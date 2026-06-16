@@ -134,8 +134,8 @@ func (r *RealRepository) DeleteAlias(ctx context.Context, id string) error {
 	return err
 }
 
-// ListAllAlias retorna el arreglo completo de alias registrados para el panel de control.
-func (r *RealRepository) ListAllAlias(ctx context.Context) ([]domain.Alias, error) {
+// ListAllAliases retorna el arreglo completo de alias registrados para el panel de control.
+func (r *RealRepository) ListAllAliases(ctx context.Context) ([]domain.Alias, error) {
 
 	query := `SELECT id, customer_id, alias_value, created_at FROM alias`
 	rows, err := r.db.QueryContext(ctx, query)

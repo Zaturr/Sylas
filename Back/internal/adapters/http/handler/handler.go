@@ -2,17 +2,17 @@ package handler
 
 import (
 	"Alias_bdsa/Back/internal/ports"
-	"encoding/json"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-type HTTpHandler struct {
+type HTTPHandler struct {
 	service ports.AliasService
 }
 
 // HTTPHandler estructura el controlador que expone los entry points del simulador.
-func NewHTTPHandler(service ports.AliasService) *HTTpHandler {
-	return &HTTpHandler{
+func NewHTTPHandler(service ports.AliasService) *HTTPHandler {
+	return &HTTPHandler{
 		service: service,
 	}
 }
@@ -24,75 +24,50 @@ type CreateAliasRequest struct {
 }
 
 // CreateAlias maneja la petición POST para registrar un nuevo alias único.
-func (h *HTTpHandler) CreatedAlias(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
+func (h *HTTPHandler) CreatedAlias(c *gin.Context) {
 	var req CreateAliasRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "JSON invalido"}`))
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "JSON invalido"})
 		return
 	}
 
-	alias, err := h.service.CreateAlias(r.Context(), req.CustomerID, req.AliasValue)
+	alias, err := h.service.CreateAlias(c.Request.Context(), req.CustomerID, req.AliasValue)
 	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte(`{"error":` + err.Error() + `"}`))
+		c.JSON(422, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(alias)
+	c.JSON(201, alias)
 }
 
 // ResolveAlias maneja la petición GET para buscar y resolver las cuentas de un alias.
-func (h *HTTpHandler) ResolveAlias(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	aliasValue := r.URL.Query().Get("value")
+func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
+	aliasValue := c.Query("value") // Obtiene el query param ?value=...
 	if aliasValue == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "El alias es requerido"}`))
-		return
-	}
-	customer, accounts, err := h.service.ResolveAlias(r.Context(), aliasValue)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error":"` + err.Error() + `}`))
+		c.JSON(400, gin.H{"error": "El alias es requerido"})
 		return
 	}
 
-	response := map[string]interface{}{
+	customer, accounts, err := h.service.ResolveAlias(c.Request.Context(), aliasValue)
+	if err != nil {
+		c.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
 		"alias":    aliasValue,
 		"customer": customer,
 		"accounts": accounts,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
-func (h *HTTpHandler) ListAllAlias(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-	alias, err := h.service.GetAllAlias(r.Context())
+// ListAllAlias retorna todos los alias
+func (h *HTTPHandler) ListAllAlias(c *gin.Context) {
+	alias, err := h.service.GetAllAlias(c.Request.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`"Error interno del servidor`))
+		c.JSON(500, gin.H{"error": "Error interno del servidor"})
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(alias)
+
+	c.JSON(200, alias)
 }
