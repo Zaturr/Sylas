@@ -8,3 +8,20 @@ type Alias struct {
 	AliasValue string    `json:"alias_value"`
 	CreatedAt  time.Time `json:"created_at"`
 }
+
+type AccountDetail struct {
+	Bank          string `json:"bank"`
+	AccountNumber string `json:"account_number"`
+}
+
+// AliasDetail agrupa la información completa de un alias para el panel de control
+type AliasDetail struct {
+	CustomerID     string          `json:"customer_id"`
+	DocumentNumber string          `json:"document_number"`
+	FirstName      string          `json:"first_name"`
+	LastName       string          `json:"last_name"`
+	AliasValue     string          `json:"alias"`
+	Email          string          `json:"email"`
+	Phone          string          `json:"phone"`
+	Accounts       []AccountDetail `json:"accounts"`
+}

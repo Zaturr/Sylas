@@ -5,6 +5,7 @@ import (
 	"Alias_bdsa/Back/internal/ports"
 	"context"
 	"errors"
+	"strings"
 )
 
 type AppService struct {
@@ -59,10 +60,51 @@ func (s *AppService) ResolveAlias(ctx context.Context, aliasValue string) (*doma
 	return customer, accounts, nil
 }
 
+func (s *AppService) AddAccountToCustomer(ctx context.Context, documentNumber string, email string, aliasValue string, account *domain.Account) error {
+	// 1. Verificar que el cliente existe y que los datos coinciden
+	customer, err := s.repo.GetCustomerByVerificationData(ctx, documentNumber, email, aliasValue)
+	if err != nil {
+		return err
+	}
+	if customer == nil {
+		return errors.New("los datos de verificación (cédula, correo o alias) no coinciden con ningún usuario registrado")
+	}
+
+	// 2. Asociar la cuenta al ID del cliente encontrado
+	account.CustomerID = customer.ID
+
+	// 3. Guardar la cuenta
+	err = s.repo.SaveAccount(ctx, account)
+	if err != nil {
+		// Traducir el error si la cuenta ya existe o el banco no existe
+		errStr := err.Error()
+		if strings.Contains(errStr, "accounts.account_number") {
+			return errors.New("el número de cuenta ya se encuentra registrado en el sistema")
+		}
+		if strings.Contains(errStr, "FOREIGN KEY constraint failed") {
+			return errors.New("el banco especificado no existe")
+		}
+		if strings.Contains(errStr, "UNIQUE constraint failed: accounts.customer_id, accounts.bank_id") {
+			return errors.New("el usuario ya tiene una cuenta registrada en este banco")
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (s *AppService) RemoveAlias(ctx context.Context, aliasID string) error {
 	return s.repo.DeleteAlias(ctx, aliasID)
 }
 
 func (s *AppService) GetAllAlias(ctx context.Context) ([]domain.Alias, error) {
 	return s.repo.ListAllAliases(ctx)
+}
+
+func (s *AppService) GetAllAliasWithDetails(ctx context.Context) ([]domain.AliasDetail, error) {
+	return s.repo.ListAllAliasesWithDetails(ctx)
+}
+
+func (s *AppService) CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error {
+	return s.repo.CreateFullUser(ctx, customer, accounts, alias)
 }

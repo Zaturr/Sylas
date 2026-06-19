@@ -61,13 +61,13 @@ func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 	})
 }
 
-// ListAllAlias retorna todos los alias
+// ListAllAlias retorna todos los alias con sus detalles
 func (h *HTTPHandler) ListAllAlias(c *gin.Context) {
-	alias, err := h.service.GetAllAlias(c.Request.Context())
+	aliasDetails, err := h.service.GetAllAliasWithDetails(c.Request.Context())
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Error interno del servidor"})
+		c.JSON(500, gin.H{"error": "Error interno del servidor", "details": err.Error()})
 		return
 	}
 
-	c.JSON(200, alias)
+	c.JSON(200, aliasDetails)
 }

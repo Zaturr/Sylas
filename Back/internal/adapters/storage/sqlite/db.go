@@ -22,12 +22,53 @@ func InitDatabase(filepath string) (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
+
+	err = seedBanks(ctx, db)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
 	return db, nil
 
 }
 
+func seedBanks(ctx context.Context, db *sql.DB) error {
+	query := `
+	INSERT INTO banks (id, name) VALUES 
+	('0102', 'Banco de Venezuela'),
+	('0104', 'Banco Venezolano de Crédito'),
+	('0105', 'Banco Mercantil'),
+	('0108', 'Banco Provincial'),
+	('0114', 'Bancaribe'),
+	('0115', 'Banco Exterior'),
+	('0128', 'Banco Caroní'),
+	('0134', 'Banesco'),
+	('0138', 'Banco Plaza'),
+	('0151', 'BFC Banco Fondo Común'),
+	('0156', '100% Banco'),
+	('0157', 'Banco del Sur'),
+	('0163', 'Banco del Tesoro'),
+	('0166', 'Banco Agrícola de Venezuela'),
+	('0168', 'Bancrecer'),
+	('0169', 'Mi Banco'),
+	('0171', 'Banco Activo'),
+	('0172', 'Bancamiga'),
+	('0174', 'Banplus'),
+	('0175', 'Banco Bicentenario'),
+	('0177', 'Banco de la Fuerza Armada Nacional Bolivariana'),
+	('0191', 'Banco Nacional de Crédito (BNC)')
+	ON CONFLICT(id) DO NOTHING;
+	`
+	_, err := db.ExecContext(ctx, query)
+	return err
+}
+
 func createTables(ctx context.Context, db *sql.DB) error {
 	ddl := `
+	PRAGMA journal_mode = WAL;
+	PRAGMA synchronous = NORMAL;
+	PRAGMA temp_store = MEMORY;
 	PRAGMA foreign_keys = ON;
 
 	CREATE TABLE IF NOT EXISTS banks (
@@ -39,7 +80,7 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS customers(
 	id TEXT PRIMARY KEY,
 	document_type TEXT NOT NULL,
-	document_number TEXT NOT NULL,
+	document_number TEXT NOT NULL UNIQUE,
 	first_name TEXT NOT NULL,
 	last_name TEXT NO NULL,
 	email TEXT NOT NULL UNIQUE,
@@ -57,7 +98,8 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	status TEXT DEFAULT 'ACTIVE',
 	created_at DATATIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE,
-	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+	UNIQUE(customer_id, bank_id)
 	);
 
 	CREATE TABLE IF NOT EXISTS alias(
