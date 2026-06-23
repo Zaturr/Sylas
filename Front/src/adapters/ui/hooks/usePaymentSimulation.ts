@@ -1,206 +1,145 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { simulationAdapter } from '../../api/simulationAdapter';
-import type {
-  MobileAppTab,
-  PaymentSimulationContext,
-  PaymentSimulationStep,
-} from '../../../domain/simulation';
+import { useCallback, useReducer, useState } from 'react';
 import {
-  createInitialSimulationContext,
-  isPaymentFlowActive,
+  createInitialPaymentSimulationState,
+  paymentSimulationReducer,
+  validatePaymentDraft,
+  type MobileAppTab,
+  type PaymentSimulationStep,
 } from '../../../domain/simulation';
+import { usePaymentSimulationService } from '../providers/AppServicesProvider';
 
 export function usePaymentSimulation() {
-  const [context, setContext] = useState<PaymentSimulationContext>(
-    createInitialSimulationContext,
+  const paymentSimulationService = usePaymentSimulationService();
+  const [context, dispatch] = useReducer(
+    paymentSimulationReducer,
+    undefined,
+    createInitialPaymentSimulationState,
   );
   const [isResolvingAlias, setIsResolvingAlias] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  useEffect(() => {
-    if (context.step !== 'processing') {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setContext((prev) => ({
-        ...prev,
-        step: 'success',
-        errorMessage: '',
-      }));
-    }, 1800);
-
-    return () => window.clearTimeout(timer);
-  }, [context.step]);
-
-  const setTab = useCallback((activeTab: MobileAppTab) => {
-    setContext((prev) => {
-      if (isPaymentFlowActive(prev.step) && prev.step !== 'success' && prev.step !== 'error') {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        activeTab,
-        step: 'idle',
-        errorMessage: '',
-      };
-    });
+  const setTab = useCallback((tab: MobileAppTab) => {
+    dispatch({ type: 'SET_TAB', tab });
   }, []);
 
   const startPayment = useCallback(() => {
-    setContext((prev) => ({
-      ...prev,
-      step: 'enter-alias',
-      aliasValue: '',
-      amount: '',
-      recipient: null,
-      errorMessage: '',
-    }));
+    dispatch({ type: 'START_PAYMENT' });
   }, []);
 
-  const setAliasValue = useCallback((aliasValue: string) => {
-    setContext((prev) => ({ ...prev, aliasValue, errorMessage: '' }));
+  const setAliasValue = useCallback((value: string) => {
+    dispatch({ type: 'SET_ALIAS', value });
   }, []);
 
-  const setAmount = useCallback((amount: string) => {
-    setContext((prev) => ({ ...prev, amount, errorMessage: '' }));
+  const setAmount = useCallback((value: string) => {
+    dispatch({ type: 'SET_AMOUNT', value });
   }, []);
 
   const submitAlias = useCallback(async () => {
-    const draftResult = simulationAdapter.validatePaymentDraft(
-      context.aliasValue,
-      context.amount,
-    );
+    const draftResult = validatePaymentDraft(context.aliasValue, context.amount);
 
     if (!draftResult.ok) {
-      setContext((prev) => ({
-        ...prev,
-        errorMessage: draftResult.error,
-      }));
+      dispatch({ type: 'SET_ERROR', message: draftResult.error });
       return;
     }
 
     setIsResolvingAlias(true);
-    setContext((prev) => ({ ...prev, errorMessage: '' }));
+    dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const resolveResult = await simulationAdapter.resolvePaymentAlias(
+      const resolveResult = await paymentSimulationService.resolvePaymentAlias(
         context.aliasValue.trim(),
       );
 
       if (!resolveResult.ok) {
-        setContext((prev) => ({
-          ...prev,
-          errorMessage: resolveResult.error,
-        }));
+        dispatch({ type: 'SET_ERROR', message: resolveResult.error });
         return;
       }
 
-      setContext((prev) => ({
-        ...prev,
-        step: 'confirm',
-        aliasValue: prev.aliasValue.trim(),
-        amount: prev.amount.trim(),
+      dispatch({
+        type: 'SUBMIT_ALIAS_SUCCESS',
+        aliasValue: context.aliasValue.trim(),
+        amount: context.amount.trim(),
         recipient: resolveResult.recipient,
-        errorMessage: '',
-      }));
+      });
     } finally {
       setIsResolvingAlias(false);
     }
-  }, [context.aliasValue, context.amount]);
+  }, [context.aliasValue, context.amount, paymentSimulationService]);
 
-  const confirmPayment = useCallback(() => {
-    setContext((prev) => ({
-      ...prev,
-      step: 'processing',
-      errorMessage: '',
-    }));
-  }, []);
+  const confirmPayment = useCallback(async () => {
+    dispatch({ type: 'CONFIRM_PAYMENT' });
+    setIsProcessingPayment(true);
+
+    try {
+      const result = await paymentSimulationService.executePayment(
+        context.aliasValue,
+        context.amount,
+      );
+
+      if (!result.ok) {
+        dispatch({ type: 'PAYMENT_FAILED', message: result.error });
+        return;
+      }
+
+      dispatch({ type: 'PAYMENT_SUCCESS' });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  }, [context.aliasValue, context.amount, paymentSimulationService]);
 
   const cancelFlow = useCallback(() => {
     setIsResolvingAlias(false);
-    setContext((prev) => ({
-      ...prev,
-      step: 'idle',
-      aliasValue: '',
-      amount: '',
-      recipient: null,
-      errorMessage: '',
-    }));
+    setIsProcessingPayment(false);
+    dispatch({ type: 'CANCEL_FLOW' });
   }, []);
 
   const goBack = useCallback(() => {
     setIsResolvingAlias(false);
-    setContext((prev) => {
-      if (prev.step === 'enter-alias') {
-        return {
-          ...prev,
-          step: 'idle',
-          aliasValue: '',
-          amount: '',
-          recipient: null,
-          errorMessage: '',
-        };
-      }
-
-      if (prev.step === 'confirm') {
-        return { ...prev, step: 'enter-alias', recipient: null, errorMessage: '' };
-      }
-
-      if (prev.step === 'error') {
-        return { ...prev, step: 'enter-alias', errorMessage: '' };
-      }
-
-      return prev;
-    });
+    dispatch({ type: 'GO_BACK' });
   }, []);
 
   const resetPayment = useCallback(() => {
     setIsResolvingAlias(false);
-    setContext((prev) => ({
-      ...prev,
-      step: 'idle',
-      aliasValue: '',
-      amount: '',
-      recipient: null,
-      errorMessage: '',
-    }));
+    setIsProcessingPayment(false);
+    dispatch({ type: 'RESET_PAYMENT' });
   }, []);
 
   const setStep = useCallback((step: PaymentSimulationStep) => {
-    setContext((prev) => ({ ...prev, step }));
+    if (step === 'processing') {
+      dispatch({ type: 'CONFIRM_PAYMENT' });
+      return;
+    }
+
+    if (step === 'success') {
+      dispatch({ type: 'PAYMENT_SUCCESS' });
+      return;
+    }
+
+    if (step === 'error') {
+      dispatch({ type: 'PAYMENT_FAILED', message: context.errorMessage || 'Error desconocido' });
+    }
+  }, [context.errorMessage]);
+
+  const reset = useCallback(() => {
+    setIsResolvingAlias(false);
+    setIsProcessingPayment(false);
+    dispatch({ type: 'RESET' });
   }, []);
 
-  const actions = useMemo(
-    () => ({
-      setTab,
-      startPayment,
-      setAliasValue,
-      setAmount,
-      submitAlias,
-      confirmPayment,
-      cancelFlow,
-      goBack,
-      resetPayment,
-      setStep,
-      reset: () => {
-        setIsResolvingAlias(false);
-        setContext(createInitialSimulationContext());
-      },
-    }),
-    [
-      setTab,
-      startPayment,
-      setAliasValue,
-      setAmount,
-      submitAlias,
-      confirmPayment,
-      cancelFlow,
-      goBack,
-      resetPayment,
-      setStep,
-    ],
-  );
-
-  return { context, isResolvingAlias, ...actions };
+  return {
+    context,
+    isResolvingAlias,
+    isProcessingPayment,
+    setTab,
+    startPayment,
+    setAliasValue,
+    setAmount,
+    submitAlias,
+    confirmPayment,
+    cancelFlow,
+    goBack,
+    resetPayment,
+    setStep,
+    reset,
+  };
 }

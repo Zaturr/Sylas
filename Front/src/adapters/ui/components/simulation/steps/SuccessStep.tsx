@@ -1,4 +1,4 @@
-import { formatPaymentAmount } from '../../../../../application/simulationService';
+import { formatPaymentAmount } from '../../../../../domain/simulation';
 import type { PaymentRecipient } from '../../../../../domain/simulation';
 import { RecipientSummaryCard } from '../RecipientSummaryCard';
 import '../simulationSteps.css';

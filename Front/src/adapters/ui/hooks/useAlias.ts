@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { type AliasDetail, type PaginationMeta } from '../../../domain/alias';
 import { type ResolveAliasService } from '../../../application/aliasService';
-import { aliasAdapter } from '../../api/aliasApi';
+import { useAliasService } from '../providers/AppServicesProvider';
 
 const DEFAULT_LIMIT = 20;
 
@@ -27,6 +27,7 @@ function looksLikeExactAlias(term: string): boolean {
 }
 
 export const useAlias = () => {
+  const aliasService = useAliasService();
   const [aliases, setAliases] = useState<AliasDetail[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>({
     page: 1,
@@ -54,7 +55,7 @@ export const useAlias = () => {
 
       if (term && looksLikeExactAlias(term)) {
         try {
-          const resolved = await aliasAdapter.resolveAlias(term);
+          const resolved = await aliasService.resolveAlias(term);
           if (generation !== fetchGenerationRef.current) {
             return;
           }
@@ -73,7 +74,7 @@ export const useAlias = () => {
         }
       }
 
-      const result = await aliasAdapter.getAliasDetailsPaginated(page, limit, term);
+      const result = await aliasService.getAliasDetailsPaginated(page, limit, term);
 
       if (generation !== fetchGenerationRef.current) {
         return;
@@ -142,7 +143,7 @@ export const useAlias = () => {
     try {
       setDeletingCustomerId(customerId);
       setError(null);
-      await aliasAdapter.deleteAliasByCustomerId(customerId);
+      await aliasService.deleteAliasByCustomerId(customerId);
 
       if (aliases.length === 1 && pagination.page > 1) {
         setPagination((prev) => ({ ...prev, page: prev.page - 1 }));
@@ -175,7 +176,7 @@ export const useAlias = () => {
     try {
       setDeletingAll(true);
       setError(null);
-      await aliasAdapter.deleteAllAliases();
+      await aliasService.deleteAllAliases();
       setSearchTerm('');
       setPagination((prev) => ({ ...prev, page: 1 }));
       refetch();

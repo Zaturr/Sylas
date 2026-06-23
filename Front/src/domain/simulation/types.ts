@@ -19,7 +19,7 @@ export type PaymentRecipient = {
   alias: string;
 };
 
-export type PaymentSimulationContext = {
+export type PaymentSimulationState = {
   step: PaymentSimulationStep;
   activeTab: MobileAppTab;
   aliasValue: string;
@@ -28,7 +28,7 @@ export type PaymentSimulationContext = {
   errorMessage: string;
 };
 
-export const createInitialSimulationContext = (): PaymentSimulationContext => ({
+export const createInitialPaymentSimulationState = (): PaymentSimulationState => ({
   step: PAYMENT_SIMULATION_INITIAL_STEP,
   activeTab: 'home',
   aliasValue: '',
@@ -39,13 +39,3 @@ export const createInitialSimulationContext = (): PaymentSimulationContext => ({
 
 export const isPaymentFlowActive = (step: PaymentSimulationStep): boolean =>
   step !== 'idle';
-
-export function formatRecipientDocument(recipient: PaymentRecipient): string {
-  return `${recipient.documentType}-${recipient.documentNumber}`;
-}
-
-export function getRecipientInitials(recipient: PaymentRecipient): string {
-  const firstInitial = recipient.firstName.charAt(0).toUpperCase();
-  const lastInitial = recipient.lastName.charAt(0).toUpperCase();
-  return `${firstInitial}${lastInitial}`.trim() || '?';
-}

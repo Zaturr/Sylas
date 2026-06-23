@@ -1,17 +1,39 @@
 .simulation-page {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  grid-template-rows: auto;
   gap: 24px;
+  align-items: start;
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.simulation-page__layout {
-  display: grid;
-  grid-template-columns: minmax(260px, 360px) minmax(280px, 1fr);
-  gap: 32px;
-  align-items: center;
+.simulation-page__left {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.simulation-page__header {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;
 }
 
 .simulation-page__panel {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 28px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.34);
@@ -55,25 +77,74 @@
 }
 
 .simulation-page__stage {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 760px;
-  padding: 24px;
+  align-items: flex-start;
+  padding: 8px 12px 16px;
   border-radius: 24px;
-  background:
-    radial-gradient(circle at top, rgba(0, 77, 153, 0.08), transparent 55%),
-    rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(195, 213, 229, 0.65);
 }
 
+.simulation-page__stage .mobile-device {
+  width: 100%;
+  max-width: 340px;
+}
+
+.simulation-page__stage .mobile-device__shell {
+  width: 100%;
+  max-width: 340px;
+  box-shadow:
+    0 12px 28px rgba(15, 35, 60, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 @media (max-width: 960px) {
-  .simulation-page__layout {
+  .dashboard-page--simulation {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .dashboard-page--simulation .dashboard-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  .dashboard-main--simulation {
+    height: auto;
+    overflow: visible;
+  }
+
+  .simulation-page {
+    flex: none;
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    overflow: visible;
+  }
+
+  .simulation-page__left {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .simulation-page__stage {
-    min-height: auto;
+    grid-column: 1;
+    grid-row: 2;
     padding: 16px 0 8px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .simulation-page {
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: 16px;
   }
 }

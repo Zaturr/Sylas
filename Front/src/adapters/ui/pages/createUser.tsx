@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { AppShell } from '../components/AppShell';
-import { aliasAdapter } from '../../api/aliasApi';
+import { useAliasService } from '../providers/AppServicesProvider';
 import type { AppPage } from '../navigation';
 import './forms.css';
 
@@ -19,6 +19,7 @@ const initialForm = {
 };
 
 export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
+  const aliasService = useAliasService();
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
     setSubmitting(true);
 
     try {
-      await aliasAdapter.createFullUser({
+      await aliasService.createFullUser({
         customer: {
           document_type: form.document_type,
           document_number: form.document_number.trim(),

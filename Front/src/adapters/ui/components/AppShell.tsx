@@ -7,10 +7,18 @@ import '../pages/dashboard.css';
 type AppShellProps = {
   activeItem: AppPage | 'settings';
   onNavigate: (page: AppPage) => void;
+  pageClassName?: string;
+  mainClassName?: string;
   children: ReactNode;
 };
 
-export function AppShell({ activeItem, onNavigate, children }: AppShellProps) {
+export function AppShell({
+  activeItem,
+  onNavigate,
+  pageClassName: pageClassNameProp,
+  mainClassName,
+  children,
+}: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
@@ -27,7 +35,10 @@ export function AppShell({ activeItem, onNavigate, children }: AppShellProps) {
   const pageClassName = [
     'dashboard-page',
     sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed',
-  ].join(' ');
+    pageClassNameProp,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={pageClassName}>
@@ -42,7 +53,7 @@ export function AppShell({ activeItem, onNavigate, children }: AppShellProps) {
       />
 
       <div className="dashboard-layout">
-        <main className="dashboard-main">
+        <main className={['dashboard-main', mainClassName].filter(Boolean).join(' ')}>
           <header className="top-nav">
             <div className="top-nav-left">
               <button

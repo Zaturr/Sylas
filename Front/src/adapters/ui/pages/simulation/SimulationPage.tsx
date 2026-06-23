@@ -32,13 +32,18 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     context.step !== 'success';
 
   return (
-    <AppShell activeItem="simulation" onNavigate={onNavigate}>
+    <AppShell
+      activeItem="simulation"
+      onNavigate={onNavigate}
+      pageClassName="dashboard-page--simulation"
+      mainClassName="dashboard-main--simulation"
+    >
       <div className="simulation-page">
-        <div className="table-header">
-          <h2 className="section-title">Simulación de Pago</h2>
-        </div>
+        <div className="simulation-page__left">
+          <div className="table-header simulation-page__header">
+            <h2 className="section-title">Simulación de Pago</h2>
+          </div>
 
-        <div className="simulation-page__layout">
           <aside className="simulation-page__panel">
             <p className="simulation-page__eyebrow">Entorno interactivo</p>
             <h3 className="simulation-page__panel-title">
@@ -63,28 +68,28 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
               Volver al panel
             </button>
           </aside>
-
-          <section
-            className="simulation-page__stage"
-            aria-label="Dispositivo móvil interactivo"
-          >
-            <MobileDeviceFrame onHomePress={canGoBack ? goBack : undefined} showHomeIndicator={canGoBack}>
-              <PaymentSimulatorScreen
-                context={context}
-                isResolvingAlias={isResolvingAlias}
-                onTabChange={setTab}
-                onStartPayment={startPayment}
-                onAliasChange={setAliasValue}
-                onAmountChange={setAmount}
-                onSubmitAlias={submitAlias}
-                onConfirmPayment={confirmPayment}
-                onCancelFlow={cancelFlow}
-                onGoBack={goBack}
-                onResetPayment={resetPayment}
-              />
-            </MobileDeviceFrame>
-          </section>
         </div>
+
+        <section
+          className="simulation-page__stage"
+          aria-label="Dispositivo móvil interactivo"
+        >
+          <MobileDeviceFrame onHomePress={canGoBack ? goBack : undefined} showHomeIndicator={canGoBack}>
+            <PaymentSimulatorScreen
+              context={context}
+              isResolvingAlias={isResolvingAlias}
+              onTabChange={setTab}
+              onStartPayment={startPayment}
+              onAliasChange={setAliasValue}
+              onAmountChange={setAmount}
+              onSubmitAlias={submitAlias}
+              onConfirmPayment={confirmPayment}
+              onCancelFlow={cancelFlow}
+              onGoBack={goBack}
+              onResetPayment={resetPayment}
+            />
+          </MobileDeviceFrame>
+        </section>
       </div>
     </AppShell>
   );
