@@ -1,29 +1,33 @@
-import type { Customer } from "../domain/user";
-import type{ Account } from "../domain/account";
-import type { Alias, AliasDetail } from "../domain/alias";
-
+import type { Customer } from '../domain/user';
+import type { Account } from '../domain/account';
+import type { Alias, PaginatedAliasResponse } from '../domain/alias';
 
 export interface CreateFullUserService {
-    customer: Omit<Customer, 'id' | 'created_at'>;
-    accounts: Omit<Account, 'id' | 'customer_id' | 'created_at'>[];
-    alias: Omit<Alias, 'id' | 'customer_id' | 'created_at'>;
+  customer: Omit<Customer, 'id' | 'created_at'>;
+  alias: Omit<Alias, 'id' | 'customer_id' | 'created_at'>;
 }
+
 export interface ResolveAliasService {
-    customer: Customer;
-    accounts: Account[];
+  alias: string;
+  customer: Customer;
+  accounts: Account[];
 }
 
 export interface AliasService {
-    
-    getAllAliasDeteails(): Promise<AliasDetail[]>;
+  getAliasDetailsPaginated(
+    page: number,
+    limit: number,
+    search?: string,
+    signal?: AbortSignal,
+  ): Promise<PaginatedAliasResponse>;
 
-    resolveAlias(alias: string): Promise<ResolveAliasService>;
-    createFullUser(data: CreateFullUserService): Promise<void>;
+  resolveAlias(alias: string, signal?: AbortSignal): Promise<ResolveAliasService>;
 
-    addAccountToCustomer(
-        documentNumber: string,
-        email: string,
-        aliasValue: string,
-        account: Omit<Account, 'id' | 'customer_id' | 'created_at'>,
-    ): Promise<void>;
+  createFullUser(data: CreateFullUserService): Promise<void>;
+
+  deleteAliasByCustomerId(customerId: string): Promise<void>;
+
+  deleteAliasByValue(aliasValue: string): Promise<void>;
+
+  deleteAllAliases(): Promise<number>;
 }

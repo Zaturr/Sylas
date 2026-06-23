@@ -9,7 +9,7 @@ import (
 )
 
 func InitDatabase(filepath string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", filepath)
+	db, err := sql.Open("sqlite", filepath+"?_pragma=foreign_keys(1)&_pragma=busy_timeout(30000)&_pragma=journal_mode(WAL)")
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +112,10 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	
 
 	CREATE INDEX IF NOT EXISTS idx_alias_value ON alias(alias_value);
+	CREATE INDEX IF NOT EXISTS idx_alias_customer_id ON alias(customer_id);
+	CREATE INDEX IF NOT EXISTS idx_customers_first_name ON customers(first_name);
+	CREATE INDEX IF NOT EXISTS idx_customers_last_name ON customers(last_name);
+	CREATE INDEX IF NOT EXISTS idx_customers_document_number ON customers(document_number);
 	`
 	_, err := db.ExecContext(ctx, ddl)
 	return err

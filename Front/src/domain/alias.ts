@@ -10,6 +10,7 @@ export interface AccountDetail{
 }
 export interface AliasDetail{
     customer_id: string;
+    document_type: string;
     document_number: string;
     first_name: string;
     last_name: string;
@@ -17,5 +18,16 @@ export interface AliasDetail{
     email: string;
     phone: string;
     accounts: AccountDetail[];
-    
+}
+
+export interface PaginationMeta {
+    page: number;
+    limit: number;
+    total_records: number;
+    total_pages: number;
+}
+
+export interface PaginatedAliasResponse {
+    data: AliasDetail[];
+    pagination: PaginationMeta;
 }

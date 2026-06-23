@@ -2,6 +2,8 @@ package handler
 
 import (
 	"Alias_bdsa/Back/internal/ports"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,13 +29,13 @@ type CreateAliasRequest struct {
 func (h *HTTPHandler) CreatedAlias(c *gin.Context) {
 	var req CreateAliasRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": "JSON invalido"})
+		respondError(c, 400, "JSON invalido")
 		return
 	}
 
 	alias, err := h.service.CreateAlias(c.Request.Context(), req.CustomerID, req.AliasValue)
 	if err != nil {
-		c.JSON(422, gin.H{"error": err.Error()})
+		respondError(c, 422, err.Error())
 		return
 	}
 
@@ -44,13 +46,13 @@ func (h *HTTPHandler) CreatedAlias(c *gin.Context) {
 func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 	aliasValue := c.Query("value") // Obtiene el query param ?value=...
 	if aliasValue == "" {
-		c.JSON(400, gin.H{"error": "El alias es requerido"})
+		respondError(c, 400, "El alias es requerido")
 		return
 	}
 
 	customer, accounts, err := h.service.ResolveAlias(c.Request.Context(), aliasValue)
 	if err != nil {
-		c.JSON(404, gin.H{"error": err.Error()})
+		respondError(c, 404, err.Error())
 		return
 	}
 
@@ -61,13 +63,28 @@ func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 	})
 }
 
-// ListAllAlias retorna todos los alias con sus detalles
+// ListAllAlias retorna alias paginados con sus detalles (?page=1&limit=20)
 func (h *HTTPHandler) ListAllAlias(c *gin.Context) {
-	aliasDetails, err := h.service.GetAllAliasWithDetails(c.Request.Context())
+	page := parsePositiveInt(c.DefaultQuery("page", "1"), 1)
+	limit := parsePositiveInt(c.DefaultQuery("limit", "20"), 20)
+	if limit > 100 {
+		limit = 100
+	}
+
+	search := strings.TrimSpace(c.Query("search"))
+	result, err := h.service.GetAliasWithDetailsPaginated(c.Request.Context(), page, limit, search)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Error interno del servidor", "details": err.Error()})
+		respondError(c, 500, "Error interno del servidor")
 		return
 	}
 
-	c.JSON(200, aliasDetails)
+	c.JSON(200, result)
+}
+
+func parsePositiveInt(value string, fallback int) int {
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < 1 {
+		return fallback
+	}
+	return parsed
 }

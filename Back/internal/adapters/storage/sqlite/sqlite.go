@@ -170,11 +170,59 @@ func (r *RealRepository) GetAliasByValue(ctx context.Context, value string) (*do
 	return &alias, nil
 }
 
-// DeleteAlias elimina físicamente el registro de la tabla por ID, liberando el alias.
+// GetAliasByID busca un alias por su identificador interno.
+func (r *RealRepository) GetAliasByID(ctx context.Context, id string) (*domain.Alias, error) {
+	query := `SELECT id, customer_id, alias_value, created_at FROM alias WHERE id = ?`
+	row := r.db.QueryRowContext(ctx, query, id)
+
+	var alias domain.Alias
+	var createdAtStr string
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &createdAtStr)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	alias.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+	return &alias, nil
+}
+
+// DeleteCustomerByID elimina un cliente; alias y cuentas se borran en cascada por FK.
+func (r *RealRepository) DeleteCustomerByID(ctx context.Context, customerID string) error {
+	result, err := r.db.ExecContext(ctx, `DELETE FROM customers WHERE id = ?`, customerID)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("cliente no encontrado")
+	}
+	return nil
+}
+
+// DeleteAllCustomers elimina todos los clientes; alias y cuentas asociadas se borran en cascada.
+func (r *RealRepository) DeleteAllCustomers(ctx context.Context) (int64, error) {
+	result, err := r.db.ExecContext(ctx, `DELETE FROM customers`)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+// DeleteAlias elimina el alias y todos los datos relacionados (cliente y cuentas).
 func (r *RealRepository) DeleteAlias(ctx context.Context, id string) error {
-	query := `DELETE FROM alias WHERE id = ?`
-	_, err := r.db.ExecContext(ctx, query, id)
-	return err
+	alias, err := r.GetAliasByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if alias == nil {
+		return fmt.Errorf("alias no encontrado")
+	}
+	return r.DeleteCustomerByID(ctx, alias.CustomerID)
 }
 
 // ListAllAliases retorna el arreglo completo de alias registrados para el panel de control.
@@ -201,11 +249,90 @@ func (r *RealRepository) ListAllAliases(ctx context.Context) ([]domain.Alias, er
 	return listAlias, nil
 }
 
-// ListAllAliasesWithDetails retorna el arreglo de alias con los detalles completos del usuario y sus bancos.
-func (r *RealRepository) ListAllAliasesWithDetails(ctx context.Context) ([]domain.AliasDetail, error) {
+// ListBanks retorna todos los bancos disponibles ordenados por nombre.
+func (r *RealRepository) ListBanks(ctx context.Context) ([]domain.Bank, error) {
+	query := `SELECT id, name FROM banks ORDER BY name`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	banks := make([]domain.Bank, 0)
+	for rows.Next() {
+		var bank domain.Bank
+		if err := rows.Scan(&bank.ID, &bank.Name); err != nil {
+			return nil, err
+		}
+		banks = append(banks, bank)
+	}
+	return banks, nil
+}
+
+func parseAccountDetails(accountsStr string) []domain.AccountDetail {
+	if accountsStr == "" {
+		return []domain.AccountDetail{}
+	}
+
+	accounts := make([]domain.AccountDetail, 0)
+	for _, pair := range strings.Split(accountsStr, ",") {
+		parts := strings.Split(pair, "|")
+		if len(parts) == 2 {
+			accounts = append(accounts, domain.AccountDetail{
+				Bank:          parts[0],
+				AccountNumber: parts[1],
+			})
+		}
+	}
+	return accounts
+}
+
+func aliasSearchFilter(search string) (string, []interface{}) {
+	term := strings.TrimSpace(search)
+	if term == "" {
+		return "", nil
+	}
+
+	pattern := "%" + term + "%"
+	filter := `
+		AND (
+			al.alias_value LIKE ? OR
+			c.first_name LIKE ? OR
+			c.last_name LIKE ? OR
+			c.document_number LIKE ? OR
+			(c.document_type || '-' || c.document_number) LIKE ?
+		)`
+
+	return filter, []interface{}{pattern, pattern, pattern, pattern, pattern}
+}
+
+// ListAllAliasesWithDetailsPaginated retorna alias con detalle usando LIMIT/OFFSET.
+func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error) {
+	searchFilter, searchArgs := aliasSearchFilter(search)
+
+	// Cada cliente tiene un solo alias (customer_id UNIQUE), no hace falta GROUP BY para contar.
+	countQuery := `
+	SELECT COUNT(*)
+	FROM alias al
+	JOIN customers c ON al.customer_id = c.id
+	WHERE 1=1` + searchFilter
+
+	var totalRecords int
+	if err := r.db.QueryRowContext(ctx, countQuery, searchArgs...).Scan(&totalRecords); err != nil {
+		return nil, err
+	}
+
+	totalPages := 0
+	if totalRecords > 0 {
+		totalPages = (totalRecords + limit - 1) / limit
+	}
+
+	offset := (page - 1) * limit
+	// Primero paginamos IDs; luego unimos cuentas solo para esa página.
 	query := `
 	SELECT 
 		c.id, 
+		c.document_type,
 		c.document_number,
 		c.first_name, 
 		c.last_name, 
@@ -213,25 +340,36 @@ func (r *RealRepository) ListAllAliasesWithDetails(ctx context.Context) ([]domai
 		c.email, 
 		c.phone, 
 		IFNULL(GROUP_CONCAT(b.name || '|' || ac.account_number), '') as accounts_data
-	FROM alias al
-	JOIN customers c ON al.customer_id = c.id
+	FROM (
+		SELECT al.customer_id
+		FROM alias al
+		JOIN customers c ON al.customer_id = c.id
+		WHERE 1=1` + searchFilter + `
+		ORDER BY c.first_name, c.last_name, al.alias_value
+		LIMIT ? OFFSET ?
+	) page
+	JOIN customers c ON c.id = page.customer_id
+	JOIN alias al ON al.customer_id = c.id
 	LEFT JOIN accounts ac ON c.id = ac.customer_id
 	LEFT JOIN banks b ON ac.bank_id = b.id
 	GROUP BY c.id, al.alias_value
+	ORDER BY c.first_name, c.last_name, al.alias_value
 	`
-	rows, err := r.db.QueryContext(ctx, query)
+	queryArgs := append(append([]interface{}{}, searchArgs...), limit, offset)
+	rows, err := r.db.QueryContext(ctx, query, queryArgs...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var listAliasDetail []domain.AliasDetail
+	data := make([]domain.AliasDetail, 0)
 	for rows.Next() {
 		var detail domain.AliasDetail
 		var accountsStr string
 
 		err := rows.Scan(
 			&detail.CustomerID,
+			&detail.DocumentType,
 			&detail.DocumentNumber,
 			&detail.FirstName,
 			&detail.LastName,
@@ -244,25 +382,19 @@ func (r *RealRepository) ListAllAliasesWithDetails(ctx context.Context) ([]domai
 			return nil, err
 		}
 
-		// Procesar la cadena concatenada de cuentas
-		detail.Accounts = []domain.AccountDetail{}
-		if accountsStr != "" {
-			// accountsStr se ve así: "Banco de Venezuela|0102123,Bancamiga|0172456"
-			accountPairs := strings.Split(accountsStr, ",")
-			for _, pair := range accountPairs {
-				parts := strings.Split(pair, "|")
-				if len(parts) == 2 {
-					detail.Accounts = append(detail.Accounts, domain.AccountDetail{
-						Bank:          parts[0],
-						AccountNumber: parts[1],
-					})
-				}
-			}
-		}
-
-		listAliasDetail = append(listAliasDetail, detail)
+		detail.Accounts = parseAccountDetails(accountsStr)
+		data = append(data, detail)
 	}
-	return listAliasDetail, nil
+
+	return &domain.PaginatedAliasResponse{
+		Data: data,
+		Pagination: domain.PaginationMeta{
+			Page:         page,
+			Limit:        limit,
+			TotalRecords: totalRecords,
+			TotalPages:   totalPages,
+		},
+	}, nil
 }
 
 func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error {

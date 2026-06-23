@@ -29,7 +29,7 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 	var req CreateUserRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": "Datos no validos", "details": err.Error()})
+		respondError(c, 400, "Datos no validos")
 		return
 	}
 
@@ -71,8 +71,7 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 	//////////////////LLAMAR AL SERVICIO DE CREACION DE USUARIO//////////////////
 	err := h.service.CreateFullUser(c.Request.Context(), customer, accounts, alias)
 	if err != nil {
-		// Si da error (ej. Cédula o Alias repetido), SQLite nos devolverá el error del constraint
-		c.JSON(422, gin.H{"error": "No se pudo crear el usuario", "details": err.Error()})
+		respondError(c, 422, err.Error())
 		return
 	}
 

@@ -28,18 +28,18 @@ type NameData struct {
 }
 
 // generateRandomName genera una combinación única de dos nombres y dos apellidos
-func generateRandomName() NameData {
-	n1 := nombresBase[rand.Intn(len(nombresBase))]
-	n2 := nombresBase[rand.Intn(len(nombresBase))]
-	a1 := apellidosBase[rand.Intn(len(apellidosBase))]
-	a2 := apellidosBase[rand.Intn(len(apellidosBase))]
+func generateRandomName(rng *rand.Rand) NameData {
+	n1 := nombresBase[rng.Intn(len(nombresBase))]
+	n2 := nombresBase[rng.Intn(len(nombresBase))]
+	a1 := apellidosBase[rng.Intn(len(apellidosBase))]
+	a2 := apellidosBase[rng.Intn(len(apellidosBase))]
 
 	// Evitar que el primer y segundo nombre/apellido sean idénticos
 	if n1 == n2 {
-		n2 = nombresBase[(rand.Intn(len(nombresBase))+1)%len(nombresBase)]
+		n2 = nombresBase[(rng.Intn(len(nombresBase))+1)%len(nombresBase)]
 	}
 	if a1 == a2 {
-		a2 = apellidosBase[(rand.Intn(len(apellidosBase))+1)%len(apellidosBase)]
+		a2 = apellidosBase[(rng.Intn(len(apellidosBase))+1)%len(apellidosBase)]
 	}
 
 	return NameData{

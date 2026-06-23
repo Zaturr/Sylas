@@ -97,14 +97,44 @@ func (s *AppService) RemoveAlias(ctx context.Context, aliasID string) error {
 	return s.repo.DeleteAlias(ctx, aliasID)
 }
 
+func (s *AppService) RemoveAliasByValue(ctx context.Context, aliasValue string) error {
+	alias, err := s.repo.GetAliasByValue(ctx, aliasValue)
+	if err != nil {
+		return err
+	}
+	if alias == nil {
+		return errors.New("alias no encontrado")
+	}
+	return s.repo.DeleteCustomerByID(ctx, alias.CustomerID)
+}
+
+func (s *AppService) RemoveAliasByCustomerID(ctx context.Context, customerID string) error {
+	customer, err := s.repo.GetCustomerByID(ctx, customerID)
+	if err != nil {
+		return err
+	}
+	if customer == nil {
+		return errors.New("cliente no encontrado")
+	}
+	return s.repo.DeleteCustomerByID(ctx, customerID)
+}
+
+func (s *AppService) RemoveAllAliases(ctx context.Context) (int64, error) {
+	return s.repo.DeleteAllCustomers(ctx)
+}
+
 func (s *AppService) GetAllAlias(ctx context.Context) ([]domain.Alias, error) {
 	return s.repo.ListAllAliases(ctx)
 }
 
-func (s *AppService) GetAllAliasWithDetails(ctx context.Context) ([]domain.AliasDetail, error) {
-	return s.repo.ListAllAliasesWithDetails(ctx)
+func (s *AppService) GetAliasWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error) {
+	return s.repo.ListAllAliasesWithDetailsPaginated(ctx, page, limit, search)
 }
 
 func (s *AppService) CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error {
 	return s.repo.CreateFullUser(ctx, customer, accounts, alias)
+}
+
+func (s *AppService) GetBanks(ctx context.Context) ([]domain.Bank, error) {
+	return s.repo.ListBanks(ctx)
 }

@@ -1,0 +1,6 @@
+# SQLite local del simulador (no subir a GitHub)
+Back/cmd/simulador/test.db
+Back/cmd/simulador/test.db-wal
+Back/cmd/simulador/test.db-shm
+*.db-wal
+*.db-shm

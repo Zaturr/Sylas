@@ -22,7 +22,7 @@ func (h *HTTPHandler) AddAccount(c *gin.Context) {
 	var req AddAccountRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": "Datos inválidos o incompletos", "details": err.Error()})
+		respondError(c, 400, "Datos invalidos o incompletos")
 		return
 	}
 
@@ -37,12 +37,12 @@ func (h *HTTPHandler) AddAccount(c *gin.Context) {
 
 	err := h.service.AddAccountToCustomer(c.Request.Context(), req.DocumentNumber, req.Email, req.AliasValue, account)
 	if err != nil {
-		c.JSON(422, gin.H{"error": err.Error()})
+		respondError(c, 422, err.Error())
 		return
 	}
 
 	c.JSON(201, gin.H{
-		"message": "Cuenta agregada exitosamente al usuario",
+		"message":        "Cuenta agregada exitosamente al usuario",
 		"account_number": account.AccountNumber,
 	})
 }

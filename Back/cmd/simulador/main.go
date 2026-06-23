@@ -21,11 +21,13 @@ func main() {
 
 	sqliteRepo := sqlite.NewSQLiteRepo(db)
 	appService := application.NewAppService(sqliteRepo)
+	randomizerService := application.NewRandomizerService(sqliteRepo)
 	httpHandler := handler.NewHTTPHandler(appService)
-	randomizerController := handler.NewRandomizerController(db)
+	randomizerController := handler.NewRandomizerController(randomizerService)
 
 	// Inicializar Gin
 	r := gin.Default()
+	_ = r.SetTrustedProxies(nil)
 
 	// Configurar CORS
 	config := cors.DefaultConfig()
@@ -41,6 +43,11 @@ func main() {
 		api.POST("/accounts", httpHandler.AddAccount)
 		api.GET("/alias/resolve", httpHandler.ResolveAlias)
 		api.GET("/alias/list", httpHandler.ListAllAlias)
+		api.GET("/banks", httpHandler.ListBanks)
+		api.DELETE("/alias/all", httpHandler.DeleteAllAliases)
+		api.DELETE("/alias/id/:id", httpHandler.DeleteAliasByID)
+		api.DELETE("/alias/:value", httpHandler.DeleteAliasByValue)
+		api.DELETE("/users/:customer_id", httpHandler.DeleteUserByCustomerID)
 
 		// Randomizer
 		api.POST("/randomizer", randomizerController.RunRandomizer)
