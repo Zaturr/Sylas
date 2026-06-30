@@ -20,7 +20,7 @@ func ValidateBlockSimfParams(
 	if err := ValidateAgentCode(pathAgent); err != nil {
 		return simfdomain.BlockSimfCommand{}, err
 	}
-	// TODO: pruebas temporales — reactivar validación MsgID/EndToEndID
+	// validación MsgID/EndToEndID
 	// if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
 	// 	return simfdomain.BlockSimfCommand{}, err
 	// }

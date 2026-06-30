@@ -48,7 +48,7 @@ func ApplyCollisionFixes(
 		if collidedAliases[c.AliasValue] || localAliases[c.AliasValue] {
 			fName := lowerString(strings.Split(c.FirstName, " ")[0])
 			lName := lowerString(strings.Split(c.LastName, " ")[0])
-			c.AliasValue = fmt.Sprintf("%s.%s%d", fName, lName, rng.Intn(9000000)+1000000)
+			c.AliasValue = generateAlias(rng, fName, lName)
 			hasCollisions = true
 		}
 		localAliases[c.AliasValue] = true

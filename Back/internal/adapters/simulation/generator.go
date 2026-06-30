@@ -4,6 +4,7 @@ import (
 	"Alias_bdsa/Back/internal/domain"
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -22,7 +23,7 @@ func GenerateCustomer(config domain.RandomizerConfig, rng *rand.Rand) domain.Gen
 		Email:      fmt.Sprintf("%s.%s%d@gmail.com", nameData.BaseFirstName, nameData.BaseLastName, rng.Intn(99999)+1),
 		Phone:      fmt.Sprintf("%s%07d", phonePrefixes[rng.Intn(len(phonePrefixes))], rng.Intn(10000000)),
 		AliasID:    uuid.New().String(),
-		AliasValue: fmt.Sprintf("%s.%s%d", nameData.BaseFirstName, nameData.BaseLastName, rng.Intn(900000)+100000),
+		AliasValue: generateAlias(rng, nameData.BaseFirstName, nameData.BaseLastName),
 	}
 
 	maxPossibleAccounts := len(config.Banks)
@@ -48,4 +49,15 @@ func GenerateCustomer(config domain.RandomizerConfig, rng *rand.Rand) domain.Gen
 	}
 
 	return cust
+}
+
+// generateAlias arma un alias de 6-15 caracteres con un solo punto, siempre en minusculas.
+func generateAlias(rng *rand.Rand, fName, lName string) string {
+	if len(fName) > 4 {
+		fName = fName[:4]
+	}
+	if len(lName) > 4 {
+		lName = lName[:4]
+	}
+	return strings.ToLower(fmt.Sprintf("%s.%s%04d", fName, lName, rng.Intn(10000)))
 }
