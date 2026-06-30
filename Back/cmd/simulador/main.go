@@ -27,6 +27,7 @@ func main() {
 	randomizerController := httphandler.NewRandomizerController(randomizerService)
 	simfHandler := simfadapter.NewSIMFHandler(appService)
 
+	gin.SetMode(gin.ReleaseMode)
 	// Inicializar Gin
 	r := gin.Default()
 	_ = r.SetTrustedProxies(nil)

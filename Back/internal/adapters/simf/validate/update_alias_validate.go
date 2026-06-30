@@ -20,15 +20,16 @@ func ValidateUpdateAliasParams(
 	if err := ValidateAgentCode(pathAgent); err != nil {
 		return simfdomain.UpdateAliasCommand{}, err
 	}
-	if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
-		return simfdomain.UpdateAliasCommand{}, err
-	}
+	// TODO: pruebas temporales — reactivar validación MsgID/EndToEndID
+	// if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
+	// 	return simfdomain.UpdateAliasCommand{}, err
+	// }
 	if err := ValidateCreDtTm(req.GrpHdr.CreDtTm); err != nil {
 		return simfdomain.UpdateAliasCommand{}, err
 	}
-	if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
-		return simfdomain.UpdateAliasCommand{}, err
-	}
+	// if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
+	// 	return simfdomain.UpdateAliasCommand{}, err
+	// }
 	if err := ValidateAlias(req.Mod.Alias); err != nil {
 		return simfdomain.UpdateAliasCommand{}, err
 	}

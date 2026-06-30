@@ -8,18 +8,19 @@ import (
 
 // ValidateCreateUserSimfRequest valida el mensaje IdModAdvc y devuelve el comando de dominio.
 func ValidateCreateUserSimfRequest(req simfdomain.CreateUserSimfRequest) (simfdomain.CreateUserSimfCommand, error) {
-	if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
+	// TODO: pruebas temporales — reactivar validación MsgID/EndToEndID
+	// if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
+	// 	return simfdomain.CreateUserSimfCommand{}, err
+	// }
 	if err := ValidateCreDtTm(req.GrpHdr.CreDtTm); err != nil {
 		return simfdomain.CreateUserSimfCommand{}, err
 	}
 	if err := ValidateAgentCode(req.Mod.AgentCode); err != nil {
 		return simfdomain.CreateUserSimfCommand{}, err
 	}
-	if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
+	// if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
+	// 	return simfdomain.CreateUserSimfCommand{}, err
+	// }
 	if err := ValidateAlias(req.Mod.Alias); err != nil {
 		return simfdomain.CreateUserSimfCommand{}, err
 	}

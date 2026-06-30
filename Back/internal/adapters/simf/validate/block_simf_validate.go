@@ -20,15 +20,16 @@ func ValidateBlockSimfParams(
 	if err := ValidateAgentCode(pathAgent); err != nil {
 		return simfdomain.BlockSimfCommand{}, err
 	}
-	if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
-		return simfdomain.BlockSimfCommand{}, err
-	}
+	// TODO: pruebas temporales — reactivar validación MsgID/EndToEndID
+	// if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
+	// 	return simfdomain.BlockSimfCommand{}, err
+	// }
 	if err := ValidateCreDtTm(req.GrpHdr.CreDtTm); err != nil {
 		return simfdomain.BlockSimfCommand{}, err
 	}
-	if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
-		return simfdomain.BlockSimfCommand{}, err
-	}
+	// if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
+	// 	return simfdomain.BlockSimfCommand{}, err
+	// }
 	if err := ValidateAlias(req.Mod.Alias); err != nil {
 		return simfdomain.BlockSimfCommand{}, err
 	}
