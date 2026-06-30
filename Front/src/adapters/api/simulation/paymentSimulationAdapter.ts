@@ -8,6 +8,17 @@ import type {
 
 const PAYMENT_PROCESSING_DELAY_MS = 1800;
 
+function parseDocumentInput(value: string): { documentType: string; documentNumber: string } | null {
+  const match = value.trim().match(/^([VEJPG])-?(\d+)$/i);
+  if (!match) {
+    return null;
+  }
+  return {
+    documentType: match[1].toUpperCase(),
+    documentNumber: match[2],
+  };
+}
+
 function buildRecipient(
   aliasValue: string,
   customer: {
@@ -65,18 +76,27 @@ export function createPaymentSimulationService(
 ): PaymentSimulationService {
   return {
     async resolvePaymentAlias(aliasValue, signal): Promise<ResolvePaymentAliasResult> {
-      const trimmedAlias = aliasValue.trim();
+      const trimmedValue = aliasValue.trim();
 
-      if (!trimmedAlias) {
-        return { ok: false, error: 'Ingresa un alias destino.' };
+      if (!trimmedValue) {
+        return { ok: false, error: 'Ingresa la cédula del destinatario.' };
+      }
+
+      const document = parseDocumentInput(trimmedValue);
+      if (!document) {
+        return { ok: false, error: 'Formato de cédula inválido (ej. V12345678).' };
       }
 
       try {
-        const resolved = await aliasService.resolveAlias(trimmedAlias, signal);
-        const recipient = buildRecipient(trimmedAlias, resolved.customer);
+        const resolved = await aliasService.resolveByDocument(
+          document.documentType,
+          document.documentNumber,
+          signal,
+        );
+        const recipient = buildRecipient(resolved.alias, resolved.customer);
 
         if (!recipient) {
-          return { ok: false, error: 'Alias no se encuentra en el sistema' };
+          return { ok: false, error: 'Titular no se encuentra en el sistema' };
         }
 
         return { ok: true, recipient };
@@ -84,7 +104,7 @@ export function createPaymentSimulationService(
         return {
           ok: false,
           error:
-            error instanceof Error ? error.message : 'Alias no se encuentra en el sistema',
+            error instanceof Error ? error.message : 'Titular no se encuentra en el sistema',
         };
       }
     },

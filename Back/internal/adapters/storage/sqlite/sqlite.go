@@ -66,6 +66,34 @@ func (r *RealRepository) GetCustomerByID(ctx context.Context, id string) (*domai
 	return &customer, nil
 }
 
+// GetCustomerByDocument busca un cliente por document_type y document_number.
+func (r *RealRepository) GetCustomerByDocument(ctx context.Context, documentType, documentNumber string) (*domain.Customer, error) {
+	query := `SELECT id, document_type, document_number, first_name, last_name, email, phone, created_at
+	FROM customers WHERE document_type = ? AND document_number = ?`
+	row := r.db.QueryRowContext(ctx, query, documentType, documentNumber)
+
+	var customer domain.Customer
+	var createdAtStr string
+	err := row.Scan(
+		&customer.ID,
+		&customer.DocumentType,
+		&customer.DocumentNumber,
+		&customer.FirstName,
+		&customer.LastName,
+		&customer.Email,
+		&customer.Phone,
+		&createdAtStr,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	customer.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+	return &customer, nil
+}
+
 // GetCustomerByVerificationData busca un cliente verificando que su cédula, correo y alias coincidan.
 func (r *RealRepository) GetCustomerByVerificationData(ctx context.Context, documentNumber string, email string, aliasValue string) (*domain.Customer, error) {
 	query := `
@@ -156,6 +184,24 @@ func (r *RealRepository) SaveAlias(ctx context.Context, alias *domain.Alias) err
 func (r *RealRepository) GetAliasByValue(ctx context.Context, value string) (*domain.Alias, error) {
 	query := `SELECT id, customer_id, alias_value, created_at FROM alias WHERE alias_value = ?`
 	row := r.db.QueryRowContext(ctx, query, value)
+
+	var alias domain.Alias
+	var createdAtStr string
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &createdAtStr)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	alias.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+	return &alias, nil
+}
+
+// GetAliasByCustomerID busca el alias asociado a un cliente (relación 1:1).
+func (r *RealRepository) GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error) {
+	query := `SELECT id, customer_id, alias_value, created_at FROM alias WHERE customer_id = ?`
+	row := r.db.QueryRowContext(ctx, query, customerID)
 
 	var alias domain.Alias
 	var createdAtStr string

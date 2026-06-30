@@ -22,8 +22,15 @@ function mapResolveToAliasDetail(resolved: ResolveAliasService): AliasDetail {
   };
 }
 
-function looksLikeExactAlias(term: string): boolean {
-  return term.includes('.') && !term.includes(' ');
+function parseDocumentSearch(term: string): { documentType: string; documentNumber: string } | null {
+  const match = term.trim().match(/^([VEJPG])-?(\d+)$/i);
+  if (!match) {
+    return null;
+  }
+  return {
+    documentType: match[1].toUpperCase(),
+    documentNumber: match[2],
+  };
 }
 
 export const useAlias = () => {
@@ -53,9 +60,13 @@ export const useAlias = () => {
       setError(null);
       const term = search.trim();
 
-      if (term && looksLikeExactAlias(term)) {
+      const document = parseDocumentSearch(term);
+      if (document) {
         try {
-          const resolved = await aliasService.resolveAlias(term);
+          const resolved = await aliasService.resolveByDocument(
+            document.documentType,
+            document.documentNumber,
+          );
           if (generation !== fetchGenerationRef.current) {
             return;
           }

@@ -42,22 +42,35 @@ func (h *HTTPHandler) CreatedAlias(c *gin.Context) {
 	c.JSON(201, alias)
 }
 
-// ResolveAlias maneja la petición GET para buscar y resolver las cuentas de un alias.
+// ResolveAlias maneja GET /alias/resolve por documento (?document_type=V&document_number=12345678).
 func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
-	aliasValue := c.Query("value") // Obtiene el query param ?value=...
-	if aliasValue == "" {
-		respondError(c, 400, "El alias es requerido")
+	documentType := strings.TrimSpace(c.Query("document_type"))
+	documentNumber := strings.TrimSpace(c.Query("document_number"))
+	if documentType == "" || documentNumber == "" {
+		respondError(c, 400, "document_type y document_number son requeridos")
 		return
 	}
 
-	customer, accounts, err := h.service.ResolveAlias(c.Request.Context(), aliasValue)
+	customer, alias, accounts, err := h.service.ResolveAlias(
+		c.Request.Context(),
+		documentType,
+		documentNumber,
+	)
 	if err != nil {
-		respondError(c, 404, err.Error())
+		respondError(c, 500, err.Error())
+		return
+	}
+	if customer == nil {
+		respondError(c, 404, "Titular no se encuentra en el sistema")
+		return
+	}
+	if alias == nil {
+		respondError(c, 404, "El titular no tiene alias registrado")
 		return
 	}
 
 	c.JSON(200, gin.H{
-		"alias":    aliasValue,
+		"alias":    alias.AliasValue,
 		"customer": customer,
 		"accounts": accounts,
 	})

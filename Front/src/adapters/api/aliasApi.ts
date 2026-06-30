@@ -39,14 +39,21 @@ export const aliasAdapter: AliasService = {
     return response.json();
   },
 
-  resolveAlias: async (alias: string, signal?: AbortSignal) => {
-    const response = await fetch(
-      `${API_BASE_URL}/alias/resolve?value=${encodeURIComponent(alias)}`,
-      { signal },
-    );
+  resolveByDocument: async (
+    documentType: string,
+    documentNumber: string,
+    signal?: AbortSignal,
+  ) => {
+    const params = new URLSearchParams({
+      document_type: documentType,
+      document_number: documentNumber,
+    });
+    const response = await fetch(`${API_BASE_URL}/alias/resolve?${params.toString()}`, {
+      signal,
+    });
 
     if (!response.ok) {
-      throw new Error(await readApiError(response, 'Alias no encontrado'));
+      throw new Error(await readApiError(response, 'Titular no encontrado'));
     }
 
     return response.json();

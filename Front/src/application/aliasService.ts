@@ -21,7 +21,11 @@ export interface AliasService {
     signal?: AbortSignal,
   ): Promise<PaginatedAliasResponse>;
 
-  resolveAlias(alias: string, signal?: AbortSignal): Promise<ResolveAliasService>;
+  resolveByDocument(
+    documentType: string,
+    documentNumber: string,
+    signal?: AbortSignal,
+  ): Promise<ResolveAliasService>;
 
   createFullUser(data: CreateFullUserService): Promise<void>;
 

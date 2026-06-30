@@ -44,20 +44,30 @@ func (s *AppService) CreateAlias(ctx context.Context, customerID string, aliasVa
 	return newAlias, nil
 }
 
-func (s *AppService) ResolveAlias(ctx context.Context, aliasValue string) (*domain.Customer, []domain.Account, error) {
-	alias, err := s.repo.GetAliasByValue(ctx, aliasValue)
+// ResolveAlias busca titular, alias y cuentas por tipo y número de documento (cédula).
+func (s *AppService) ResolveAlias(ctx context.Context, documentType, documentNumber string) (*domain.Customer, *domain.Alias, []domain.Account, error) {
+	customer, err := s.repo.GetCustomerByDocument(ctx, documentType, documentNumber)
 	if err != nil {
-		return nil, nil, errors.New("Alias no se encuentra en el sistema")
+		return nil, nil, nil, err
 	}
-	customer, err := s.repo.GetCustomerByID(ctx, alias.CustomerID)
+	if customer == nil {
+		return nil, nil, nil, nil
+	}
+
+	alias, err := s.repo.GetAliasByCustomerID(ctx, customer.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+	if alias == nil {
+		return customer, nil, nil, nil
+	}
+
 	accounts, err := s.repo.GetAccountsByCustomerID(ctx, customer.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return customer, accounts, nil
+
+	return customer, alias, accounts, nil
 }
 
 func (s *AppService) AddAccountToCustomer(ctx context.Context, documentNumber string, email string, aliasValue string, account *domain.Account) error {

@@ -9,6 +9,7 @@ import (
 type AliasRepository interface {
 	SaveCustomer(ctx context.Context, customer *domain.Customer) error
 	GetCustomerByID(ctx context.Context, id string) (*domain.Customer, error)
+	GetCustomerByDocument(ctx context.Context, documentType, documentNumber string) (*domain.Customer, error)
 	GetCustomerByVerificationData(ctx context.Context, documentNumber string, email string, aliasValue string) (*domain.Customer, error)
 
 	SaveAccount(ctx context.Context, account *domain.Account) error
@@ -17,6 +18,7 @@ type AliasRepository interface {
 	CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error
 	SaveAlias(ctx context.Context, alias *domain.Alias) error
 	GetAliasByValue(ctx context.Context, value string) (*domain.Alias, error)
+	GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)
 	GetAliasByID(ctx context.Context, id string) (*domain.Alias, error)
 	DeleteAlias(ctx context.Context, id string) error
 	DeleteCustomerByID(ctx context.Context, customerID string) error

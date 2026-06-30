@@ -1,7 +1,8 @@
 package main
 
 import (
-	"Alias_bdsa/Back/internal/adapters/http/handler"
+	httphandler "Alias_bdsa/Back/internal/adapters/http/handler"
+	simfadapter "Alias_bdsa/Back/internal/adapters/simf"
 	"Alias_bdsa/Back/internal/adapters/storage/sqlite"
 	"Alias_bdsa/Back/internal/application"
 	"fmt"
@@ -22,8 +23,9 @@ func main() {
 	sqliteRepo := sqlite.NewSQLiteRepo(db)
 	appService := application.NewAppService(sqliteRepo)
 	randomizerService := application.NewRandomizerService(sqliteRepo)
-	httpHandler := handler.NewHTTPHandler(appService)
-	randomizerController := handler.NewRandomizerController(randomizerService)
+	httpHandler := httphandler.NewHTTPHandler(appService)
+	randomizerController := httphandler.NewRandomizerController(randomizerService)
+	simfHandler := simfadapter.NewSIMFHandler(appService)
 
 	// Inicializar Gin
 	r := gin.Default()
@@ -52,6 +54,8 @@ func main() {
 		// Randomizer
 		api.POST("/randomizer", randomizerController.RunRandomizer)
 	}
+
+	simfadapter.RegisterRoutes(r, simfHandler)
 
 	fmt.Println("Simulador escuchando en http://localhost:8080")
 	if err := r.Run(":8080"); err != nil {
