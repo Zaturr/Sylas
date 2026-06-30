@@ -14,6 +14,7 @@ type AliasRepository interface {
 
 	SaveAccount(ctx context.Context, account *domain.Account) error
 	GetAccountsByCustomerID(ctx context.Context, customerID string) ([]domain.Account, error)
+	UpdateAccountStatus(ctx context.Context, accountID, status string) error
 
 	CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error
 	SaveAlias(ctx context.Context, alias *domain.Alias) error

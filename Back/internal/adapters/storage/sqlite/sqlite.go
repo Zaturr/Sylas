@@ -166,6 +166,12 @@ func (r *RealRepository) GetAccountsByCustomerID(ctx context.Context, customerID
 	return accounts, nil
 }
 
+// UpdateAccountStatus actualiza el status de una cuenta por su ID.
+func (r *RealRepository) UpdateAccountStatus(ctx context.Context, accountID, status string) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE accounts SET status = ? WHERE id = ?`, status, accountID)
+	return err
+}
+
 // SaveAlias almacena de forma física el registro del alias en el sistema.
 func (r *RealRepository) SaveAlias(ctx context.Context, alias *domain.Alias) error {
 	query := `INSERT INTO alias (id, customer_id, alias_value, created_at) 

@@ -140,6 +140,19 @@ func ValidateCreDtTm(creDtTm string) error {
 	return nil
 }
 
+// ValidateSimfStatus valida Sts para actualización (ACTV | INAC | PNDL | BLKD).
+func ValidateSimfStatus(status string) error {
+	switch status {
+	case simfdomain.StatusActive,
+		simfdomain.StatusInactive,
+		simfdomain.StatusPendingDrop,
+		simfdomain.StatusBlocked:
+		return nil
+	default:
+		return formatErr("Sts", "estado de alias invalido")
+	}
+}
+
 // ValidateTitularName valida Nm del titular (1-140 mayúsculas, patrón alfanumérico SIMF).
 func ValidateTitularName(name string) error {
 	if name == "" || len(name) > 140 {

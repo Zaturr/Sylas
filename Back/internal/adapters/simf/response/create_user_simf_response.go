@@ -33,7 +33,7 @@ func buildCreateUserSimfResponse(
 ) simfdomain.CreateUserSimfResponseMessage {
 	return simfdomain.CreateUserSimfResponseMessage{
 		IdVrfctnRpt: simfdomain.CreateUserSimfResponse{
-			GrpHdr: NewGroupHeader(),
+			GrpHdr: NewGroupHeader(cmd.AgentCode),
 			OrgnlAssgnmt: simfdomain.CreateUserSimfOrgnlAssgnmt{
 				OrgnlMsgID:   cmd.MsgID,
 				OrgnlCreDtTm: cmd.CreDtTm,
