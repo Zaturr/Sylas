@@ -70,6 +70,32 @@ func (s *AppService) ResolveAlias(ctx context.Context, documentType, documentNum
 	return customer, alias, accounts, nil
 }
 
+// ResolveAliasByValue busca titular, alias y cuentas por el valor del alias.
+func (s *AppService) ResolveAliasByValue(ctx context.Context, aliasValue string) (*domain.Customer, *domain.Alias, []domain.Account, error) {
+	alias, err := s.repo.GetAliasByValue(ctx, aliasValue)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if alias == nil {
+		return nil, nil, nil, nil
+	}
+
+	customer, err := s.repo.GetCustomerByID(ctx, alias.CustomerID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if customer == nil {
+		return nil, alias, nil, nil
+	}
+
+	accounts, err := s.repo.GetAccountsByCustomerID(ctx, customer.ID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return customer, alias, accounts, nil
+}
+
 func (s *AppService) AddAccountToCustomer(ctx context.Context, documentNumber string, email string, aliasValue string, account *domain.Account) error {
 	// 1. Verificar que el cliente existe y que los datos coinciden
 	customer, err := s.repo.GetCustomerByVerificationData(ctx, documentNumber, email, aliasValue)

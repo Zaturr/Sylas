@@ -10,6 +10,7 @@ type AliasService interface {
 	CreateAlias(ctx context.Context, customerID string, aliasValue string) (*domain.Alias, error)
 	AddAccountToCustomer(ctx context.Context, documentNumber string, email string, aliasValue string, account *domain.Account) error
 	ResolveAlias(ctx context.Context, documentType, documentNumber string) (*domain.Customer, *domain.Alias, []domain.Account, error)
+	ResolveAliasByValue(ctx context.Context, aliasValue string) (*domain.Customer, *domain.Alias, []domain.Account, error)
 	RemoveAlias(ctx context.Context, aliasID string) error
 	RemoveAliasByValue(ctx context.Context, aliasValue string) error
 	RemoveAliasByCustomerID(ctx context.Context, customerID string) error

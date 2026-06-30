@@ -156,10 +156,12 @@ func BuildAliasResolveReport(
 	}
 
 	if coreData.Customer != nil && resultCode == simfdomain.ResultAccept {
-		report.Titular = TitularFromCoreCustomer(coreData.Customer, query.SchemeName)
+		titular := TitularFromCoreCustomer(coreData.Customer, query.SchemeName)
+		report.Titular = &titular
 		report.AliasList = BuildAliasEntryList(query, coreData.Alias, coreData.Accounts)
 	} else {
-		report.Titular = TitularFromAliasResolveQuery(query)
+		titular := TitularFromAliasResolveQuery(query)
+		report.Titular = &titular
 	}
 
 	return report

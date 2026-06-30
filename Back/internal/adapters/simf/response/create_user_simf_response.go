@@ -1,8 +1,8 @@
 package response
 
 import (
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
 	"Alias_bdsa/Back/internal/adapters/simf/mapper"
+	simfdomain "Alias_bdsa/Back/internal/domain/simf"
 )
 
 // BuildCreateUserFormatErrorMessage responde IdVrfctnRpt con RJCT + RR10 (sin Mod).
