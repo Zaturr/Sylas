@@ -19,6 +19,8 @@ type AliasService interface {
 	GetAliasWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error)
 	CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error
 
+	DisableAlias(ctx context.Context, aliasValue string) (*domain.Customer, error)
+
 	////////////////////////simf//////////////////////
 	RegisterSimfUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error
 	UpdateSimfAliasAgentStatus(ctx context.Context, aliasValue, bankID, simfStatus string) (*domain.Customer, error)

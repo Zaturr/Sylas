@@ -33,12 +33,7 @@ func (h *SIMFHandler) BlockSimf(c *gin.Context) {
 		return
 	}
 
-	customer, err := h.core.UpdateSimfAliasAgentStatus(
-		c.Request.Context(),
-		cmd.Alias,
-		cmd.AgentCode,
-		cmd.Status,
-	)
+	customer, err := h.core.DisableAlias(c.Request.Context(), cmd.Alias)
 	if err != nil {
 		reason := mapper.MapBlockSimfBusinessReason(err)
 		c.JSON(http.StatusOK, response.BuildBlockSimfRejectMessage(cmd, reason))

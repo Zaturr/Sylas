@@ -18,8 +18,6 @@ const (
 	coreAccountTypeDefault    = "CHECKING"
 )
 
-// ToCoreCreateUserEntities traduce el comando SIMF a entidades del core para RegisterSimfUser.
-// La cuenta del agente queda INACTIVE (INAC en SIMF) hasta activación por IdVrfctnRpt.
 func ToCoreCreateUserEntities(cmd simfdomain.CreateUserSimfCommand) (*domain.Customer, []domain.Account, *domain.Alias, error) {
 	documentType, documentNumber, err := SplitDocumentIDIntoCustomerFields(cmd.SchemeName, cmd.DocumentID)
 	if err != nil {
@@ -98,7 +96,6 @@ func TitularFromCreateUserCommand(cmd simfdomain.CreateUserSimfCommand) simfdoma
 	}
 }
 
-// MapCreateUserBusinessReason traduce errores de RegisterSimfUser / core a Rsn SIMF.
 func MapCreateUserBusinessReason(err error) string {
 	if err == nil {
 		return simfdomain.ReasonNone

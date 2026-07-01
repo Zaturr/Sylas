@@ -13,8 +13,8 @@ func RegisterRoutes(r *gin.Engine, h *SIMFHandler) {
 		bdca.GET("/identities/:SchmeNm/:Id/alias/:Agt", h.ResolveAliasByDocumentWithAgent)
 		bdca.POST("/aliases", h.CreateUserSimf)
 		bdca.PUT("/aliases/update/:Alias/:Agt", h.UpdateAliasSimf)
-		bdca.POST("/aliases/update/:Alias/:Agt", h.UpdateAliasSimf)
+		//bdca.POST("/aliases/update/:Alias/:Agt", h.UpdateAliasSimf)
 		bdca.PUT("/aliases/delete/:Alias/:Agt", h.BlockSimf)
-		bdca.POST("/aliases/delete/:Alias/:Agt", h.BlockSimf)
+		//bdca.POST("/aliases/delete/:Alias/:Agt", h.BlockSimf)
 	}
 }

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -18,6 +19,12 @@ func InitDatabase(filepath string) (*sql.DB, error) {
 	defer cancel()
 
 	err = createTables(ctx, db)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	err = migrateSchema(ctx, db)
 	if err != nil {
 		db.Close()
 		return nil, err
@@ -106,6 +113,7 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	id TEXT PRIMARY KEY,
 	customer_id TEXT NOT NULL UNIQUE,
 	alias_value TEXT NOT NULL UNIQUE,
+	status TEXT NOT NULL DEFAULT 'ENABLED',
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 	);
@@ -119,4 +127,12 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	`
 	_, err := db.ExecContext(ctx, ddl)
 	return err
+}
+
+func migrateSchema(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, `ALTER TABLE alias ADD COLUMN status TEXT NOT NULL DEFAULT 'ENABLED'`)
+	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "duplicate column") {
+		return err
+	}
+	return nil
 }

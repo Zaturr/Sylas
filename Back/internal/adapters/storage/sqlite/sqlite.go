@@ -188,12 +188,12 @@ func (r *RealRepository) SaveAlias(ctx context.Context, alias *domain.Alias) err
 
 // GetAliasByValue busca la coincidencia exacta de un alias por su valor de texto.
 func (r *RealRepository) GetAliasByValue(ctx context.Context, value string) (*domain.Alias, error) {
-	query := `SELECT id, customer_id, alias_value, created_at FROM alias WHERE alias_value = ?`
+	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at FROM alias WHERE alias_value = ?`
 	row := r.db.QueryRowContext(ctx, query, value)
 
 	var alias domain.Alias
 	var createdAtStr string
-	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &createdAtStr)
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &alias.Status, &createdAtStr)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -202,6 +202,12 @@ func (r *RealRepository) GetAliasByValue(ctx context.Context, value string) (*do
 	}
 	alias.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
 	return &alias, nil
+}
+
+// UpdateAliasStatus actualiza el estado global del alias en el core.
+func (r *RealRepository) UpdateAliasStatus(ctx context.Context, aliasID, status string) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE alias SET status = ? WHERE id = ?`, status, aliasID)
+	return err
 }
 
 // GetAliasByCustomerID busca el alias asociado a un cliente (relación 1:1).
