@@ -5,8 +5,8 @@ import {
   validatePaymentDraft,
   type MobileAppTab,
   type PaymentSimulationStep,
-} from '../../../domain/simulation';
-import { usePaymentSimulationService } from '../providers/AppServicesProvider';
+} from '../../../../domain/simulation';
+import { usePaymentSimulationService } from '../providers/SimulationServicesProvider';
 
 export function usePaymentSimulation() {
   const paymentSimulationService = usePaymentSimulationService();

@@ -1,10 +1,12 @@
 import { AppShell } from '../../components/AppShell';
-import { MobileDeviceFrame } from '../../components/simulation/MobileDeviceFrame';
-import { PaymentSimulatorScreen } from '../../components/simulation/PaymentSimulatorScreen';
-import { usePaymentSimulation } from '../../hooks/usePaymentSimulation';
+import { MobileDeviceFrame } from '../components/MobileDeviceFrame';
+import { PaymentSimulatorScreen } from '../components/PaymentSimulatorScreen';
+import { usePaymentSimulation } from '../hooks/usePaymentSimulation';
+import { useSimulationAuth } from '../hooks/useSimulationAuth';
 import { isPaymentFlowActive } from '../../../../domain/simulation';
 import type { AppPage } from '../../navigation';
-import '../forms.css';
+import '../../pages/forms.css';
+import '../simulation-layout.css';
 import './simulationPage.css';
 
 type SimulationPageProps = {
@@ -12,6 +14,25 @@ type SimulationPageProps = {
 };
 
 export function SimulationPage({ onNavigate }: SimulationPageProps) {
+  const {
+    auth,
+    setDocumentInput,
+    setFirstNameInput,
+    setLastNameInput,
+    submitLogin,
+    openCreateAccount,
+    backToLogin,
+    submitCreateAccount,
+    openAliasManagement,
+    openCreateAlias,
+    setAliasInput,
+    setAliasStatus,
+    submitUpdateAliasStatus,
+    submitCreateAlias,
+    backToHome,
+    logout,
+  } = useSimulationAuth();
+
   const {
     context,
     isResolvingAlias,
@@ -26,7 +47,9 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     resetPayment,
   } = usePaymentSimulation();
 
+  const isAuthenticated = auth.step === 'authenticated';
   const canGoBack =
+    isAuthenticated &&
     isPaymentFlowActive(context.step) &&
     context.step !== 'processing' &&
     context.step !== 'success';
@@ -50,14 +73,14 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
               Usa el teléfono como si fuera real
             </h3>
             <p className="simulation-page__panel-text">
-              Navega por las pestañas, inicia un pago con alias, confirma la operación
-              y observa el resultado dentro del dispositivo simulado.
+              Inicia sesión con cédula, consulta o crea tu alias y luego
+              navega por el flujo de pagos dentro del dispositivo simulado.
             </p>
 
             <ul className="simulation-page__checklist">
-              <li>Pestañas Inicio, Pagos</li>
-              <li>Validación del alias contra la base de datos</li>
-              <li>Flujo completo: alias → confirmación → éxito</li>
+              <li>Login por cédula con resolve alias</li>
+              <li>Gestión de alias</li>
+              <li>Flujo de pago con alias destino</li>
             </ul>
 
             <button
@@ -76,8 +99,24 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
         >
           <MobileDeviceFrame onHomePress={canGoBack ? goBack : undefined} showHomeIndicator={canGoBack}>
             <PaymentSimulatorScreen
+              auth={auth}
               context={context}
               isResolvingAlias={isResolvingAlias}
+              onDocumentChange={setDocumentInput}
+              onFirstNameChange={setFirstNameInput}
+              onLastNameChange={setLastNameInput}
+              onSubmitLogin={submitLogin}
+              onOpenCreateAccount={openCreateAccount}
+              onBackToLogin={backToLogin}
+              onSubmitCreateAccount={submitCreateAccount}
+              onManageAlias={openAliasManagement}
+              onOpenCreateAlias={openCreateAlias}
+              onAliasInputChange={setAliasInput}
+              onAliasStatusChange={setAliasStatus}
+              onSubmitAliasStatusUpdate={submitUpdateAliasStatus}
+              onSubmitCreateAlias={submitCreateAlias}
+              onBackToHome={backToHome}
+              onLogout={logout}
               onTabChange={setTab}
               onStartPayment={startPayment}
               onAliasChange={setAliasValue}

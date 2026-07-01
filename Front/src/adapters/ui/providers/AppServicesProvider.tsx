@@ -1,6 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { AliasService } from '../../../application/aliasService';
-import type { PaymentSimulationService } from '../../../application/simulation/paymentSimulation.port';
 import {
   defaultAppServices,
   type AppServices,
@@ -24,10 +23,6 @@ export function AppServicesProvider({
 
 export function useAppServices(): AppServices {
   return useContext(AppServicesContext);
-}
-
-export function usePaymentSimulationService(): PaymentSimulationService {
-  return useAppServices().paymentSimulationService;
 }
 
 export function useAliasService(): AliasService {

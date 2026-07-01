@@ -27,6 +27,11 @@ export interface AliasService {
     signal?: AbortSignal,
   ): Promise<ResolveAliasService>;
 
+  resolveByAliasValue(
+    aliasValue: string,
+    signal?: AbortSignal,
+  ): Promise<ResolveAliasService>;
+
   createFullUser(data: CreateFullUserService): Promise<void>;
 
   deleteAliasByCustomerId(customerId: string): Promise<void>;

@@ -1,4 +1,5 @@
 import type { AliasService } from '../../../application/aliasService';
+import { isPendingAlias } from '../../../domain/simulation/auth.types';
 import type { PaymentRecipient } from '../../../domain/simulation';
 import type {
   ExecutePaymentResult,
@@ -7,17 +8,6 @@ import type {
 } from '../../../application/simulation/paymentSimulation.port';
 
 const PAYMENT_PROCESSING_DELAY_MS = 1800;
-
-function parseDocumentInput(value: string): { documentType: string; documentNumber: string } | null {
-  const match = value.trim().match(/^([VEJPG])-?(\d+)$/i);
-  if (!match) {
-    return null;
-  }
-  return {
-    documentType: match[1].toUpperCase(),
-    documentNumber: match[2],
-  };
-}
 
 function buildRecipient(
   aliasValue: string,
@@ -79,20 +69,20 @@ export function createPaymentSimulationService(
       const trimmedValue = aliasValue.trim();
 
       if (!trimmedValue) {
-        return { ok: false, error: 'Ingresa la cédula del destinatario.' };
+        return { ok: false, error: 'Ingresa el alias del destinatario.' };
       }
 
-      const document = parseDocumentInput(trimmedValue);
-      if (!document) {
-        return { ok: false, error: 'Formato de cédula inválido (ej. V12345678).' };
+      if (isPendingAlias(trimmedValue)) {
+        return { ok: false, error: 'El alias destino no está activo.' };
       }
 
       try {
-        const resolved = await aliasService.resolveByDocument(
-          document.documentType,
-          document.documentNumber,
-          signal,
-        );
+        const resolved = await aliasService.resolveByAliasValue(trimmedValue, signal);
+
+        if (isPendingAlias(resolved.alias)) {
+          return { ok: false, error: 'El alias destino no está activo.' };
+        }
+
         const recipient = buildRecipient(resolved.alias, resolved.customer);
 
         if (!recipient) {
@@ -104,7 +94,7 @@ export function createPaymentSimulationService(
         return {
           ok: false,
           error:
-            error instanceof Error ? error.message : 'Titular no se encuentra en el sistema',
+            error instanceof Error ? error.message : 'Alias no encontrado en el sistema',
         };
       }
     },

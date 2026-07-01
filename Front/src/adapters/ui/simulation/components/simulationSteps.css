@@ -50,6 +50,51 @@
   margin-top: auto;
 }
 
+.sim-session-banner {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(195, 213, 229, 0.85);
+}
+
+.sim-session-banner__title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #102033;
+}
+
+.sim-session-banner__meta {
+  margin: 0;
+  font-size: 12px;
+  color: #5a738e;
+}
+
+.sim-session-banner__notice {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 77, 153, 0.08);
+  color: #004d99;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sim-session-banner__notice--success {
+  background: rgba(22, 120, 60, 0.1);
+  color: #16783c;
+}
+
+.sim-session-banner__notice--warning {
+  background: rgba(180, 120, 20, 0.12);
+  color: #8a5a00;
+}
+
+.sim-session-banner__notice--danger {
+  background: rgba(180, 35, 35, 0.1);
+  color: #8f1f1f;
+}
+
 .sim-balance-card {
   padding: 18px;
   border-radius: 18px;
@@ -238,6 +283,42 @@
 .sim-field input:focus {
   border-color: rgba(0, 77, 153, 0.45);
   box-shadow: 0 0 0 3px rgba(0, 77, 153, 0.12);
+}
+
+.sim-field__select {
+  width: 100%;
+  padding: 14px 12px;
+  border: 1px solid rgba(195, 213, 229, 0.85);
+  border-radius: 14px;
+  background: #fff;
+  color: #102033;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sim-field__select:focus {
+  border-color: rgba(0, 77, 153, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 77, 153, 0.12);
+}
+
+.sim-field__select:disabled {
+  opacity: 0.72;
+  background: rgba(245, 248, 252, 0.95);
+}
+
+.sim-field__hint {
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #5a738e;
+}
+
+.sim-field__hint--info {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0, 77, 153, 0.08);
+  color: #004d99;
 }
 
 .sim-summary-card {

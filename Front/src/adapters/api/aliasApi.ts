@@ -1,6 +1,5 @@
 import type { AliasService, CreateFullUserService } from '../../application/aliasService';
 import type { PaginatedAliasResponse } from '../../domain/alias';
-
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
 
@@ -57,6 +56,55 @@ export const aliasAdapter: AliasService = {
     }
 
     return response.json();
+  },
+
+  resolveByAliasValue: async (aliasValue, signal) => {
+    const trimmedAlias = aliasValue.trim();
+    const params = new URLSearchParams({
+      page: '1',
+      limit: '50',
+      search: trimmedAlias,
+    });
+
+    const response = await fetch(`${API_BASE_URL}/alias/list?${params.toString()}`, {
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response, 'Error al buscar el alias'));
+    }
+
+    const data = (await response.json()) as PaginatedAliasResponse;
+    const match = data.data.find(
+      (item) => item.alias.toLowerCase() === trimmedAlias.toLowerCase(),
+    );
+
+    if (!match) {
+      throw new Error('Alias no encontrado en el sistema');
+    }
+
+    return {
+      alias: match.alias,
+      customer: {
+        id: match.customer_id,
+        document_type: match.document_type,
+        document_number: match.document_number,
+        first_name: match.first_name,
+        last_name: match.last_name,
+        email: match.email,
+        phone: match.phone,
+        created_at: '',
+      },
+      accounts: match.accounts.map((account, index) => ({
+        id: String(index),
+        bank_id: account.bank,
+        customer_id: match.customer_id,
+        account_number: account.account_number,
+        account_type: 'CTA. Corriente',
+        status: 'ACTIVE',
+        created_at: '',
+      })),
+    };
   },
 
   createFullUser: async (data: CreateFullUserService): Promise<void> => {
