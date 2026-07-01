@@ -212,12 +212,12 @@ func (r *RealRepository) UpdateAliasStatus(ctx context.Context, aliasID, status 
 
 // GetAliasByCustomerID busca el alias asociado a un cliente (relación 1:1).
 func (r *RealRepository) GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error) {
-	query := `SELECT id, customer_id, alias_value, created_at FROM alias WHERE customer_id = ?`
+	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at FROM alias WHERE customer_id = ?`
 	row := r.db.QueryRowContext(ctx, query, customerID)
 
 	var alias domain.Alias
 	var createdAtStr string
-	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &createdAtStr)
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &alias.Status, &createdAtStr)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

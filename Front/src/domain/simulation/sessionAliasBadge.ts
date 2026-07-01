@@ -1,7 +1,9 @@
 import type { SimulationSession } from './auth.types';
+import { getPrimaryAccount } from './aliasFlow';
 import {
   SIMF_ALIAS_STATUS,
   coreAccountStatusToSimf,
+  isAliasGloballyBlocked,
   type SimfAliasStatus,
 } from './aliasStatus';
 
@@ -19,7 +21,11 @@ export function resolveSessionAliasLinkStatus(
     return null;
   }
 
-  const primaryAccount = session.accounts[0];
+  if (isAliasGloballyBlocked(session.aliasCoreStatus)) {
+    return SIMF_ALIAS_STATUS.BLOCKED;
+  }
+
+  const primaryAccount = getPrimaryAccount(session);
   if (!primaryAccount) {
     return SIMF_ALIAS_STATUS.UNREGISTERED;
   }
@@ -43,6 +49,11 @@ export function getHomeAliasBadge(session: SimulationSession): HomeAliasBadge | 
   const linkStatus = resolveSessionAliasLinkStatus(session);
 
   switch (linkStatus) {
+    case SIMF_ALIAS_STATUS.BLOCKED:
+      return {
+        text: `Alias bloqueado: ${alias}`,
+        variant: 'danger',
+      };
     case SIMF_ALIAS_STATUS.INACTIVE:
       return {
         text: `Alias inactivo: ${alias}`,

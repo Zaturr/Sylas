@@ -6,6 +6,183 @@
   min-height: 100%;
 }
 
+.sim-card {
+  padding: 16px;
+  border-radius: var(--sim-radius-lg);
+  background: var(--sim-surface);
+  border: 1px solid var(--sim-border);
+  box-shadow: var(--sim-shadow-card);
+}
+
+.sim-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sim-card__title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sim-text);
+}
+
+.sim-card__subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--sim-text-muted);
+}
+
+.sim-card__alias {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sim-navy-700);
+  word-break: break-word;
+}
+
+.sim-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--sim-border);
+  font-size: 13px;
+  color: var(--sim-text-muted);
+}
+
+.sim-card__row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.sim-card__row strong {
+  color: var(--sim-text);
+  text-align: right;
+}
+
+.sim-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.sim-status-badge--actv {
+  background: var(--sim-green-bg);
+  color: var(--sim-green);
+}
+
+.sim-status-badge--inac {
+  background: var(--sim-red-bg);
+  color: var(--sim-red);
+}
+
+.sim-status-badge--pndl {
+  background: var(--sim-orange-bg);
+  color: var(--sim-orange);
+}
+
+.sim-status-badge--unrg {
+  background: var(--sim-red-bg);
+  color: var(--sim-red);
+}
+
+.sim-status-badge--blkd {
+  background: var(--sim-red-bg);
+  color: var(--sim-red);
+}
+
+.sim-segment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 4px;
+  border-radius: var(--sim-radius-md);
+  background: #f3f6fb;
+  border: 1px solid var(--sim-border);
+}
+
+.sim-segment__option {
+  padding: 12px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sim-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sim-segment__option--active {
+  background: var(--sim-surface);
+  color: var(--sim-navy-700);
+  box-shadow: 0 2px 8px rgba(12, 26, 51, 0.1);
+}
+
+.sim-segment__option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sim-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sim-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(12, 26, 51, 0.55);
+  cursor: pointer;
+}
+
+.sim-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 300px);
+  padding: 20px 16px 16px;
+  border-radius: var(--sim-radius-lg);
+  background: var(--sim-surface);
+  box-shadow: 0 16px 40px rgba(12, 26, 51, 0.24);
+}
+
+.sim-modal__title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sim-text);
+  text-align: center;
+}
+
+.sim-modal__message {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sim-text-muted);
+  text-align: center;
+}
+
+.sim-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .sim-flow--centered {
   align-items: center;
   justify-content: center;
@@ -21,16 +198,16 @@
 
 .sim-flow__title {
   margin: 0;
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1.2;
-  color: #102033;
+  color: var(--sim-text);
 }
 
 .sim-flow__subtitle {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #5a738e;
+  color: var(--sim-text-muted);
 }
 
 .sim-flow__error {
@@ -97,10 +274,10 @@
 
 .sim-balance-card {
   padding: 18px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #0057b8 0%, #003f88 100%);
+  border-radius: var(--sim-radius-lg);
+  background: linear-gradient(135deg, var(--sim-navy-700) 0%, var(--sim-navy-900) 100%);
   color: #fff;
-  box-shadow: 0 10px 24px rgba(0, 63, 136, 0.22);
+  box-shadow: var(--sim-shadow-card);
 }
 
 .sim-balance-card__label {
@@ -370,14 +547,156 @@
 }
 
 .sim-mobile-btn--primary {
-  background: linear-gradient(135deg, #0057b8 0%, #003f88 100%);
+  background: var(--sim-navy-900);
   color: #fff;
 }
 
 .sim-mobile-btn--ghost {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(195, 213, 229, 0.85);
-  color: #5a738e;
+  background: var(--sim-surface);
+  border: 1px solid var(--sim-border);
+  color: var(--sim-text-muted);
+}
+
+.sim-mobile-btn--danger-text {
+  color: var(--sim-red);
+  border-color: rgba(198, 40, 40, 0.25);
+}
+
+.sim-flow--splash {
+  justify-content: center;
+  padding-top: 24px;
+}
+
+.sim-splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 24px 12px;
+}
+
+.sim-splash__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: var(--sim-navy-900);
+  color: var(--sim-gold-400);
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.sim-splash__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--sim-text);
+}
+
+.sim-splash__text {
+  margin: 0;
+  max-width: 280px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--sim-text-muted);
+}
+
+.sim-account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sim-account-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px 10px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--sim-border);
+  border-radius: var(--sim-radius-md);
+  background: #f8fafc;
+  color: var(--sim-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sim-account-option--selected {
+  border-color: var(--sim-navy-600);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(26, 53, 96, 0.12);
+}
+
+.sim-account-option__bank {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--sim-navy-700);
+}
+
+.sim-account-option__number {
+  grid-column: 2;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sim-account-option__type {
+  grid-column: 2;
+  font-size: 11px;
+  color: var(--sim-text-muted);
+  text-transform: capitalize;
+}
+
+.sim-account-option__check {
+  grid-row: 1 / span 2;
+  grid-column: 3;
+  color: var(--sim-green);
+  font-weight: 800;
+}
+
+.sim-editable-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--sim-border);
+}
+
+.sim-editable-row__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sim-editable-row__label {
+  font-size: 12px;
+  color: var(--sim-text-muted);
+}
+
+.sim-editable-row__value {
+  font-size: 14px;
+  color: var(--sim-text);
+}
+
+.sim-editable-row__btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--sim-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sim-navy-700);
+  font-size: 16px;
+  cursor: pointer;
 }
 
 .sim-flow--compact {
@@ -483,11 +802,11 @@
 }
 
 .sim-result-icon--success {
-  background: rgba(22, 140, 78, 0.12);
-  color: #168c4e;
+  background: var(--sim-green-bg);
+  color: var(--sim-green);
 }
 
 .sim-result-icon--error {
-  background: rgba(180, 35, 35, 0.12);
-  color: #b42323;
+  background: var(--sim-red-bg);
+  color: var(--sim-red);
 }

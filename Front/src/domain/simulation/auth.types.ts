@@ -7,8 +7,15 @@ export type SimulationAuthStep =
   | 'login'
   | 'create-account'
   | 'authenticated'
+  | 'alias-splash'
   | 'alias-management'
-  | 'create-alias';
+  | 'alias-link-account'
+  | 'create-alias'
+  | 'alias-create-success'
+  | 'alias-status-success'
+  | 'alias-error';
+
+export type AliasLinkAccountMode = 'initial' | 'change' | 'before-create-alias' | 'select-for-alias';
 
 export type SimulationSession = {
   customer: Customer;
@@ -16,6 +23,8 @@ export type SimulationSession = {
   alias: string | null;
   hasConfiguredAlias: boolean;
   mappedDocument: ParsedDocument;
+  primaryAccountId: string | null;
+  aliasCoreStatus: string | null;
 };
 
 export type AliasCheckStatus = 'found' | 'not-found' | 'error';
@@ -41,6 +50,10 @@ export type SimulationAuthState = {
   aliasInput: string;
   aliasStatusInput: UserModifiableAliasStatus | '';
   aliasCheck: AliasCheckResult | null;
+  selectedAccountId: string | null;
+  linkAccountMode: AliasLinkAccountMode;
+  aliasErrorMessage: string;
+  lastCreatedAlias: string | null;
 };
 
 export const createInitialSimulationAuthState = (): SimulationAuthState => ({
@@ -55,6 +68,10 @@ export const createInitialSimulationAuthState = (): SimulationAuthState => ({
   aliasInput: '',
   aliasStatusInput: '',
   aliasCheck: null,
+  selectedAccountId: null,
+  linkAccountMode: 'initial',
+  aliasErrorMessage: '',
+  lastCreatedAlias: null,
 });
 
 export const isPendingAlias = (alias: string | null): boolean => {

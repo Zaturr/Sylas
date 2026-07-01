@@ -21,26 +21,24 @@ export function LoginStep({
 }: LoginStepProps) {
   return (
     <div className="sim-flow">
-      <div className="sim-flow__intro">
-        <h2 className="sim-flow__title">Iniciar sesión</h2>
-        <p className="sim-flow__subtitle">
-          Ingresa tu cédula para acceder a la banca simulada.
-        </p>
-      </div>
+      <div className="sim-card">
+        <p className="sim-card__title">Ingresa tu cédula</p>
+        <p className="sim-card__subtitle">Accede a la banca simulada con tu documento.</p>
 
-      <div className="sim-form">
-        <label className="sim-field">
-          <span>Cédula</span>
-          <input
-            type="text"
-            inputMode="text"
-            autoComplete="off"
-            disabled={isSubmitting}
-            placeholder="ej. V12345678"
-            value={documentInput}
-            onChange={(event) => onDocumentChange(event.target.value)}
-          />
-        </label>
+        <div className="sim-form" style={{ marginTop: 14 }}>
+          <label className="sim-field">
+            <span>Cédula</span>
+            <input
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              disabled={isSubmitting}
+              placeholder="ej. V12345678"
+              value={documentInput}
+              onChange={(event) => onDocumentChange(event.target.value)}
+            />
+          </label>
+        </div>
       </div>
 
       {errorMessage && <p className="sim-flow__error">{errorMessage}</p>}
@@ -52,7 +50,7 @@ export function LoginStep({
           disabled={isSubmitting}
           onClick={onSubmit}
         >
-          {isSubmitting ? 'Validando...' : 'Ingresar'}
+          {isSubmitting ? 'Validando...' : 'Continuar'}
         </button>
 
         {canCreateAccount && (

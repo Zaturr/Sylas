@@ -6,6 +6,11 @@ import {
   type AliasCheckResult,
   type SimulationAuthState,
 } from '../../../../domain/simulation/auth.types';
+import {
+  isAliasDeletionBlocked,
+  needsAccountLinking,
+  withPrimaryAccount,
+} from '../../../../domain/simulation/aliasFlow';
 import { isUserModifiableAliasStatus } from '../../../../domain/simulation/aliasStatus';
 import { formatDocumentInput } from '../../../../domain/simulation';
 import { validateAliasValue } from '../../../../domain/simulation/aliasValidation';
@@ -103,12 +108,10 @@ export function useSimulationAuth() {
     state.lastNameInput,
   ]);
 
-  const openAliasManagement = useCallback(async () => {
+  const runAliasCheck = useCallback(async () => {
     if (!state.session) {
       return;
     }
-
-    dispatch({ type: 'OPEN_ALIAS_MANAGEMENT' });
 
     const documentInput = formatDocumentInput(
       state.session.mappedDocument.documentType,
@@ -122,15 +125,55 @@ export function useSimulationAuth() {
       return;
     }
 
-    dispatch({
-      type: 'ALIAS_CHECK_SUCCESS',
-      check: mapServiceCheckToState(result),
-    });
+    const check = mapServiceCheckToState(result);
+    dispatch({ type: 'ALIAS_CHECK_SUCCESS', check });
+
+    if (check.status === 'found' && needsAccountLinking(state.session, check)) {
+      dispatch({ type: 'OPEN_ALIAS_LINK_ACCOUNT', mode: 'initial' });
+    }
   }, [authSimulationService, state.session]);
 
-  const openCreateAlias = useCallback(() => {
-    dispatch({ type: 'OPEN_CREATE_ALIAS' });
+  const openAliasSplash = useCallback(() => {
+    dispatch({ type: 'OPEN_ALIAS_SPLASH' });
   }, []);
+
+  const continueAliasSplash = useCallback(async () => {
+    dispatch({ type: 'OPEN_ALIAS_MANAGEMENT' });
+    await runAliasCheck();
+  }, [runAliasCheck]);
+
+  const openCreateAlias = useCallback(() => {
+    if (state.session && state.session.accounts.length > 0) {
+      dispatch({ type: 'OPEN_ALIAS_LINK_ACCOUNT', mode: 'before-create-alias' });
+      return;
+    }
+
+    dispatch({ type: 'OPEN_CREATE_ALIAS' });
+  }, [state.session]);
+
+  const openSelectAccountForAlias = useCallback(() => {
+    dispatch({ type: 'OPEN_ALIAS_LINK_ACCOUNT', mode: 'select-for-alias' });
+  }, []);
+
+  const openChangeAccount = useCallback(() => {
+    dispatch({ type: 'OPEN_ALIAS_LINK_ACCOUNT', mode: 'change' });
+  }, []);
+
+  const selectLinkAccount = useCallback((accountId: string) => {
+    dispatch({ type: 'SET_SELECTED_ACCOUNT', accountId });
+  }, []);
+
+  const confirmLinkAccount = useCallback(() => {
+    if (!state.session || !state.selectedAccountId) {
+      return;
+    }
+
+    dispatch({
+      type: 'SELECT_LINK_ACCOUNT',
+      session: withPrimaryAccount(state.session, state.selectedAccountId),
+      accountId: state.selectedAccountId,
+    });
+  }, [state.session, state.selectedAccountId]);
 
   const setAliasInput = useCallback((value: string) => {
     dispatch({ type: 'SET_ALIAS_INPUT', value });
@@ -221,6 +264,45 @@ export function useSimulationAuth() {
     dispatch({ type: 'CREATE_ALIAS_FAILED', message: result.message });
   }, [authSimulationService, state.session, state.aliasInput]);
 
+  const requestDeleteAlias = useCallback(async () => {
+    if (!state.session?.customer.created_at) {
+      return;
+    }
+
+    if (isAliasDeletionBlocked(state.session.customer.created_at)) {
+      dispatch({
+        type: 'OPEN_ALIAS_ERROR',
+        message:
+          'No puedes bloquear este alias porque fue creado hace menos de 30 días.',
+      });
+      return;
+    }
+
+    dispatch({ type: 'SUBMIT_UPDATE_ALIAS_STATUS' });
+
+    const result = await authSimulationService.deleteAlias(state.session);
+
+    if (result.ok) {
+      dispatch({
+        type: 'UPDATE_ALIAS_STATUS_SUCCESS',
+        session: result.session,
+        check: mapServiceCheckToState(result.check),
+      });
+      return;
+    }
+
+    dispatch({ type: 'UPDATE_ALIAS_STATUS_FAILED', message: result.message });
+  }, [authSimulationService, state.session]);
+
+  const finishAliasFlow = useCallback(() => {
+    dispatch({ type: 'FINISH_ALIAS_FLOW' });
+  }, []);
+
+  const backToAliasManagement = useCallback(async () => {
+    dispatch({ type: 'OPEN_ALIAS_MANAGEMENT' });
+    await runAliasCheck();
+  }, [runAliasCheck]);
+
   const backToHome = useCallback(() => {
     dispatch({ type: 'BACK_TO_HOME' });
   }, []);
@@ -238,12 +320,20 @@ export function useSimulationAuth() {
     openCreateAccount,
     backToLogin,
     submitCreateAccount,
-    openAliasManagement,
+    openAliasSplash,
+    continueAliasSplash,
     openCreateAlias,
+    openSelectAccountForAlias,
+    openChangeAccount,
+    selectLinkAccount,
+    confirmLinkAccount,
     setAliasInput,
     setAliasStatus,
     submitUpdateAliasStatus,
     submitCreateAlias,
+    requestDeleteAlias,
+    finishAliasFlow,
+    backToAliasManagement,
     backToHome,
     logout,
   };

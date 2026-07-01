@@ -1,16 +1,29 @@
+import { useState } from 'react';
+import { appConfig } from '../../../../../adapters/api/app.config';
 import { isSimfNotFoundReason } from '../../../../../domain/simulation/simf.constants';
 import type { AliasCheckResult } from '../../../../../domain/simulation/auth.types';
 import {
+  getAccountDisplayLabel,
+  getPrimaryAccount,
+} from '../../../../../domain/simulation/aliasFlow';
+import type { SimulationSession } from '../../../../../domain/simulation/auth.types';
+import {
   USER_MODIFIABLE_ALIAS_STATUSES,
+  SIMF_ALIAS_STATUS,
   getUserModifiableAliasStatusLabel,
   isUserModifiableAliasStatus,
   type UserModifiableAliasStatus,
 } from '../../../../../domain/simulation/aliasStatus';
 import { formatDocumentInput } from '../../../../../domain/simulation';
 import type { ParsedDocument } from '../../../../../domain/simulation/documentParser';
+import { SimConfirmModal } from '../ui/SimConfirmModal';
+import { SimEditableRow } from '../ui/SimEditableRow';
+import { SimSegmentControl } from '../ui/SimSegmentControl';
+import { SimStatusBadge } from '../ui/SimStatusBadge';
 import '../simulationSteps.css';
 
 type AliasManagementStepProps = {
+  session: SimulationSession;
   mappedDocument: ParsedDocument;
   aliasCheck: AliasCheckResult | null;
   aliasStatusInput: UserModifiableAliasStatus | '';
@@ -19,10 +32,13 @@ type AliasManagementStepProps = {
   onAliasStatusChange: (value: UserModifiableAliasStatus) => void;
   onSubmitStatusUpdate: () => void;
   onCreateAlias: () => void;
-  onBack: () => void;
+  onSelectAccountForAlias: () => void;
+  onChangeAccount: () => void;
+  onDeleteAlias: () => void;
 };
 
 export function AliasManagementStep({
+  session,
   mappedDocument,
   aliasCheck,
   aliasStatusInput,
@@ -31,8 +47,13 @@ export function AliasManagementStep({
   onAliasStatusChange,
   onSubmitStatusUpdate,
   onCreateAlias,
-  onBack,
+  onSelectAccountForAlias,
+  onChangeAccount,
+  onDeleteAlias,
 }: AliasManagementStepProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   const documentLabel = formatDocumentInput(
     mappedDocument.documentType,
     mappedDocument.documentNumber,
@@ -44,6 +65,7 @@ export function AliasManagementStep({
     isSimfNotFoundReason(aliasCheck.reason);
 
   const currentStatus = aliasCheck?.agentStatus ?? null;
+  const isBlocked = currentStatus === SIMF_ALIAS_STATUS.BLOCKED;
   const selectValue: UserModifiableAliasStatus =
     aliasStatusInput || USER_MODIFIABLE_ALIAS_STATUSES[0];
 
@@ -52,64 +74,99 @@ export function AliasManagementStep({
       ? currentStatus
       : null;
 
-  const canUpdateStatus = hasAlias && selectValue !== currentModifiable;
+  const canUpdateStatus = hasAlias && !isBlocked && selectValue !== currentModifiable;
+  const primaryAccount = getPrimaryAccount(session);
+
+  const statusOptions = USER_MODIFIABLE_ALIAS_STATUSES.map((status) => ({
+    value: status,
+    label: getUserModifiableAliasStatusLabel(status),
+  }));
+
+  const handleConfirmStatus = () => {
+    setConfirmOpen(false);
+    onSubmitStatusUpdate();
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteConfirmOpen(false);
+    onDeleteAlias();
+  };
 
   return (
     <div className="sim-flow">
-      <div className="sim-flow__intro">
-        <h2 className="sim-flow__title">Gestión de alias</h2>
-        <p className="sim-flow__subtitle">
-          Consulta del alias asociado a la cédula ingresada en el login.
-        </p>
-      </div>
-
-      <div className="sim-summary-card">
-        <div className="sim-summary-card__row">
-          <span>Cédula consultada</span>
-          <strong>{documentLabel}</strong>
+      {isSubmitting && !aliasCheck && (
+        <div className="sim-card">
+          <p className="sim-card__subtitle">Consultando alias...</p>
         </div>
+      )}
 
-        {isSubmitting && (
-          <div className="sim-summary-card__row">
-            <span>Estado</span>
-            <strong>Consultando...</strong>
-          </div>
-        )}
-
-        {!isSubmitting && hasAlias && (
-          <>
-            <div className="sim-summary-card__row sim-summary-card__row--highlight">
-              <span>Alias activo</span>
-              <strong>{aliasCheck.alias}</strong>
+      {!isSubmitting && hasAlias && aliasCheck.alias && (
+        <div className="sim-card">
+          <div className="sim-card__header">
+            <div>
+              <p className="sim-card__title">Tu alias</p>
+              <p className="sim-card__alias">{aliasCheck.alias}</p>
             </div>
-            <p className="sim-flow__subtitle">{aliasCheck.message}</p>
-          </>
-        )}
+            <SimStatusBadge status={currentStatus} />
+          </div>
+          <div className="sim-card__row">
+            <span>Cédula</span>
+            <strong>{documentLabel}</strong>
+          </div>
+          {primaryAccount && !isBlocked && (
+            <SimEditableRow
+              label="Cuenta vinculada"
+              value={getAccountDisplayLabel(primaryAccount)}
+              onEdit={onChangeAccount}
+            />
+          )}
+          {primaryAccount && isBlocked && (
+            <div className="sim-card__row">
+              <span>Cuenta vinculada</span>
+              <strong>{getAccountDisplayLabel(primaryAccount)}</strong>
+            </div>
+          )}
+          {isBlocked && (
+            <p className="sim-card__subtitle">
+              Este alias fue bloqueado (BLKD). No se elimina del sistema; la baja es global SIMF.
+            </p>
+          )}
+        </div>
+      )}
 
-        {!isSubmitting && canCreateAlias && (
-          <p className="sim-flow__subtitle">{aliasCheck.message}</p>
-        )}
-      </div>
+      {!isSubmitting && canCreateAlias && (
+        <div className="sim-card">
+          <p className="sim-card__title">Sin alias registrado</p>
+          <p className="sim-card__subtitle">{aliasCheck?.message}</p>
+          <div className="sim-card__row">
+            <span>Cédula</span>
+            <strong>{documentLabel}</strong>
+          </div>
+          {primaryAccount ? (
+            <SimEditableRow
+              label="Cuenta a vincular"
+              value={getAccountDisplayLabel(primaryAccount)}
+              onEdit={onSelectAccountForAlias}
+            />
+          ) : (
+            <p className="sim-card__subtitle">
+              No hay cuenta del banco {appConfig.simulation.bankCode}. Inicia sesión de nuevo para
+              registrarla.
+            </p>
+          )}
+        </div>
+      )}
 
-      {!isSubmitting && hasAlias && (
-        <div className="sim-form">
-          <label className="sim-field">
-            <span>Estado del alias en el banco</span>
-            <select
-              className="sim-field__select"
-              value={selectValue}
-              disabled={isSubmitting}
-              onChange={(event) =>
-                onAliasStatusChange(event.target.value as UserModifiableAliasStatus)
-              }
-            >
-              {USER_MODIFIABLE_ALIAS_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {getUserModifiableAliasStatusLabel(status)}
-                </option>
-              ))}
-            </select>
-          </label>
+      {!isSubmitting && hasAlias && !isBlocked && (
+        <div className="sim-card">
+          <p className="sim-card__title">Modificar estado</p>
+          <p className="sim-card__subtitle">Selecciona el estado del vínculo con el banco.</p>
+          <SimSegmentControl
+            options={statusOptions}
+            value={selectValue}
+            disabled={isSubmitting}
+            onChange={onAliasStatusChange}
+          />
         </div>
       )}
 
@@ -121,9 +178,9 @@ export function AliasManagementStep({
             type="button"
             className="sim-mobile-btn sim-mobile-btn--primary"
             disabled={isSubmitting}
-            onClick={onSubmitStatusUpdate}
+            onClick={() => setConfirmOpen(true)}
           >
-            {isSubmitting ? 'Guardando...' : 'Guardar estado'}
+            Continuar
           </button>
         )}
 
@@ -131,21 +188,46 @@ export function AliasManagementStep({
           <button
             type="button"
             className="sim-mobile-btn sim-mobile-btn--primary"
+            disabled={!primaryAccount}
             onClick={onCreateAlias}
           >
             Crear alias
           </button>
         )}
 
-        <button
-          type="button"
-          className="sim-mobile-btn sim-mobile-btn--ghost"
-          disabled={isSubmitting}
-          onClick={onBack}
-        >
-          Volver al inicio
-        </button>
+        {!isSubmitting && hasAlias && !isBlocked && (
+          <button
+            type="button"
+            className="sim-mobile-btn sim-mobile-btn--ghost sim-mobile-btn--danger-text"
+            onClick={() => setDeleteConfirmOpen(true)}
+          >
+            Bloquear alias (BLKD)
+          </button>
+        )}
       </div>
+
+      <SimConfirmModal
+        open={confirmOpen}
+        title="Confirmar cambio"
+        message={`¿Deseas cambiar el estado del alias a ${getUserModifiableAliasStatusLabel(selectValue)}?`}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        isSubmitting={isSubmitting}
+        onConfirm={handleConfirmStatus}
+        onCancel={() => setConfirmOpen(false)}
+      />
+
+      <SimConfirmModal
+        open={deleteConfirmOpen}
+        title="Bloquear alias"
+        message="¿Confirmas el bloqueo global del alias (BLKD)? No se eliminará del sistema; se registrará la baja vía SIMF."
+        confirmLabel="Bloquear"
+        cancelLabel="Cancelar"
+        isSubmitting={isSubmitting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </div>
   );
 }
+

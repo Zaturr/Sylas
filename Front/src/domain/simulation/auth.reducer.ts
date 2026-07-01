@@ -1,7 +1,8 @@
-import type { SimulationAuthState, SimulationSession } from './auth.types';
+import type { SimulationAuthState, SimulationSession, AliasLinkAccountMode } from './auth.types';
 import { SIMF_ALIAS_STATUS, isUserModifiableAliasStatus } from './aliasStatus';
 import type { UserModifiableAliasStatus } from './aliasStatus';
 import { createInitialSimulationAuthState } from './auth.types';
+import { getDefaultLinkedAccountId } from './aliasFlow';
 
 export type SimulationAuthAction =
   | { type: 'SET_DOCUMENT'; value: string }
@@ -16,7 +17,11 @@ export type SimulationAuthAction =
   | { type: 'SUBMIT_CREATE_ACCOUNT' }
   | { type: 'CREATE_ACCOUNT_SUCCESS'; session: SimulationSession }
   | { type: 'CREATE_ACCOUNT_FAILED'; message: string }
+  | { type: 'OPEN_ALIAS_SPLASH' }
   | { type: 'OPEN_ALIAS_MANAGEMENT' }
+  | { type: 'OPEN_ALIAS_LINK_ACCOUNT'; mode: AliasLinkAccountMode }
+  | { type: 'SET_SELECTED_ACCOUNT'; accountId: string }
+  | { type: 'SELECT_LINK_ACCOUNT'; session: SimulationSession; accountId: string }
   | { type: 'ALIAS_CHECK_SUCCESS'; check: NonNullable<SimulationAuthState['aliasCheck']> }
   | { type: 'ALIAS_CHECK_FAILED'; message: string }
   | { type: 'OPEN_CREATE_ALIAS' }
@@ -28,6 +33,8 @@ export type SimulationAuthAction =
   | { type: 'SUBMIT_CREATE_ALIAS' }
   | { type: 'CREATE_ALIAS_SUCCESS'; session: SimulationSession }
   | { type: 'CREATE_ALIAS_FAILED'; message: string }
+  | { type: 'OPEN_ALIAS_ERROR'; message: string }
+  | { type: 'FINISH_ALIAS_FLOW' }
   | { type: 'BACK_TO_HOME' }
   | { type: 'LOGOUT' };
 
@@ -127,6 +134,12 @@ export function simulationAuthReducer(
         isSubmitting: false,
         errorMessage: action.message,
       };
+    case 'OPEN_ALIAS_SPLASH':
+      return {
+        ...state,
+        step: 'alias-splash',
+        errorMessage: '',
+      };
     case 'OPEN_ALIAS_MANAGEMENT':
       return {
         ...state,
@@ -135,17 +148,42 @@ export function simulationAuthReducer(
         aliasCheck: null,
         isSubmitting: true,
       };
+    case 'OPEN_ALIAS_LINK_ACCOUNT':
+      return {
+        ...state,
+        step: 'alias-link-account',
+        linkAccountMode: action.mode,
+        errorMessage: '',
+        selectedAccountId:
+          state.selectedAccountId ??
+          (state.session ? getDefaultLinkedAccountId(state.session) : null),
+      };
+    case 'SET_SELECTED_ACCOUNT':
+      return {
+        ...state,
+        selectedAccountId: action.accountId,
+      };
+    case 'SELECT_LINK_ACCOUNT':
+      return {
+        ...state,
+        step:
+          state.linkAccountMode === 'before-create-alias'
+            ? 'create-alias'
+            : 'alias-management',
+        session: action.session,
+        selectedAccountId: action.accountId,
+        errorMessage: '',
+      };
     case 'ALIAS_CHECK_SUCCESS':
       return {
         ...state,
         isSubmitting: false,
         aliasCheck: action.check,
         aliasStatusInput:
-          action.check.status === 'found'
-            ? action.check.agentStatus &&
-              isUserModifiableAliasStatus(action.check.agentStatus)
-              ? action.check.agentStatus
-              : SIMF_ALIAS_STATUS.ACTIVE
+          action.check.status === 'found' &&
+          action.check.agentStatus &&
+          isUserModifiableAliasStatus(action.check.agentStatus)
+            ? action.check.agentStatus
             : '',
         errorMessage: action.check.status === 'error' ? action.check.message : '',
       };
@@ -183,6 +221,7 @@ export function simulationAuthReducer(
     case 'UPDATE_ALIAS_STATUS_SUCCESS':
       return {
         ...state,
+        step: 'alias-status-success',
         session: action.session,
         aliasCheck: action.check,
         aliasStatusInput:
@@ -207,12 +246,13 @@ export function simulationAuthReducer(
     case 'CREATE_ALIAS_SUCCESS':
       return {
         ...state,
-        step: 'authenticated',
+        step: 'alias-create-success',
         session: action.session,
         isSubmitting: false,
         errorMessage: '',
         aliasCheck: null,
         aliasInput: '',
+        lastCreatedAlias: action.session.alias,
       };
     case 'CREATE_ALIAS_FAILED':
       return {
@@ -220,6 +260,15 @@ export function simulationAuthReducer(
         isSubmitting: false,
         errorMessage: action.message,
       };
+    case 'OPEN_ALIAS_ERROR':
+      return {
+        ...state,
+        step: 'alias-error',
+        aliasErrorMessage: action.message,
+        isSubmitting: false,
+        errorMessage: '',
+      };
+    case 'FINISH_ALIAS_FLOW':
     case 'BACK_TO_HOME':
       return {
         ...state,
@@ -228,6 +277,10 @@ export function simulationAuthReducer(
         aliasCheck: null,
         aliasInput: '',
         aliasStatusInput: '',
+        selectedAccountId: null,
+        linkAccountMode: 'initial',
+        aliasErrorMessage: '',
+        lastCreatedAlias: null,
       };
     case 'LOGOUT':
       return createInitialSimulationAuthState();

@@ -23,12 +23,20 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     openCreateAccount,
     backToLogin,
     submitCreateAccount,
-    openAliasManagement,
+    openAliasSplash,
+    continueAliasSplash,
     openCreateAlias,
+    openSelectAccountForAlias,
+    openChangeAccount,
+    selectLinkAccount,
+    confirmLinkAccount,
     setAliasInput,
     setAliasStatus,
     submitUpdateAliasStatus,
     submitCreateAlias,
+    requestDeleteAlias,
+    finishAliasFlow,
+    backToAliasManagement,
     backToHome,
     logout,
   } = useSimulationAuth();
@@ -79,7 +87,7 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
 
             <ul className="simulation-page__checklist">
               <li>Login por cédula con resolve alias</li>
-              <li>Gestión de alias</li>
+              <li>Gestión de alias con flujo completo</li>
               <li>Flujo de pago con alias destino</li>
             </ul>
 
@@ -109,12 +117,20 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
               onOpenCreateAccount={openCreateAccount}
               onBackToLogin={backToLogin}
               onSubmitCreateAccount={submitCreateAccount}
-              onManageAlias={openAliasManagement}
+              onManageAlias={openAliasSplash}
+              onContinueAliasSplash={continueAliasSplash}
               onOpenCreateAlias={openCreateAlias}
+              onSelectAccountForAlias={openSelectAccountForAlias}
+              onChangeAccount={openChangeAccount}
+              onSelectLinkAccount={selectLinkAccount}
+              onConfirmLinkAccount={confirmLinkAccount}
               onAliasInputChange={setAliasInput}
               onAliasStatusChange={setAliasStatus}
               onSubmitAliasStatusUpdate={submitUpdateAliasStatus}
               onSubmitCreateAlias={submitCreateAlias}
+              onDeleteAlias={requestDeleteAlias}
+              onFinishAliasFlow={finishAliasFlow}
+              onBackToAliasManagement={backToAliasManagement}
               onBackToHome={backToHome}
               onLogout={logout}
               onTabChange={setTab}

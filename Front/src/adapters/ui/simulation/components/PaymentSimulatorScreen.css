@@ -2,21 +2,24 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: linear-gradient(180deg, #ffffff 0%, #eef4fa 100%);
+  background: var(--sim-bg);
 }
 
 .payment-simulator__header {
   display: grid;
-  grid-template-columns: 36px 1fr;
+  grid-template-columns: 40px 1fr 40px;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 4px;
+  min-height: 52px;
+  padding: 8px 12px;
+  background: var(--sim-navy-900);
+  color: #fff;
 }
 
 .payment-simulator__back-btn,
-.payment-simulator__back-spacer {
-  width: 36px;
-  height: 36px;
+.payment-simulator__header-spacer {
+  width: 40px;
+  height: 40px;
 }
 
 .payment-simulator__back-btn {
@@ -24,87 +27,72 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.88);
-  color: #004d99;
-  font-size: 18px;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font-size: 20px;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: background 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .payment-simulator__back-btn:active {
-  transform: scale(0.96);
-  background: rgba(0, 77, 153, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.payment-simulator__brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.payment-simulator__brand-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #0057b8 0%, #003f88 100%);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.payment-simulator__brand-name {
+.payment-simulator__title {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: #102033;
-}
-
-.payment-simulator__brand-tagline {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: #5a738e;
+  text-align: center;
+  color: #fff;
 }
 
 .payment-simulator__body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 16px 16px;
+  padding: 16px;
   overflow: auto;
 }
 
 .payment-simulator__tab-bar {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  padding: 10px 12px 14px;
-  background: rgba(255, 255, 255, 0.92);
-  border-top: 1px solid rgba(195, 213, 229, 0.65);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  padding: 8px 6px 10px;
+  background: var(--sim-navy-900);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .payment-simulator__tab {
-  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: transparent;
-  color: #5a738e;
-  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.payment-simulator__tab:active {
-  transform: scale(0.98);
+.payment-simulator__tab-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .payment-simulator__tab--active {
-  background: rgba(0, 77, 153, 0.1);
-  color: #004d99;
+  color: var(--sim-gold-400);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.payment-simulator__tab--disabled {
+  opacity: 0.35;
+  cursor: default;
 }

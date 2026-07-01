@@ -1,0 +1,22 @@
+:root {
+  --sim-navy-900: #0c1a33;
+  --sim-navy-800: #122647;
+  --sim-navy-700: #1a3560;
+  --sim-navy-600: #234878;
+  --sim-gold-500: #c9a227;
+  --sim-gold-400: #dbb94a;
+  --sim-bg: #eef1f6;
+  --sim-surface: #ffffff;
+  --sim-text: #0f1f38;
+  --sim-text-muted: #5f708a;
+  --sim-border: #d5deea;
+  --sim-green: #1f8a4c;
+  --sim-green-bg: rgba(31, 138, 76, 0.12);
+  --sim-red: #c62828;
+  --sim-red-bg: rgba(198, 40, 40, 0.12);
+  --sim-orange: #b86e00;
+  --sim-orange-bg: rgba(184, 110, 0, 0.12);
+  --sim-radius-lg: 16px;
+  --sim-radius-md: 12px;
+  --sim-shadow-card: 0 8px 24px rgba(12, 26, 51, 0.08);
+}

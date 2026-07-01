@@ -71,11 +71,21 @@ export {
 } from './sessionAliasBadge';
 
 export {
+  getPrimaryAccount,
+  withPrimaryAccount,
+  needsAccountLinking,
+  isAliasDeletionBlocked,
+  getAccountDisplayLabel,
+  ALIAS_DELETE_MIN_DAYS,
+} from './aliasFlow';
+
+export {
   SIMF_ALIAS_STATUS,
   ALL_ALIAS_STATUS_OPTIONS,
   USER_MODIFIABLE_ALIAS_STATUSES,
   READONLY_ALIAS_STATUSES,
   coreAccountStatusToSimf,
+  isAliasGloballyBlocked,
   isUserModifiableAliasStatus,
   getUserModifiableAliasStatusLabel,
   type SimfAliasStatus,

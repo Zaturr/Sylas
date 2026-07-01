@@ -2,8 +2,11 @@ import {
   formatDocumentInput,
   getAccountLastDigits,
   getHomeAliasBadge,
+  getPrimaryAccount,
+  resolveSessionAliasLinkStatus,
   type SimulationSession,
 } from '../../../../../domain/simulation';
+import { SimStatusBadge } from '../ui/SimStatusBadge';
 import '../simulationSteps.css';
 
 type HomeTabViewProps = {
@@ -26,7 +29,7 @@ export function HomeTabView({
   onManageAlias,
   onLogout,
 }: HomeTabViewProps) {
-  const primaryAccount = session.accounts[0];
+  const primaryAccount = getPrimaryAccount(session);
   const accountHint = primaryAccount
     ? `Cuenta ${primaryAccount.bank_id} ·••• ${getAccountLastDigits(primaryAccount.account_number)}`
     : 'Sin cuenta bancaria activa';
@@ -41,16 +44,23 @@ export function HomeTabView({
   );
 
   const aliasBadge = getHomeAliasBadge(session);
+  const linkStatus = resolveSessionAliasLinkStatus(session);
 
   return (
     <div className="sim-view">
-      <div className="sim-session-banner">
-        <p className="sim-session-banner__title">{fullName || 'Titular registrado'}</p>
-        <p className="sim-session-banner__meta">{documentLabel}</p>
+      <div className="sim-card">
+        <div className="sim-card__header">
+          <div>
+            <p className="sim-card__title">{fullName || 'Titular registrado'}</p>
+            <p className="sim-card__subtitle">{documentLabel}</p>
+          </div>
+          {session.hasConfiguredAlias && linkStatus && (
+            <SimStatusBadge status={linkStatus} />
+          )}
+        </div>
+
         {aliasBadge && (
-          <p
-            className={`sim-session-banner__notice ${badgeClassByVariant[aliasBadge.variant]}`}
-          >
+          <p className={`sim-session-banner__notice ${badgeClassByVariant[aliasBadge.variant]}`}>
             {aliasBadge.text}
           </p>
         )}
@@ -78,7 +88,6 @@ export function HomeTabView({
       </div>
 
       <div className="sim-section">
-        <h3 className="sim-section__title">Sesión</h3>
         <button type="button" className="sim-mobile-btn sim-mobile-btn--ghost" onClick={onLogout}>
           Cerrar sesión
         </button>

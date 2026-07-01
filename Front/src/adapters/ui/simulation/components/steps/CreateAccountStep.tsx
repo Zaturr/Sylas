@@ -1,4 +1,4 @@
-import { simulationConfig } from '../../../../../adapters/api/simulation/simulation.config';
+import { appConfig } from '../../../../../adapters/api/app.config';
 import '../simulationSteps.css';
 
 type CreateAccountStepProps = {
@@ -31,7 +31,7 @@ export function CreateAccountStep({
       <div className="sim-flow__intro">
         <h2 className="sim-flow__title">Crear cuenta</h2>
         <p className="sim-flow__subtitle">
-          Registra tus datos y una cuenta en el banco {simulationConfig.bankCode}.
+          Registra tus datos y una cuenta en el banco {appConfig.simulation.bankCode}.
           El alias se configurará en un paso posterior.
         </p>
       </div>
@@ -78,11 +78,11 @@ export function CreateAccountStep({
       <div className="sim-summary-card">
         <div className="sim-summary-card__row">
           <span>Banco</span>
-          <strong>{simulationConfig.bankCode}</strong>
+          <strong>{appConfig.simulation.bankCode}</strong>
         </div>
         <div className="sim-summary-card__row">
           <span>Tipo de cuenta</span>
-          <strong>{simulationConfig.accountType}</strong>
+          <strong>{appConfig.simulation.accountType}</strong>
         </div>
       </div>
 

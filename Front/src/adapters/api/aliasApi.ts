@@ -1,7 +1,6 @@
 import type { AliasService, CreateFullUserService } from '../../application/aliasService';
 import type { PaginatedAliasResponse } from '../../domain/alias';
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
+import { appConfig } from './app.config';
 
 async function readApiError(response: Response, fallback: string): Promise<string> {
   const data = await response.json().catch(() => null);
@@ -27,7 +26,7 @@ export const aliasAdapter: AliasService = {
       params.set('search', trimmedSearch);
     }
 
-    const response = await fetch(`${API_BASE_URL}/alias/list?${params.toString()}`, {
+    const response = await fetch(`${appConfig.apiBaseUrl}/alias/list?${params.toString()}`, {
       signal,
     });
 
@@ -47,7 +46,7 @@ export const aliasAdapter: AliasService = {
       document_type: documentType,
       document_number: documentNumber,
     });
-    const response = await fetch(`${API_BASE_URL}/alias/resolve?${params.toString()}`, {
+    const response = await fetch(`${appConfig.apiBaseUrl}/alias/resolve?${params.toString()}`, {
       signal,
     });
 
@@ -66,7 +65,7 @@ export const aliasAdapter: AliasService = {
       search: trimmedAlias,
     });
 
-    const response = await fetch(`${API_BASE_URL}/alias/list?${params.toString()}`, {
+    const response = await fetch(`${appConfig.apiBaseUrl}/alias/list?${params.toString()}`, {
       signal,
     });
 
@@ -119,7 +118,7 @@ export const aliasAdapter: AliasService = {
       accounts: [],
     };
 
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await fetch(`${appConfig.apiBaseUrl}/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -132,7 +131,7 @@ export const aliasAdapter: AliasService = {
 
   deleteAliasByCustomerId: async (customerId: string): Promise<void> => {
     const response = await fetch(
-      `${API_BASE_URL}/users/${encodeURIComponent(customerId)}`,
+      `${appConfig.apiBaseUrl}/users/${encodeURIComponent(customerId)}`,
       { method: 'DELETE' },
     );
 
@@ -143,7 +142,7 @@ export const aliasAdapter: AliasService = {
 
   deleteAliasByValue: async (aliasValue: string): Promise<void> => {
     const response = await fetch(
-      `${API_BASE_URL}/alias/${encodeURIComponent(aliasValue)}`,
+      `${appConfig.apiBaseUrl}/alias/${encodeURIComponent(aliasValue)}`,
       { method: 'DELETE' },
     );
 
@@ -153,7 +152,7 @@ export const aliasAdapter: AliasService = {
   },
 
   deleteAllAliases: async (): Promise<number> => {
-    const response = await fetch(`${API_BASE_URL}/alias/all?confirm=true`, {
+    const response = await fetch(`${appConfig.apiBaseUrl}/alias/all?confirm=true`, {
       method: 'DELETE',
     });
 

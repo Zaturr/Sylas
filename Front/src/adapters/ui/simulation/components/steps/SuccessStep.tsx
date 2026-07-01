@@ -18,7 +18,7 @@ export function SuccessStep({ amount, recipient, onNewPayment }: SuccessStepProp
         <div className="sim-result-icon sim-result-icon--success" aria-hidden="true">
           ✓
         </div>
-        <h2 className="sim-flow__title">Pago enviado</h2>
+        <h2 className="sim-flow__title">¡Listo!</h2>
         <p className="sim-flow__subtitle">
           Enviaste Bs. {formattedAmount} correctamente.
         </p>
@@ -27,7 +27,7 @@ export function SuccessStep({ amount, recipient, onNewPayment }: SuccessStepProp
       <RecipientSummaryCard recipient={recipient} title="Beneficiario del pago" />
 
       <button type="button" className="sim-mobile-btn sim-mobile-btn--primary" onClick={onNewPayment}>
-        Nuevo pago
+        Finalizar
       </button>
     </div>
   );

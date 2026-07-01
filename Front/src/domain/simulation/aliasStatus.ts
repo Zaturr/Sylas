@@ -3,6 +3,7 @@ export const SIMF_ALIAS_STATUS = {
   INACTIVE: 'INAC',
   PENDING: 'PNDL',
   UNREGISTERED: 'UNRG',
+  BLOCKED: 'BLKD',
 } as const;
 
 export type SimfAliasStatus =
@@ -20,6 +21,7 @@ export const USER_MODIFIABLE_ALIAS_STATUSES: UserModifiableAliasStatus[] = [
 export const READONLY_ALIAS_STATUSES: SimfAliasStatus[] = [
   SIMF_ALIAS_STATUS.PENDING,
   SIMF_ALIAS_STATUS.UNREGISTERED,
+  SIMF_ALIAS_STATUS.BLOCKED,
 ];
 
 export const ALL_ALIAS_STATUS_OPTIONS: SimfAliasStatus[] = [
@@ -27,7 +29,13 @@ export const ALL_ALIAS_STATUS_OPTIONS: SimfAliasStatus[] = [
   SIMF_ALIAS_STATUS.INACTIVE,
   SIMF_ALIAS_STATUS.PENDING,
   SIMF_ALIAS_STATUS.UNREGISTERED,
+  SIMF_ALIAS_STATUS.BLOCKED,
 ];
+
+export function isAliasGloballyBlocked(status: string | undefined | null): boolean {
+  const normalized = (status ?? '').trim().toUpperCase();
+  return normalized === 'DISABLED' || normalized === 'BLKD' || normalized === 'BLOCKED';
+}
 
 export function coreAccountStatusToSimf(status: string | undefined | null): SimfAliasStatus {
   switch ((status ?? '').trim().toUpperCase()) {
@@ -42,9 +50,9 @@ export function coreAccountStatusToSimf(status: string | undefined | null): Simf
       return SIMF_ALIAS_STATUS.PENDING;
     case 'BLOCKED':
     case 'BLKD':
-      return SIMF_ALIAS_STATUS.INACTIVE;
+      return SIMF_ALIAS_STATUS.BLOCKED;
     default:
-      return SIMF_ALIAS_STATUS.ACTIVE;
+      return SIMF_ALIAS_STATUS.INACTIVE;
   }
 }
 
@@ -64,6 +72,8 @@ export function getAliasStatusLabel(status: SimfAliasStatus): string {
       return 'Pendiente de baja (PNDL)';
     case SIMF_ALIAS_STATUS.UNREGISTERED:
       return 'No registrado (UNRG)';
+    case SIMF_ALIAS_STATUS.BLOCKED:
+      return 'Bloqueado (BLKD)';
     default:
       return status;
   }

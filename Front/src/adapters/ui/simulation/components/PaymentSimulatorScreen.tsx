@@ -4,6 +4,11 @@ import type {
 } from '../../../../domain/simulation';
 import type { SimulationAuthState } from '../../../../domain/simulation/auth.types';
 import { isPaymentFlowActive } from '../../../../domain/simulation';
+import { AliasSplashStep } from './steps/AliasSplashStep';
+import { AliasLinkAccountStep } from './steps/AliasLinkAccountStep';
+import { AliasCreateSuccessStep } from './steps/AliasCreateSuccessStep';
+import { AliasStatusSuccessStep } from './steps/AliasStatusSuccessStep';
+import { AliasErrorStep } from './steps/AliasErrorStep';
 import { AliasManagementStep } from './steps/AliasManagementStep';
 import { ConfirmPaymentStep } from './steps/ConfirmPaymentStep';
 import { CreateAccountStep } from './steps/CreateAccountStep';
@@ -15,6 +20,7 @@ import { ProcessingStep } from './steps/ProcessingStep';
 import { SuccessStep } from './steps/SuccessStep';
 import { HomeTabView } from './views/HomeTabView';
 import { PaymentsTabView } from './views/PaymentsTabView';
+import '../simulation.theme.css';
 import './PaymentSimulatorScreen.css';
 import './simulationSteps.css';
 
@@ -30,11 +36,19 @@ type PaymentSimulatorScreenProps = {
   onLastNameChange: (value: string) => void;
   onSubmitCreateAccount: () => void;
   onManageAlias: () => void;
+  onContinueAliasSplash: () => void;
   onOpenCreateAlias: () => void;
+  onSelectAccountForAlias: () => void;
+  onChangeAccount: () => void;
+  onSelectLinkAccount: (accountId: string) => void;
+  onConfirmLinkAccount: () => void;
   onAliasInputChange: (value: string) => void;
   onAliasStatusChange: (value: 'ACTV' | 'INAC') => void;
   onSubmitAliasStatusUpdate: () => void;
   onSubmitCreateAlias: () => void;
+  onDeleteAlias: () => void;
+  onFinishAliasFlow: () => void;
+  onBackToAliasManagement: () => void;
   onBackToHome: () => void;
   onLogout: () => void;
   onTabChange: (tab: MobileAppTab) => void;
@@ -48,10 +62,70 @@ type PaymentSimulatorScreenProps = {
   onResetPayment: () => void;
 };
 
-const tabLabels: Record<MobileAppTab, string> = {
-  home: 'Inicio',
-  payments: 'Pagos',
-};
+const bottomTabs: Array<{
+  id: MobileAppTab | 'alias' | 'menu';
+  label: string;
+  icon: string;
+  enabled: boolean;
+}> = [
+  { id: 'home', label: 'Inicio', icon: '⌂', enabled: true },
+  { id: 'payments', label: 'Pagos', icon: '⇄', enabled: true },
+  { id: 'alias', label: 'Alias', icon: '@', enabled: true },
+  { id: 'menu', label: 'Menú', icon: '☰', enabled: false },
+];
+
+const ALIAS_FLOW_STEPS = new Set([
+  'alias-splash',
+  'alias-management',
+  'alias-link-account',
+  'create-alias',
+  'alias-create-success',
+  'alias-status-success',
+  'alias-error',
+]);
+
+function resolveScreenTitle(
+  auth: SimulationAuthState,
+  context: PaymentSimulationContext,
+  flowActive: boolean,
+): string {
+  if (auth.step === 'login') {
+    return 'Acceso';
+  }
+  if (auth.step === 'create-account') {
+    return 'Crear cuenta';
+  }
+  if (auth.step === 'alias-splash') {
+    return 'Alias';
+  }
+  if (
+    auth.step === 'alias-management' ||
+    auth.step === 'create-alias' ||
+    auth.step === 'alias-link-account' ||
+    auth.step === 'alias-create-success' ||
+    auth.step === 'alias-status-success' ||
+    auth.step === 'alias-error'
+  ) {
+    return 'Alias';
+  }
+  if (flowActive) {
+    switch (context.step) {
+      case 'enter-alias':
+        return 'Nuevo pago';
+      case 'confirm':
+        return 'Confirmar';
+      case 'processing':
+        return 'Procesando';
+      case 'success':
+        return 'Completado';
+      case 'error':
+        return 'Error';
+      default:
+        return 'Pagos';
+    }
+  }
+  return context.activeTab === 'payments' ? 'Pagos' : 'Inicio';
+}
 
 export function PaymentSimulatorScreen({
   auth,
@@ -65,11 +139,19 @@ export function PaymentSimulatorScreen({
   onLastNameChange,
   onSubmitCreateAccount,
   onManageAlias,
+  onContinueAliasSplash,
   onOpenCreateAlias,
+  onSelectAccountForAlias,
+  onChangeAccount,
+  onSelectLinkAccount,
+  onConfirmLinkAccount,
   onAliasInputChange,
   onAliasStatusChange,
   onSubmitAliasStatusUpdate,
   onSubmitCreateAlias,
+  onDeleteAlias,
+  onFinishAliasFlow,
+  onBackToAliasManagement,
   onBackToHome,
   onLogout,
   onTabChange,
@@ -82,10 +164,58 @@ export function PaymentSimulatorScreen({
   onGoBack,
   onResetPayment,
 }: PaymentSimulatorScreenProps) {
-  const isAuthenticated = auth.step === 'authenticated' && auth.session !== null;
-  const isAliasFlow = auth.step === 'alias-management' || auth.step === 'create-alias';
-  const flowActive = isAuthenticated && isPaymentFlowActive(context.step);
-  const showTabs = isAuthenticated && !isAliasFlow && (!flowActive || context.step === 'success');
+  const isAliasFlow = ALIAS_FLOW_STEPS.has(auth.step);
+  const isAuthenticated =
+    auth.session !== null && auth.step !== 'login' && auth.step !== 'create-account';
+  const flowActive =
+    auth.step === 'authenticated' && isPaymentFlowActive(context.step);
+  const showTabs =
+    auth.step === 'authenticated' &&
+    !flowActive &&
+    (context.step === 'idle' || context.step === 'success');
+
+  const screenTitle = resolveScreenTitle(auth, context, flowActive);
+
+  const showBackButton =
+    auth.step === 'create-account' ||
+    auth.step === 'alias-splash' ||
+    auth.step === 'alias-management' ||
+    auth.step === 'create-alias' ||
+    auth.step === 'alias-link-account' ||
+    auth.step === 'alias-error' ||
+    (flowActive && context.step !== 'success' && context.step !== 'processing');
+
+  const handleBack = () => {
+    if (auth.step === 'create-account') {
+      onBackToLogin();
+      return;
+    }
+    if (auth.step === 'alias-splash') {
+      onBackToHome();
+      return;
+    }
+    if (auth.step === 'alias-link-account') {
+      if (
+        auth.linkAccountMode === 'change' ||
+        auth.linkAccountMode === 'before-create-alias' ||
+        auth.linkAccountMode === 'select-for-alias'
+      ) {
+        onBackToAliasManagement();
+        return;
+      }
+      onBackToHome();
+      return;
+    }
+    if (auth.step === 'alias-error') {
+      onBackToAliasManagement();
+      return;
+    }
+    if (isAliasFlow) {
+      onBackToHome();
+      return;
+    }
+    onGoBack();
+  };
 
   const renderAuthFlow = () => {
     if (auth.step === 'create-account') {
@@ -105,9 +235,27 @@ export function PaymentSimulatorScreen({
       );
     }
 
+    if (auth.step === 'alias-splash') {
+      return <AliasSplashStep onContinue={onContinueAliasSplash} />;
+    }
+
+    if (auth.step === 'alias-link-account' && auth.session) {
+      return (
+        <AliasLinkAccountStep
+          accounts={auth.session.accounts}
+          selectedAccountId={auth.selectedAccountId}
+          mode={auth.linkAccountMode}
+          isSubmitting={auth.isSubmitting}
+          onSelectAccount={onSelectLinkAccount}
+          onConfirm={onConfirmLinkAccount}
+        />
+      );
+    }
+
     if (auth.step === 'alias-management' && auth.session) {
       return (
         <AliasManagementStep
+          session={auth.session}
           mappedDocument={auth.session.mappedDocument}
           aliasCheck={auth.aliasCheck}
           aliasStatusInput={auth.aliasStatusInput}
@@ -116,7 +264,38 @@ export function PaymentSimulatorScreen({
           onAliasStatusChange={onAliasStatusChange}
           onSubmitStatusUpdate={onSubmitAliasStatusUpdate}
           onCreateAlias={onOpenCreateAlias}
-          onBack={onBackToHome}
+          onSelectAccountForAlias={onSelectAccountForAlias}
+          onChangeAccount={onChangeAccount}
+          onDeleteAlias={onDeleteAlias}
+        />
+      );
+    }
+
+    if (auth.step === 'alias-create-success') {
+      return (
+        <AliasCreateSuccessStep
+          aliasValue={auth.lastCreatedAlias ?? auth.session?.alias ?? ''}
+          onFinish={onFinishAliasFlow}
+        />
+      );
+    }
+
+    if (auth.step === 'alias-status-success' && auth.session) {
+      return (
+        <AliasStatusSuccessStep
+          aliasValue={auth.session.alias ?? ''}
+          status={auth.aliasCheck?.agentStatus ?? null}
+          onFinish={onFinishAliasFlow}
+        />
+      );
+    }
+
+    if (auth.step === 'alias-error') {
+      return (
+        <AliasErrorStep
+          message={auth.aliasErrorMessage}
+          onRetry={onBackToAliasManagement}
+          onFinish={onFinishAliasFlow}
         />
       );
     }
@@ -124,13 +303,13 @@ export function PaymentSimulatorScreen({
     if (auth.step === 'create-alias' && auth.session) {
       return (
         <CreateAliasStep
+          session={auth.session}
           mappedDocument={auth.session.mappedDocument}
           aliasInput={auth.aliasInput}
           errorMessage={auth.errorMessage}
           isSubmitting={auth.isSubmitting}
           onAliasChange={onAliasInputChange}
           onSubmit={onSubmitCreateAlias}
-          onBack={onBackToHome}
         />
       );
     }
@@ -227,65 +406,67 @@ export function PaymentSimulatorScreen({
     }
   };
 
-  const brandTagline = !isAuthenticated && !isAliasFlow
-    ? 'Acceso seguro'
-    : auth.step === 'alias-management'
-      ? 'Gestión de alias'
-      : auth.step === 'create-alias'
-        ? 'Crear alias'
-        : flowActive
-          ? 'Flujo de pago'
-          : tabLabels[context.activeTab];
-
   return (
     <div className="payment-simulator">
       <header className="payment-simulator__header">
-        {flowActive && context.step !== 'success' && context.step !== 'processing' ? (
+        {showBackButton ? (
           <button
             type="button"
             className="payment-simulator__back-btn"
             aria-label="Volver"
-            onClick={onGoBack}
+            onClick={handleBack}
           >
             ←
           </button>
         ) : (
-          <div className="payment-simulator__back-spacer" aria-hidden="true" />
+          <span className="payment-simulator__header-spacer" aria-hidden="true" />
         )}
 
-        <div className="payment-simulator__brand">
-          <span className="payment-simulator__brand-icon">B</span>
-          <div>
-            <p className="payment-simulator__brand-name">BDSA Pay</p>
-            <p className="payment-simulator__brand-tagline">{brandTagline}</p>
-          </div>
-        </div>
+        <h1 className="payment-simulator__title">{screenTitle}</h1>
+        <span className="payment-simulator__header-spacer" aria-hidden="true" />
       </header>
 
       <main className="payment-simulator__body">
-        {!isAuthenticated || isAliasFlow
+        {isAliasFlow || !isAuthenticated
           ? renderAuthFlow()
-          : flowActive
+          : auth.step === 'authenticated' && flowActive
             ? renderPaymentFlow()
             : renderTabContent()}
       </main>
 
       {showTabs && (
         <nav className="payment-simulator__tab-bar" aria-label="Navegación simulada">
-          {(Object.keys(tabLabels) as MobileAppTab[]).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              className={`payment-simulator__tab ${
-                context.activeTab === tab && context.step === 'idle'
-                  ? 'payment-simulator__tab--active'
-                  : ''
-              }`}
-              onClick={() => onTabChange(tab)}
-            >
-              {tabLabels[tab]}
-            </button>
-          ))}
+          {bottomTabs.map((tab) => {
+            const isActive =
+              tab.enabled &&
+              tab.id === context.activeTab &&
+              context.step === 'idle';
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={`payment-simulator__tab ${
+                  isActive ? 'payment-simulator__tab--active' : ''
+                } ${!tab.enabled ? 'payment-simulator__tab--disabled' : ''}`}
+                disabled={!tab.enabled}
+                onClick={() => {
+                  if (tab.id === 'alias') {
+                    onManageAlias();
+                    return;
+                  }
+                  if (tab.enabled && (tab.id === 'home' || tab.id === 'payments')) {
+                    onTabChange(tab.id);
+                  }
+                }}
+              >
+                <span className="payment-simulator__tab-icon" aria-hidden="true">
+                  {tab.icon}
+                </span>
+                {tab.label}
+              </button>
+            );
+          })}
         </nav>
       )}
     </div>

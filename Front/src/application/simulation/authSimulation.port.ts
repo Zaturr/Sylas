@@ -59,6 +59,14 @@ export type RegisterAliasResult =
   | { ok: true; session: SimulationSession }
   | { ok: false; message: string };
 
+export type DeleteAliasResult =
+  | {
+      ok: true;
+      session: SimulationSession;
+      check: Extract<CheckAliasResult, { ok: true }>;
+    }
+  | { ok: false; message: string };
+
 export interface AuthSimulationService {
   loginByDocument(
     documentInput: string,
@@ -86,4 +94,9 @@ export interface AuthSimulationService {
     input: UpdateAliasStatusInput,
     signal?: AbortSignal,
   ): Promise<UpdateAliasStatusResult>;
+
+  deleteAlias(
+    session: SimulationSession,
+    signal?: AbortSignal,
+  ): Promise<DeleteAliasResult>;
 }

@@ -70,9 +70,10 @@ func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"alias":    alias.AliasValue,
-		"customer": customer,
-		"accounts": accounts,
+		"alias":        alias.AliasValue,
+		"alias_status": alias.Status,
+		"customer":     customer,
+		"accounts":     accounts,
 	})
 }
 
