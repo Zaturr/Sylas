@@ -10,6 +10,7 @@ type AliasRepository interface {
 	SaveCustomer(ctx context.Context, customer *domain.Customer) error
 	GetCustomerByID(ctx context.Context, id string) (*domain.Customer, error)
 	GetCustomerByDocument(ctx context.Context, documentType, documentNumber string) (*domain.Customer, error)
+	GetCustomerByDocumentNumber(ctx context.Context, documentNumber string) (*domain.Customer, error)
 	GetCustomerByVerificationData(ctx context.Context, documentNumber string, email string, aliasValue string) (*domain.Customer, error)
 
 	SaveAccount(ctx context.Context, account *domain.Account) error

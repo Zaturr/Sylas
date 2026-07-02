@@ -56,13 +56,34 @@
   overflow: auto;
 }
 
+.payment-simulator--home {
+  background: var(--sim-bg);
+}
+
+.payment-simulator__body--home {
+  padding: 0;
+  overflow: auto;
+}
+
 .payment-simulator__tab-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0;
-  padding: 8px 6px 10px;
+  padding: 10px 8px 12px;
   background: var(--sim-navy-900);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: none;
+  position: relative;
+}
+
+.payment-simulator--home .payment-simulator__tab-bar {
+  padding-top: 14px;
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -4px 20px rgba(12, 26, 51, 0.12);
+}
+
+.payment-simulator--home .payment-simulator__tab--active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .payment-simulator__tab {

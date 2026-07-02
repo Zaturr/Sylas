@@ -1,13 +1,13 @@
+import { useState } from 'react';
 import {
   formatDocumentInput,
   getAccountLastDigits,
   getHomeAliasBadge,
   getPrimaryAccount,
-  resolveSessionAliasLinkStatus,
   type SimulationSession,
 } from '../../../../../domain/simulation';
-import { SimStatusBadge } from '../ui/SimStatusBadge';
 import '../simulationSteps.css';
+import './HomeTabView.css';
 
 type HomeTabViewProps = {
   session: SimulationSession;
@@ -17,11 +17,20 @@ type HomeTabViewProps = {
 };
 
 const badgeClassByVariant = {
-  success: 'sim-session-banner__notice--success',
-  warning: 'sim-session-banner__notice--warning',
-  danger: 'sim-session-banner__notice--danger',
+  success: 'sim-home-hero__notice--success',
+  warning: 'sim-home-hero__notice--warning',
+  danger: 'sim-home-hero__notice--danger',
   info: '',
 } as const;
+
+type HomeMenuItem = {
+  id: string;
+  label: string;
+  icon: string;
+  enabled: boolean;
+  highlighted?: boolean;
+  onClick?: () => void;
+};
 
 export function HomeTabView({
   session,
@@ -29,14 +38,15 @@ export function HomeTabView({
   onManageAlias,
   onLogout,
 }: HomeTabViewProps) {
+  const [balanceVisible, setBalanceVisible] = useState(true);
+
   const primaryAccount = getPrimaryAccount(session);
   const accountHint = primaryAccount
     ? `Cuenta ${primaryAccount.bank_id} ·••• ${getAccountLastDigits(primaryAccount.account_number)}`
     : 'Sin cuenta bancaria activa';
 
-  const fullName = [session.customer.first_name, session.customer.last_name]
-    .filter(Boolean)
-    .join(' ');
+  const firstName = session.customer.first_name.trim() || 'Usuario';
+  const avatarInitial = firstName.charAt(0).toUpperCase();
 
   const documentLabel = formatDocumentInput(
     session.mappedDocument.documentType,
@@ -44,51 +54,96 @@ export function HomeTabView({
   );
 
   const aliasBadge = getHomeAliasBadge(session);
-  const linkStatus = resolveSessionAliasLinkStatus(session);
+  const aliasPending = !session.hasConfiguredAlias;
+
+  const menuItems: HomeMenuItem[] = [
+    { id: 'info', label: 'Información', icon: 'ℹ', enabled: false },
+    { id: 'payment', label: 'Pago Móvil', icon: '📱', enabled: true, onClick: onStartPayment },
+    { id: 'services', label: 'Servicios', icon: '🛠', enabled: false },
+    { id: 'topup', label: 'Recargas', icon: '↻', enabled: false },
+    { id: 'transfer', label: 'Transferir', icon: '⇄', enabled: false },
+    {
+      id: 'alias',
+      label: 'Alias',
+      icon: '👤',
+      enabled: true,
+      highlighted: aliasPending,
+      onClick: onManageAlias,
+    },
+    { id: 'web', label: 'Web', icon: '🌐', enabled: false },
+  ];
 
   return (
-    <div className="sim-view">
-      <div className="sim-card">
-        <div className="sim-card__header">
-          <div>
-            <p className="sim-card__title">{fullName || 'Titular registrado'}</p>
-            <p className="sim-card__subtitle">{documentLabel}</p>
+    <div className="sim-home">
+      <section className="sim-home-hero" aria-label="Bienvenida">
+        <div className="sim-home-hero__profile">
+          <div className="sim-home-hero__avatar" aria-hidden="true">
+            {avatarInitial}
           </div>
-          {session.hasConfiguredAlias && linkStatus && (
-            <SimStatusBadge status={linkStatus} />
-          )}
+          <div className="sim-home-hero__identity">
+            <p className="sim-home-hero__greeting">Hola, {firstName}</p>
+            <p className="sim-home-hero__document">{documentLabel}</p>
+          </div>
         </div>
 
         {aliasBadge && (
-          <p className={`sim-session-banner__notice ${badgeClassByVariant[aliasBadge.variant]}`}>
+          <p
+            className={`sim-home-hero__notice ${badgeClassByVariant[aliasBadge.variant]}`}
+          >
             {aliasBadge.text}
           </p>
         )}
-      </div>
+      </section>
 
-      <div className="sim-balance-card">
-        <p className="sim-balance-card__label">Saldo disponible</p>
-        <p className="sim-balance-card__amount">Bs. 12.450,00</p>
-        <p className="sim-balance-card__hint">{accountHint}</p>
-      </div>
-
-      <div className="sim-quick-actions">
+      <section className="sim-home-balance" aria-label="Balance disponible">
+        <div className="sim-home-balance__content">
+          <p className="sim-home-balance__label">Balance</p>
+          <div className="sim-home-balance__amount-row">
+            <p className="sim-home-balance__amount">
+              {balanceVisible ? 'Bs 12.450,00' : '••••••••'}
+            </p>
+            <button
+              type="button"
+              className="sim-home-balance__toggle"
+              aria-label={balanceVisible ? 'Ocultar saldo' : 'Mostrar saldo'}
+              aria-pressed={balanceVisible}
+              onClick={() => setBalanceVisible((visible) => !visible)}
+            >
+              {balanceVisible ? '👁' : '👁‍🗨'}
+            </button>
+          </div>
+          <p className="sim-home-balance__hint">{accountHint}</p>
+        </div>
         <button
           type="button"
-          className="sim-action-btn sim-action-btn--primary"
-          onClick={onStartPayment}
+          className="sim-home-balance__nav"
+          aria-label="Ver detalle de cuenta"
         >
-          <span className="sim-action-btn__icon">↗</span>
-          <span>Pagar con alias</span>
+          ›
         </button>
-        <button type="button" className="sim-action-btn" onClick={onManageAlias}>
-          <span className="sim-action-btn__icon">@</span>
-          <span>Gestión de alias</span>
-        </button>
-      </div>
+      </section>
 
-      <div className="sim-section">
-        <button type="button" className="sim-mobile-btn sim-mobile-btn--ghost" onClick={onLogout}>
+      <section className="sim-home-grid" aria-label="Accesos rápidos">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`sim-home-tile${
+              item.highlighted ? ' sim-home-tile--highlight' : ''
+            }`}
+            disabled={!item.enabled}
+            onClick={item.onClick}
+          >
+            <span className="sim-home-tile__icon" aria-hidden="true">
+              {item.icon}
+            </span>
+            <span className="sim-home-tile__label">{item.label}</span>
+          </button>
+        ))}
+      </section>
+
+      <div className="sim-home-footer">
+        <button type="button" className="sim-home-logout" onClick={onLogout}>
           Cerrar sesión
         </button>
       </div>

@@ -94,6 +94,34 @@ func (r *RealRepository) GetCustomerByDocument(ctx context.Context, documentType
 	return &customer, nil
 }
 
+// GetCustomerByDocumentNumber busca un cliente solo por document_number.
+func (r *RealRepository) GetCustomerByDocumentNumber(ctx context.Context, documentNumber string) (*domain.Customer, error) {
+	query := `SELECT id, document_type, document_number, first_name, last_name, email, phone, created_at
+	FROM customers WHERE document_number = ?`
+	row := r.db.QueryRowContext(ctx, query, documentNumber)
+
+	var customer domain.Customer
+	var createdAtStr string
+	err := row.Scan(
+		&customer.ID,
+		&customer.DocumentType,
+		&customer.DocumentNumber,
+		&customer.FirstName,
+		&customer.LastName,
+		&customer.Email,
+		&customer.Phone,
+		&createdAtStr,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	customer.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+	return &customer, nil
+}
+
 // GetCustomerByVerificationData busca un cliente verificando que su cédula, correo y alias coincidan.
 func (r *RealRepository) GetCustomerByVerificationData(ctx context.Context, documentNumber string, email string, aliasValue string) (*domain.Customer, error) {
 	query := `
@@ -331,16 +359,17 @@ func parseAccountDetails(accountsStr string) []domain.AccountDetail {
 	if accountsStr == "" {
 		return []domain.AccountDetail{}
 	}
-
 	accounts := make([]domain.AccountDetail, 0)
 	for _, pair := range strings.Split(accountsStr, ",") {
 		parts := strings.Split(pair, "|")
-		if len(parts) == 2 {
-			accounts = append(accounts, domain.AccountDetail{
-				Bank:          parts[0],
-				AccountNumber: parts[1],
-			})
+		if len(parts) != 3 {
+			continue
 		}
+		accounts = append(accounts, domain.AccountDetail{
+			Bank:          parts[0],
+			AccountNumber: parts[1],
+			Status:        parts[2],
+		})
 	}
 	return accounts
 }
@@ -354,7 +383,7 @@ func aliasSearchFilter(search string) (string, []interface{}) {
 	pattern := "%" + term + "%"
 	filter := `
 		AND (
-			al.alias_value LIKE ? OR
+			COALESCE(al.alias_value, '') LIKE ? OR
 			c.first_name LIKE ? OR
 			c.last_name LIKE ? OR
 			c.document_number LIKE ? OR
@@ -364,15 +393,14 @@ func aliasSearchFilter(search string) (string, []interface{}) {
 	return filter, []interface{}{pattern, pattern, pattern, pattern, pattern}
 }
 
-// ListAllAliasesWithDetailsPaginated retorna alias con detalle usando LIMIT/OFFSET.
+// ListAllAliasesWithDetailsPaginated retorna titulares con detalle (incluye sin alias registrado).
 func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error) {
 	searchFilter, searchArgs := aliasSearchFilter(search)
 
-	// Cada cliente tiene un solo alias (customer_id UNIQUE), no hace falta GROUP BY para contar.
 	countQuery := `
 	SELECT COUNT(*)
-	FROM alias al
-	JOIN customers c ON al.customer_id = c.id
+	FROM customers c
+	LEFT JOIN alias al ON al.customer_id = c.id
 	WHERE 1=1` + searchFilter
 
 	var totalRecords int
@@ -386,7 +414,6 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 	}
 
 	offset := (page - 1) * limit
-	// Primero paginamos IDs; luego unimos cuentas solo para esa página.
 	query := `
 	SELECT 
 		c.id, 
@@ -394,25 +421,32 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 		c.document_number,
 		c.first_name, 
 		c.last_name, 
-		al.alias_value, 
+		COALESCE(al.alias_value, '') AS alias_value,
+		CASE
+			WHEN al.id IS NULL THEN '` + domain.AliasStatusUnregistered + `'
+			ELSE COALESCE(al.status, '` + domain.AliasStatusEnabled + `')
+		END AS alias_status,
 		c.email, 
 		c.phone, 
-		IFNULL(GROUP_CONCAT(b.name || '|' || ac.account_number), '') as accounts_data
+		IFNULL(
+			GROUP_CONCAT(ac.bank_id || '|' || ac.account_number || '|' || ac.status),
+			''
+		) AS accounts_data
 	FROM (
-		SELECT al.customer_id
-		FROM alias al
-		JOIN customers c ON al.customer_id = c.id
+		SELECT c.id
+		FROM customers c
+		LEFT JOIN alias al ON al.customer_id = c.id
 		WHERE 1=1` + searchFilter + `
-		ORDER BY c.first_name, c.last_name, al.alias_value
+		ORDER BY c.first_name, c.last_name, COALESCE(al.alias_value, '')
 		LIMIT ? OFFSET ?
 	) page
-	JOIN customers c ON c.id = page.customer_id
-	JOIN alias al ON al.customer_id = c.id
+	JOIN customers c ON c.id = page.id
+	LEFT JOIN alias al ON al.customer_id = c.id
 	LEFT JOIN accounts ac ON c.id = ac.customer_id
-	LEFT JOIN banks b ON ac.bank_id = b.id
-	GROUP BY c.id, al.alias_value
-	ORDER BY c.first_name, c.last_name, al.alias_value
+	GROUP BY c.id, al.id, al.alias_value, al.status
+	ORDER BY c.first_name, c.last_name, COALESCE(al.alias_value, '')
 	`
+
 	queryArgs := append(append([]interface{}{}, searchArgs...), limit, offset)
 	rows, err := r.db.QueryContext(ctx, query, queryArgs...)
 	if err != nil {
@@ -432,6 +466,7 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 			&detail.FirstName,
 			&detail.LastName,
 			&detail.AliasValue,
+			&detail.AliasStatus,
 			&detail.Email,
 			&detail.Phone,
 			&accountsStr,
@@ -525,22 +560,25 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 		// Si la cuenta ya existe, simplemente la ignoramos y no hacemos el INSERT
 	}
 
-	// 3. Manejo del Alias
-	// Actualizamos el CustomerID del alias por si cambió en el paso 1
-	alias.CustomerID = customer.ID
+	// 3. Manejo del Alias (solo si el usuario envió un valor)
+	aliasValue := strings.TrimSpace(alias.AliasValue)
+	if aliasValue != "" {
+		alias.CustomerID = customer.ID
+		alias.AliasValue = aliasValue
 
-	queryAlias := `INSERT INTO alias (id, customer_id, alias_value, created_at) VALUES (?,?,?,?)`
-	_, err = tx.ExecContext(ctx, queryAlias, alias.ID, alias.CustomerID, alias.AliasValue, alias.CreatedAt)
-	if err != nil {
-		tx.Rollback()
-		errStr := err.Error()
-		if strings.Contains(errStr, "alias.alias_value") {
-			return fmt.Errorf("el alias '%s' ya está en uso por otro usuario", alias.AliasValue)
+		queryAlias := `INSERT INTO alias (id, customer_id, alias_value, created_at) VALUES (?,?,?,?)`
+		_, err = tx.ExecContext(ctx, queryAlias, alias.ID, alias.CustomerID, alias.AliasValue, alias.CreatedAt)
+		if err != nil {
+			tx.Rollback()
+			errStr := err.Error()
+			if strings.Contains(errStr, "alias.alias_value") {
+				return fmt.Errorf("el alias '%s' ya está en uso por otro usuario", alias.AliasValue)
+			}
+			if strings.Contains(errStr, "alias.customer_id") {
+				return fmt.Errorf("este usuario ya tiene un alias registrado, solo se permite uno por cliente")
+			}
+			return fmt.Errorf("error insertando alias: %w", err)
 		}
-		if strings.Contains(errStr, "alias.customer_id") {
-			return fmt.Errorf("este usuario ya tiene un alias registrado, solo se permite uno por cliente")
-		}
-		return fmt.Errorf("error insertando alias: %w", err)
 	}
 
 	return tx.Commit()

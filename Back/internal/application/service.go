@@ -59,7 +59,11 @@ func (s *AppService) ResolveAlias(ctx context.Context, documentType, documentNum
 		return nil, nil, nil, err
 	}
 	if alias == nil {
-		return customer, nil, nil, nil
+		accounts, err := s.repo.GetAccountsByCustomerID(ctx, customer.ID)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		return customer, nil, accounts, nil
 	}
 
 	accounts, err := s.repo.GetAccountsByCustomerID(ctx, customer.ID)
@@ -97,13 +101,25 @@ func (s *AppService) ResolveAliasByValue(ctx context.Context, aliasValue string)
 }
 
 func (s *AppService) AddAccountToCustomer(ctx context.Context, documentNumber string, email string, aliasValue string, account *domain.Account) error {
-	// 1. Verificar que el cliente existe y que los datos coinciden
-	customer, err := s.repo.GetCustomerByVerificationData(ctx, documentNumber, email, aliasValue)
+	documentNumber = strings.TrimSpace(documentNumber)
+	email = strings.TrimSpace(email)
+	aliasValue = strings.TrimSpace(aliasValue)
+
+	// 1. Verificar que el cliente existe (solo cédula, o cédula + email + alias)
+	var (
+		customer *domain.Customer
+		err      error
+	)
+	if email == "" && aliasValue == "" {
+		customer, err = s.repo.GetCustomerByDocumentNumber(ctx, documentNumber)
+	} else {
+		customer, err = s.repo.GetCustomerByVerificationData(ctx, documentNumber, email, aliasValue)
+	}
 	if err != nil {
 		return err
 	}
 	if customer == nil {
-		return errors.New("los datos de verificación (cédula, correo o alias) no coinciden con ningún usuario registrado")
+		return errors.New("la cédula no coincide con ningún usuario registrado")
 	}
 
 	// 2. Asociar la cuenta al ID del cliente encontrado

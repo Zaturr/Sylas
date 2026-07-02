@@ -314,8 +314,17 @@
 
   .dashboard-table .col-documento,
   .dashboard-table .col-alias,
+  .dashboard-table .col-banco,
+  .dashboard-table .col-status-cuenta,
+  .dashboard-table .col-status-alias,
   .dashboard-table .col-acciones {
     text-align: center;
+  }
+
+  .dashboard-table .col-banco,
+  .dashboard-table .col-status-cuenta,
+  .dashboard-table .col-status-alias {
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-table .col-acciones {

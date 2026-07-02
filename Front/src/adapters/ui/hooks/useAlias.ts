@@ -13,11 +13,13 @@ function mapResolveToAliasDetail(resolved: ResolveAliasService): AliasDetail {
     first_name: resolved.customer.first_name,
     last_name: resolved.customer.last_name,
     alias: resolved.alias,
+    alias_status: resolved.alias_status ?? 'UNRG',
     email: resolved.customer.email,
     phone: resolved.customer.phone,
     accounts: resolved.accounts.map((account) => ({
       bank: account.bank_id,
       account_number: account.account_number,
+      status: account.status,
     })),
   };
 }

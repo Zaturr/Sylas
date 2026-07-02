@@ -174,6 +174,9 @@ export function PaymentSimulatorScreen({
     !flowActive &&
     (context.step === 'idle' || context.step === 'success');
 
+  const isHomeDashboard =
+    showTabs && context.activeTab === 'home' && auth.step === 'authenticated';
+
   const screenTitle = resolveScreenTitle(auth, context, flowActive);
 
   const showBackButton =
@@ -407,26 +410,32 @@ export function PaymentSimulatorScreen({
   };
 
   return (
-    <div className="payment-simulator">
-      <header className="payment-simulator__header">
-        {showBackButton ? (
-          <button
-            type="button"
-            className="payment-simulator__back-btn"
-            aria-label="Volver"
-            onClick={handleBack}
-          >
-            ←
-          </button>
-        ) : (
+    <div className={`payment-simulator${isHomeDashboard ? ' payment-simulator--home' : ''}`}>
+      {!isHomeDashboard && (
+        <header className="payment-simulator__header">
+          {showBackButton ? (
+            <button
+              type="button"
+              className="payment-simulator__back-btn"
+              aria-label="Volver"
+              onClick={handleBack}
+            >
+              ←
+            </button>
+          ) : (
+            <span className="payment-simulator__header-spacer" aria-hidden="true" />
+          )}
+
+          <h1 className="payment-simulator__title">{screenTitle}</h1>
           <span className="payment-simulator__header-spacer" aria-hidden="true" />
-        )}
+        </header>
+      )}
 
-        <h1 className="payment-simulator__title">{screenTitle}</h1>
-        <span className="payment-simulator__header-spacer" aria-hidden="true" />
-      </header>
-
-      <main className="payment-simulator__body">
+      <main
+        className={`payment-simulator__body${
+          isHomeDashboard ? ' payment-simulator__body--home' : ''
+        }`}
+      >
         {isAliasFlow || !isAuthenticated
           ? renderAuthFlow()
           : auth.step === 'authenticated' && flowActive

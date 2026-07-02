@@ -10,8 +10,8 @@ import (
 
 type AddAccountRequest struct {
 	DocumentNumber string `json:"document_number" binding:"required"`
-	Email          string `json:"email" binding:"required,email"`
-	AliasValue     string `json:"alias_value" binding:"required"`
+	Email          string `json:"email""`
+	AliasValue     string `json:"alias_value""`
 	BankID         string `json:"bank_id" binding:"required"`
 	AccountNumber  string `json:"account_number" binding:"required"`
 	AccountType    string `json:"account_type" binding:"required"`

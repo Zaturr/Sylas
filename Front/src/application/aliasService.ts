@@ -9,6 +9,7 @@ export interface CreateFullUserService {
 
 export interface ResolveAliasService {
   alias: string;
+  alias_status?: string;
   customer: Customer;
   accounts: Account[];
 }

@@ -84,6 +84,7 @@ export const aliasAdapter: AliasService = {
 
     return {
       alias: match.alias,
+      alias_status: match.alias_status,
       customer: {
         id: match.customer_id,
         document_type: match.document_type,
@@ -100,7 +101,7 @@ export const aliasAdapter: AliasService = {
         customer_id: match.customer_id,
         account_number: account.account_number,
         account_type: 'CTA. Corriente',
-        status: 'ACTIVE',
+        status: account.status,
         created_at: '',
       })),
     };

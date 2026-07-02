@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"Alias_bdsa/Back/internal/domain"
 	"Alias_bdsa/Back/internal/ports"
 	"strconv"
 	"strings"
@@ -64,17 +65,20 @@ func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 		respondError(c, 404, "Titular no se encuentra en el sistema")
 		return
 	}
-	if alias == nil {
-		respondError(c, 404, "El titular no tiene alias registrado")
-		return
+
+	response := gin.H{
+		"customer": customer,
+		"accounts": accounts,
+	}
+	if alias != nil {
+		response["alias"] = alias.AliasValue
+		response["alias_status"] = alias.Status
+	} else {
+		response["alias"] = nil
+		response["alias_status"] = domain.AliasStatusUnregistered
 	}
 
-	c.JSON(200, gin.H{
-		"alias":        alias.AliasValue,
-		"alias_status": alias.Status,
-		"customer":     customer,
-		"accounts":     accounts,
-	})
+	c.JSON(200, response)
 }
 
 // ListAllAlias retorna alias paginados con sus detalles (?page=1&limit=20)

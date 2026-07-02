@@ -24,14 +24,6 @@ async function addConfiguredBankAccountIfMissing(
   session: SimulationSession,
   signal?: AbortSignal,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const aliasValue = session.alias?.trim();
-  if (!aliasValue) {
-    return {
-      ok: false,
-      message: 'No hay alias asociado para registrar la cuenta del banco configurado.',
-    };
-  }
-
   const { bankCode, accountSuffixLength, accountType, maxAccountGenerationAttempts } =
     appConfig.simulation;
 
@@ -43,8 +35,8 @@ async function addConfiguredBankAccountIfMissing(
     const result = await addAccountForCustomer(
       {
         document_number: session.mappedDocument.documentNumber,
-        email: session.customer.email.trim(),
-        alias_value: aliasValue,
+        email: '',
+        alias_value: '',
         bank_id: bankCode,
         account_number: accountNumber,
         account_type: accountType,

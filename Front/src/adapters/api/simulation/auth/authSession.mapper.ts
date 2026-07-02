@@ -20,7 +20,7 @@ export function buildSession(
       hasConfiguredAlias: hasConfiguredAliasValue(alias),
       mappedDocument,
       primaryAccountId: null,
-      aliasCoreStatus: response.alias_status?.trim() || 'ENABLED',
+      aliasCoreStatus: response.alias_status?.trim() || 'UNRG',
     },
     appConfig.simulation.bankCode,
   );

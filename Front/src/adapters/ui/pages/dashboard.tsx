@@ -139,6 +139,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   <th className="col-apellido">Apellido</th>
                   <th className="col-documento">Documento</th>
                   <th className="col-alias">Alias</th>
+                  <th className="col-banco">Código banco</th>
+                  <th className="col-status-cuenta">Status cuenta</th>
+                  <th className="col-status-alias">Status alias</th>
                   <th className="col-acciones">Acciones</th>
                 </tr>
               </thead>
@@ -149,14 +152,21 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   const isDeletingRow = deletingCustomerId === alias.customer_id;
 
                   return (
-                    <tr key={`${alias.customer_id}-${alias.alias}`}>
+                    <tr key={alias.customer_id}>
                       <td className="col-num">{itemNumber}</td>
                       <td className="col-nombre">{alias.first_name}</td>
                       <td className="col-apellido">{alias.last_name}</td>
                       <td className="col-documento">
                         {alias.document_type}-{alias.document_number}
                       </td>
-                      <td className="col-alias text-blue">{alias.alias}</td>
+                      <td className="col-alias text-blue">{alias.alias || '—'}</td>
+                      <td className="col-banco">
+                        {alias.accounts.map((account) => account.bank).join(', ') || '—'}
+                      </td>
+                      <td className="col-status-cuenta">
+                        {alias.accounts.map((account) => account.status).join(', ') || '—'}
+                      </td>
+                      <td className="col-status-alias">{alias.alias_status || '—'}</td>
                       <td className="col-acciones">
                         <button
                           type="button"

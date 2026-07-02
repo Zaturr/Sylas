@@ -1,10 +1,4 @@
-import type {
-  CheckAliasResult,
-  DeleteAliasResult,
-  RegisterAliasResult,
-  UpdateAliasStatusInput,
-  UpdateAliasStatusResult,
-} from '../../../../application/simulation/authSimulation.port';
+import type { CheckAliasResult, DeleteAliasResult, RegisterAliasResult, UpdateAliasStatusInput, UpdateAliasStatusResult } from '../../../../application/simulation/authSimulation.port';
 import type { SimulationSession } from '../../../../domain/simulation/auth.types';
 import { isPendingAlias } from '../../../../domain/simulation/auth.types';
 import { parseDocumentInput } from '../../../../domain/simulation/documentParser';
@@ -13,13 +7,9 @@ import { SIMF_REASON_NOT_FOUND } from '../../../../domain/simulation/simf.consta
 import { SIMF_ALIAS_STATUS } from '../../../../domain/simulation/aliasStatus';
 import { appConfig } from '../../app.config';
 import {
-  buildRegistrationPayloadFromSession,
-} from '../shared/registrationPayload.builder';
-import {
   resolveByDocument,
-  deleteAliasByValue,
   createAliasForCustomer,
-  postRegisterUser,
+  deleteAliasByValue,
 } from './aliasHttp.client';
 import {
   buildAliasCheckFromResolve,
@@ -121,31 +111,26 @@ export async function registerAlias(
   const document = session.mappedDocument;
   const currentAlias = session.alias?.trim() || null;
 
+  if (session.hasConfiguredAlias) {
+    return {
+      ok: false,
+      message: 'Este titular ya tiene un alias configurado.',
+    };
+  }
+
   if (currentAlias && isPendingAlias(currentAlias)) {
     const deleted = await deleteAliasByValue(currentAlias, signal);
     if (!deleted) {
       return {
         ok: false,
-        message: 'No se pudo reemplazar el alias temporal del titular.',
+        message: 'No se pudo eliminar el alias temporal previo.',
       };
     }
+  }
 
-    const payload = buildRegistrationPayloadFromSession(session, trimmedAlias);
-    const registered = await postRegisterUser(payload, signal, 'No se pudo registrar el alias');
-
-    if (!registered.ok) {
-      return { ok: false, message: registered.message };
-    }
-  } else if (!session.hasConfiguredAlias) {
-    const created = await createAliasForCustomer(session.customer.id, trimmedAlias, signal);
-    if (!created.ok) {
-      return { ok: false, message: created.message };
-    }
-  } else {
-    return {
-      ok: false,
-      message: 'Este titular ya tiene un alias configurado.',
-    };
+  const created = await createAliasForCustomer(session.customer.id, trimmedAlias, signal);
+  if (!created.ok) {
+    return { ok: false, message: created.message };
   }
 
   const resolved = await resolveByDocument(

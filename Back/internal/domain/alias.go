@@ -3,8 +3,9 @@ package domain
 import "time"
 
 const (
-	AliasStatusEnabled  = "ENABLED"
-	AliasStatusDisabled = "DISABLED"
+	AliasStatusEnabled      = "ENABLED"
+	AliasStatusDisabled     = "DISABLED"
+	AliasStatusUnregistered = "UNRG"
 )
 
 type Alias struct {
@@ -18,6 +19,7 @@ type Alias struct {
 type AccountDetail struct {
 	Bank          string `json:"bank"`
 	AccountNumber string `json:"account_number"`
+	Status        string `json:"status"`
 }
 
 // AliasDetail agrupa la información completa de un alias para el panel de control
@@ -28,6 +30,7 @@ type AliasDetail struct {
 	FirstName      string          `json:"first_name"`
 	LastName       string          `json:"last_name"`
 	AliasValue     string          `json:"alias"`
+	AliasStatus    string          `json:"alias_status"`
 	Email          string          `json:"email"`
 	Phone          string          `json:"phone"`
 	Accounts       []AccountDetail `json:"accounts"`

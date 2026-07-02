@@ -9,19 +9,18 @@ export function buildRegistrationPayload(
   firstName: string,
   lastName: string,
   accountNumber: string,
-  aliasValue: string,
+  aliasValue?: string,
 ) {
   const normalizedType = documentType.toUpperCase();
   const docKey = `${normalizedType.toLowerCase()}${documentNumber}`;
 
-  return {
+  const payload: Record<string, unknown> = {
     document_type: normalizedType,
     document_number: documentNumber,
     first_name: firstName.trim(),
     last_name: lastName.trim(),
     email: `${docKey}@simf.local`,
     phone: `SIMF${normalizedType}${documentNumber}`,
-    alias_value: aliasValue,
     accounts: [
       {
         bank_id: appConfig.simulation.bankCode,
@@ -30,6 +29,13 @@ export function buildRegistrationPayload(
       },
     ],
   };
+
+  const trimmedAlias = aliasValue?.trim();
+  if (trimmedAlias) {
+    payload.alias_value = trimmedAlias;
+  }
+
+  return payload;
 }
 
 export function buildRegistrationPayloadFromSession(

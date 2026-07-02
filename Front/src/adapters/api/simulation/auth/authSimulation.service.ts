@@ -74,9 +74,6 @@ export async function createAccount(
     };
   }
 
-  const docKey = `${document.documentType.toLowerCase()}${document.documentNumber}`;
-  const pendingAlias = `pending.${docKey}`;
-
   let lastError = 'No se pudo crear la cuenta.';
 
   for (let attempt = 0; attempt < appConfig.simulation.maxAccountGenerationAttempts; attempt += 1) {
@@ -91,7 +88,6 @@ export async function createAccount(
       input.firstName,
       input.lastName,
       accountNumber,
-      pendingAlias,
     );
 
     const registered = await postRegisterUser(payload, signal, 'Error al crear la cuenta');
