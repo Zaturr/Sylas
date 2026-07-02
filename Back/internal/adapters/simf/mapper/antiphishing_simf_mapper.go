@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // BuildAntiphishingFormatReport responde RJCT + RR10 por parámetros inválidos.

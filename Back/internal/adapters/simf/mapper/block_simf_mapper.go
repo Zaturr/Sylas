@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"Alias_bdsa/Back/internal/application"
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	"Alias_bdca/Back/internal/application"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // MapBlockSimfBusinessReason traduce errores de bloqueo SIMF a Rsn en IdVrfctnRpt.

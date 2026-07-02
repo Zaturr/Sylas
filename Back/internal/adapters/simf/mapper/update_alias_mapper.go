@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strings"
 
-	"Alias_bdsa/Back/internal/application"
-	"Alias_bdsa/Back/internal/domain"
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	"Alias_bdca/Back/internal/application"
+	"Alias_bdca/Back/internal/domain"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // TitularFromCustomer arma Pty para respuestas IdVrfctnRpt de actualización.

@@ -1,14 +1,20 @@
-import type { CheckAliasResult, DeleteAliasResult, RegisterAliasResult, UpdateAliasStatusInput, UpdateAliasStatusResult } from '../../../../application/simulation/authSimulation.port';
+import type {
+  CheckAliasResult,
+  DeleteAliasResult,
+  RegisterAliasResult,
+  UpdateAliasStatusInput,
+  UpdateAliasStatusResult,
+} from '../../../../application/simulation/authSimulation.port';
 import type { SimulationSession } from '../../../../domain/simulation/auth.types';
 import { isPendingAlias } from '../../../../domain/simulation/auth.types';
 import { parseDocumentInput } from '../../../../domain/simulation/documentParser';
 import { validateAliasValue } from '../../../../domain/simulation/aliasValidation';
 import { SIMF_REASON_NOT_FOUND } from '../../../../domain/simulation/simf.constants';
 import { SIMF_ALIAS_STATUS } from '../../../../domain/simulation/aliasStatus';
+import { buildSimfTraceSessionKey } from '../../../../domain/peticiones';
 import { appConfig } from '../../app.config';
 import {
   resolveByDocument,
-  createAliasForCustomer,
   deleteAliasByValue,
 } from './aliasHttp.client';
 import {
@@ -16,176 +22,257 @@ import {
   mapAliasCheckFromResolve,
 } from './aliasCheck.mapper';
 import { buildFilteredSession } from '../auth/sessionAccount.service';
-import { updateAliasViaSimf } from '../simf/simfAliasUpdate.client';
-import { blockAliasViaSimf } from '../simf/simfAliasBlock.client';
+import type { createBlockAliasViaSimf } from '../simf/simfAliasBlock.client';
+import type { createRegisterAliasViaSimf } from '../simf/simfAliasCreate.client';
+import type { createResolveAliasViaSimf } from '../simf/simfAliasResolve.client';
+import type { createUpdateAliasViaSimf } from '../simf/simfAliasUpdate.client';
 
-export async function checkAliasByDocument(
-  documentInput: string,
-  signal?: AbortSignal,
-): Promise<CheckAliasResult> {
-  const document = parseDocumentInput(documentInput);
-  if (!document) {
-    return {
-      ok: false,
-      message: 'Formato de cédula inválido (ej. V12345678).',
-    };
-  }
+export type SimfAliasClients = {
+  resolveAliasViaSimf: ReturnType<typeof createResolveAliasViaSimf>;
+  registerAliasViaSimf: ReturnType<typeof createRegisterAliasViaSimf>;
+  blockAliasViaSimf: ReturnType<typeof createBlockAliasViaSimf>;
+  updateAliasViaSimf: ReturnType<typeof createUpdateAliasViaSimf>;
+};
 
-  const resolved = await resolveByDocument(
-    document.documentType,
-    document.documentNumber,
-    signal,
+export type AliasSimulationService = {
+  checkAliasByDocument(
+    documentInput: string,
+    signal?: AbortSignal,
+  ): Promise<CheckAliasResult>;
+  updateAliasStatus(
+    session: SimulationSession,
+    input: UpdateAliasStatusInput,
+    signal?: AbortSignal,
+  ): Promise<UpdateAliasStatusResult>;
+  registerAlias(
+    session: SimulationSession,
+    aliasValue: string,
+    signal?: AbortSignal,
+  ): Promise<RegisterAliasResult>;
+  deleteAlias(
+    session: SimulationSession,
+    signal?: AbortSignal,
+  ): Promise<DeleteAliasResult>;
+};
+
+function getSessionKeyFromSimulationSession(session: SimulationSession): string {
+  return buildSimfTraceSessionKey(
+    session.mappedDocument.documentType,
+    session.mappedDocument.documentNumber,
   );
+}
 
-  if (!resolved.ok) {
-    if (resolved.status === 404) {
+export function createAliasSimulationService(
+  simfClients: SimfAliasClients,
+): AliasSimulationService {
+  return {
+    async checkAliasByDocument(documentInput, signal) {
+      const document = parseDocumentInput(documentInput);
+      if (!document) {
+        return {
+          ok: false,
+          message: 'Formato de cédula inválido (ej. V12345678).',
+        };
+      }
+
+      const sessionKey = buildSimfTraceSessionKey(
+        document.documentType,
+        document.documentNumber,
+      );
+
+      await simfClients.resolveAliasViaSimf(
+        document.documentType,
+        document.documentNumber,
+        appConfig.simulation.bankCode,
+        sessionKey,
+        signal,
+      );
+
+      const resolved = await resolveByDocument(
+        document.documentType,
+        document.documentNumber,
+        signal,
+      );
+
+      if (!resolved.ok) {
+        if (resolved.status === 404) {
+          return {
+            ok: true,
+            status: 'not-found',
+            reason: SIMF_REASON_NOT_FOUND,
+            message: 'No se encontró un alias configurado para esta cédula.',
+            agentStatus: SIMF_ALIAS_STATUS.UNREGISTERED,
+            bankCode: appConfig.simulation.bankCode,
+          };
+        }
+
+        return {
+          ok: false,
+          message: resolved.message,
+        };
+      }
+
+      return mapAliasCheckFromResolve(resolved.data);
+    },
+
+    async updateAliasStatus(session, input, signal) {
+      const sessionKey = getSessionKeyFromSimulationSession(session);
+      const updated = await simfClients.updateAliasViaSimf(
+        input.aliasValue,
+        input.bankCode,
+        input.targetStatus,
+        sessionKey,
+        signal,
+      );
+
+      if (!updated.ok) {
+        return { ok: false, message: updated.message };
+      }
+
+      await simfClients.resolveAliasViaSimf(
+        session.mappedDocument.documentType,
+        session.mappedDocument.documentNumber,
+        input.bankCode,
+        sessionKey,
+        signal,
+      );
+
+      const document = session.mappedDocument;
+      const resolved = await resolveByDocument(
+        document.documentType,
+        document.documentNumber,
+        signal,
+      );
+
+      if (!resolved.ok) {
+        return {
+          ok: false,
+          message: 'El estado se actualizó, pero no se pudo refrescar la consulta.',
+        };
+      }
+
+      const check = buildAliasCheckFromResolve(resolved.data);
+
       return {
         ok: true,
-        status: 'not-found',
-        reason: SIMF_REASON_NOT_FOUND,
-        message: 'No se encontró un alias configurado para esta cédula.',
-        agentStatus: SIMF_ALIAS_STATUS.UNREGISTERED,
-        bankCode: appConfig.simulation.bankCode,
+        session: buildFilteredSession(resolved.data, document),
+        check,
       };
-    }
+    },
 
-    return {
-      ok: false,
-      message: resolved.message,
-    };
-  }
+    async registerAlias(session, aliasValue, signal) {
+      const validation = validateAliasValue(aliasValue);
+      if (!validation.ok) {
+        return { ok: false, message: validation.error };
+      }
 
-  return mapAliasCheckFromResolve(resolved.data);
-}
+      const trimmedAlias = validation.value;
+      const document = session.mappedDocument;
+      const currentAlias = session.alias?.trim() || null;
 
-export async function updateAliasStatus(
-  session: SimulationSession,
-  input: UpdateAliasStatusInput,
-  signal?: AbortSignal,
-): Promise<UpdateAliasStatusResult> {
-  const updated = await updateAliasViaSimf(
-    input.aliasValue,
-    input.bankCode,
-    input.targetStatus,
-    signal,
-  );
+      if (session.hasConfiguredAlias) {
+        return {
+          ok: false,
+          message: 'Este titular ya tiene un alias configurado.',
+        };
+      }
 
-  if (!updated.ok) {
-    return { ok: false, message: updated.message };
-  }
+      if (currentAlias && isPendingAlias(currentAlias)) {
+        const deleted = await deleteAliasByValue(currentAlias, signal);
+        if (!deleted) {
+          return {
+            ok: false,
+            message: 'No se pudo eliminar el alias temporal previo.',
+          };
+        }
+      }
 
-  const document = session.mappedDocument;
-  const resolved = await resolveByDocument(
-    document.documentType,
-    document.documentNumber,
-    signal,
-  );
+      const created = await simfClients.registerAliasViaSimf(
+        session,
+        trimmedAlias,
+        appConfig.simulation.bankCode,
+        getSessionKeyFromSimulationSession(session),
+        signal,
+      );
+      if (!created.ok) {
+        return { ok: false, message: created.message };
+      }
 
-  if (!resolved.ok) {
-    return {
-      ok: false,
-      message: 'El estado se actualizó, pero no se pudo refrescar la consulta.',
-    };
-  }
+      await simfClients.resolveAliasViaSimf(
+        document.documentType,
+        document.documentNumber,
+        appConfig.simulation.bankCode,
+        getSessionKeyFromSimulationSession(session),
+        signal,
+      );
 
-  const check = buildAliasCheckFromResolve(resolved.data);
+      const resolved = await resolveByDocument(
+        document.documentType,
+        document.documentNumber,
+        signal,
+      );
 
-  return {
-    ok: true,
-    session: buildFilteredSession(resolved.data, document),
-    check,
-  };
-}
+      if (!resolved.ok) {
+        return {
+          ok: false,
+          message: 'El alias se registró, pero no se pudo refrescar la sesión.',
+        };
+      }
 
-export async function registerAlias(
-  session: SimulationSession,
-  aliasValue: string,
-  signal?: AbortSignal,
-): Promise<RegisterAliasResult> {
-  const validation = validateAliasValue(aliasValue);
-  if (!validation.ok) {
-    return { ok: false, message: validation.error };
-  }
-
-  const trimmedAlias = validation.value;
-  const document = session.mappedDocument;
-  const currentAlias = session.alias?.trim() || null;
-
-  if (session.hasConfiguredAlias) {
-    return {
-      ok: false,
-      message: 'Este titular ya tiene un alias configurado.',
-    };
-  }
-
-  if (currentAlias && isPendingAlias(currentAlias)) {
-    const deleted = await deleteAliasByValue(currentAlias, signal);
-    if (!deleted) {
       return {
-        ok: false,
-        message: 'No se pudo eliminar el alias temporal previo.',
+        ok: true,
+        session: buildFilteredSession(resolved.data, document),
       };
-    }
-  }
+    },
 
-  const created = await createAliasForCustomer(session.customer.id, trimmedAlias, signal);
-  if (!created.ok) {
-    return { ok: false, message: created.message };
-  }
+    async deleteAlias(session, signal) {
+      const aliasValue = session.alias?.trim();
+      if (!aliasValue || isPendingAlias(aliasValue)) {
+        return { ok: false, message: 'No hay un alias configurado para bloquear.' };
+      }
 
-  const resolved = await resolveByDocument(
-    document.documentType,
-    document.documentNumber,
-    signal,
-  );
+      const bankCode = appConfig.simulation.bankCode;
+      const sessionKey = getSessionKeyFromSimulationSession(session);
+      const blocked = await simfClients.blockAliasViaSimf(
+        aliasValue,
+        bankCode,
+        sessionKey,
+        signal,
+      );
 
-  if (!resolved.ok) {
-    return {
-      ok: false,
-      message: 'El alias se registró, pero no se pudo refrescar la sesión.',
-    };
-  }
+      if (!blocked.ok) {
+        return { ok: false, message: blocked.message };
+      }
 
-  return {
-    ok: true,
-    session: buildFilteredSession(resolved.data, document),
-  };
-}
+      await simfClients.resolveAliasViaSimf(
+        session.mappedDocument.documentType,
+        session.mappedDocument.documentNumber,
+        bankCode,
+        sessionKey,
+        signal,
+      );
 
-export async function deleteAlias(
-  session: SimulationSession,
-  signal?: AbortSignal,
-): Promise<DeleteAliasResult> {
-  const aliasValue = session.alias?.trim();
-  if (!aliasValue || isPendingAlias(aliasValue)) {
-    return { ok: false, message: 'No hay un alias configurado para bloquear.' };
-  }
+      const document = session.mappedDocument;
+      const resolved = await resolveByDocument(
+        document.documentType,
+        document.documentNumber,
+        signal,
+      );
 
-  const bankCode = appConfig.simulation.bankCode;
-  const blocked = await blockAliasViaSimf(aliasValue, bankCode, signal);
-  if (!blocked.ok) {
-    return { ok: false, message: blocked.message };
-  }
+      if (!resolved.ok) {
+        return {
+          ok: false,
+          message: 'El alias se bloqueó, pero no se pudo refrescar la consulta.',
+        };
+      }
 
-  const document = session.mappedDocument;
-  const resolved = await resolveByDocument(
-    document.documentType,
-    document.documentNumber,
-    signal,
-  );
+      const check = buildAliasCheckFromResolve(resolved.data);
 
-  if (!resolved.ok) {
-    return {
-      ok: false,
-      message: 'El alias se bloqueó, pero no se pudo refrescar la consulta.',
-    };
-  }
-
-  const check = buildAliasCheckFromResolve(resolved.data);
-
-  return {
-    ok: true,
-    session: buildFilteredSession(resolved.data, document),
-    check,
+      return {
+        ok: true,
+        session: buildFilteredSession(resolved.data, document),
+        check,
+      };
+    },
   };
 }

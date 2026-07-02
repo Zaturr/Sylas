@@ -14,7 +14,11 @@ import {
 import { isUserModifiableAliasStatus } from '../../../../domain/simulation/aliasStatus';
 import { formatDocumentInput } from '../../../../domain/simulation';
 import { validateAliasValue } from '../../../../domain/simulation/aliasValidation';
-import { useAuthSimulationService } from '../providers/SimulationServicesProvider';
+import { buildSimfTraceSessionKey } from '../../../../domain/peticiones';
+import {
+  useAuthSimulationService,
+  useSimfRequestTracePort,
+} from '../providers/SimulationServicesProvider';
 
 function mapServiceCheckToState(
   check: Extract<CheckAliasResult, { ok: true }>,
@@ -42,6 +46,7 @@ function mapServiceCheckToState(
 
 export function useSimulationAuth() {
   const authSimulationService = useAuthSimulationService();
+  const simfRequestTracePort = useSimfRequestTracePort();
   const [state, dispatch] = useReducer(
     simulationAuthReducer,
     undefined,
@@ -308,8 +313,17 @@ export function useSimulationAuth() {
   }, []);
 
   const logout = useCallback(() => {
+    if (state.session) {
+      simfRequestTracePort.clearSession(
+        buildSimfTraceSessionKey(
+          state.session.mappedDocument.documentType,
+          state.session.mappedDocument.documentNumber,
+        ),
+      );
+    }
+
     dispatch({ type: 'LOGOUT' });
-  }, []);
+  }, [simfRequestTracePort, state.session]);
 
   return {
     auth: state,

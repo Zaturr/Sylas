@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"Alias_bdsa/Back/internal/domain"
-	"Alias_bdsa/Back/internal/ports"
+	"Alias_bdca/Back/internal/domain"
+	"Alias_bdca/Back/internal/ports"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

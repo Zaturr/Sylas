@@ -1,9 +1,9 @@
 package application
 
 import (
-	"Alias_bdsa/Back/internal/adapters/simulation"
-	"Alias_bdsa/Back/internal/domain"
-	"Alias_bdsa/Back/internal/ports"
+	"Alias_bdca/Back/internal/adapters/simulation"
+	"Alias_bdca/Back/internal/domain"
+	"Alias_bdca/Back/internal/ports"
 	"context"
 	"errors"
 	"fmt"

@@ -1,10 +1,10 @@
 package main
 
 import (
-	httphandler "Alias_bdsa/Back/internal/adapters/http/handler"
-	simfadapter "Alias_bdsa/Back/internal/adapters/simf"
-	"Alias_bdsa/Back/internal/adapters/storage/sqlite"
-	"Alias_bdsa/Back/internal/application"
+	httphandler "Alias_bdca/Back/internal/adapters/http/handler"
+	simfadapter "Alias_bdca/Back/internal/adapters/simf"
+	"Alias_bdca/Back/internal/adapters/storage/sqlite"
+	"Alias_bdca/Back/internal/application"
 	"fmt"
 	"log"
 

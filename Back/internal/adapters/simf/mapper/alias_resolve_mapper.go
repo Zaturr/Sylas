@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"Alias_bdsa/Back/internal/domain"
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	"Alias_bdca/Back/internal/domain"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // AliasResolveCoreData agrupa lo que devuelve la BD del core: titular, alias y cuentas.

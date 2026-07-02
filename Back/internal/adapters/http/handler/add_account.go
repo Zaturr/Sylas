@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"Alias_bdsa/Back/internal/domain"
+	"Alias_bdca/Back/internal/domain"
 	"time"
 
 	"github.com/gin-gonic/gin"

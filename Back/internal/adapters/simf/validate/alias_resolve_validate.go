@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // ValidateAliasResolveParams valida los path params del endpoint alias resolve

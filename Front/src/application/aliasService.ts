@@ -1,10 +1,17 @@
 import type { Customer } from '../domain/user';
 import type { Account } from '../domain/account';
-import type { Alias, PaginatedAliasResponse } from '../domain/alias';
+import type { PaginatedAliasResponse } from '../domain/alias';
 
 export interface CreateFullUserService {
-  customer: Omit<Customer, 'id' | 'created_at'>;
-  alias: Omit<Alias, 'id' | 'customer_id' | 'created_at'>;
+  customer: {
+    document_type: string;
+    document_number: string;
+    first_name: string;
+    last_name: string;
+  };
+  alias: {
+    alias_value: string;
+  };
 }
 
 export interface ResolveAliasService {

@@ -3,10 +3,10 @@ package simf
 import (
 	"net/http"
 
-	"Alias_bdsa/Back/internal/adapters/simf/mapper"
-	"Alias_bdsa/Back/internal/adapters/simf/response"
-	"Alias_bdsa/Back/internal/adapters/simf/validate"
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	"Alias_bdca/Back/internal/adapters/simf/mapper"
+	"Alias_bdca/Back/internal/adapters/simf/response"
+	"Alias_bdca/Back/internal/adapters/simf/validate"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 
 	"github.com/gin-gonic/gin"
 )

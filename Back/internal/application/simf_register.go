@@ -1,7 +1,7 @@
 package application
 
 import (
-	"Alias_bdsa/Back/internal/domain"
+	"Alias_bdca/Back/internal/domain"
 	"context"
 	"fmt"
 	"strings"

@@ -64,7 +64,7 @@ export function AppShell({
               >
                 ☰
               </button>
-              <h1 className="main-title">BDSA Alias Front</h1>
+              <h1 className="main-title">BDCA Alias</h1>
             </div>
 
             

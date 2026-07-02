@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"Alias_bdsa/Back/internal/application"
-	"Alias_bdsa/Back/internal/domain"
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	"Alias_bdca/Back/internal/application"
+	"Alias_bdca/Back/internal/domain"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 
 	"github.com/google/uuid"
 )

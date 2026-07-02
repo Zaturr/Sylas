@@ -2,9 +2,6 @@ export type ValidatePaymentDraftResult =
   | { ok: true }
   | { ok: false; error: string };
 
-export const SENDER_BLOCKED_ALIAS_PAYMENT_MESSAGE =
-  'Su alias está bloqueado. No se puede pagar.';
-
 export const DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE =
   'No se puede realizar el pago: el alias destino está bloqueado (BLKD).';
 

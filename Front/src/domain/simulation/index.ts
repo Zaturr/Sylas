@@ -21,12 +21,11 @@ export {
   getRecipientInitials,
 } from './formatters';
 
-export { validatePaymentDraft, type ValidatePaymentDraftResult } from './paymentValidation';
 export {
-  SENDER_BLOCKED_ALIAS_PAYMENT_MESSAGE,
-  DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE,
+  validatePaymentDraft,
+  type ValidatePaymentDraftResult,
 } from './paymentValidation';
-export { getSenderPaymentBlockMessage } from './paymentEligibility';
+export { DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE } from './paymentValidation';
 
 export {
   validateCreateAccountDraft,

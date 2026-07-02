@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
+import type { SimfRequestTracePort } from '../../../../application/peticiones';
 import type { AuthSimulationService } from '../../../../application/simulation/authSimulation.port';
 import type { PaymentSimulationService } from '../../../../application/simulation/paymentSimulation.port';
 import { defaultAppServices } from '../../../di/createAppServices';
@@ -41,4 +42,8 @@ export function usePaymentSimulationService(): PaymentSimulationService {
 
 export function useAuthSimulationService(): AuthSimulationService {
   return useSimulationServices().authSimulationService;
+}
+
+export function useSimfRequestTracePort(): SimfRequestTracePort {
+  return useSimulationServices().simfRequestTracePort;
 }

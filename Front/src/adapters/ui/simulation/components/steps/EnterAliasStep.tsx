@@ -29,8 +29,7 @@ export function EnterAliasStep({
           Ingresa un alias registrado en el sistema y el monto a enviar.
         </p>
         <p className="sim-flow__notice">
-          Si su alias está bloqueado (BLKD), no podrá pagar. Si el alias destino está bloqueado
-          (BLKD), no se puede realizar el pago.
+          Si el alias destino está bloqueado (BLKD), no se puede realizar el pago.
         </p>
       </div>
 

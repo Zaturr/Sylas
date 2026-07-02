@@ -128,7 +128,7 @@ export function AliasManagementStep({
           )}
           {isBlocked && (
             <p className="sim-card__subtitle">
-              Este alias fue bloqueado (BLKD). No se elimina del sistema; la baja es global SIMF.
+              Este alias fue bloqueado (BLKD). No se elimina del sistema; la baja es global BDCA.
             </p>
           )}
         </div>
@@ -220,7 +220,7 @@ export function AliasManagementStep({
       <SimConfirmModal
         open={deleteConfirmOpen}
         title="Bloquear alias"
-        message="¿Confirmas el bloqueo global del alias (BLKD)? No se eliminará del sistema; se registrará la baja vía SIMF."
+        message="¿Confirmas el bloqueo global del alias (BLKD)? No se eliminará del sistema; se registrará la baja vía BDCA."
         confirmLabel="Bloquear"
         cancelLabel="Cancelar"
         isSubmitting={isSubmitting}

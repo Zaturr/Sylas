@@ -1,7 +1,7 @@
 package simf
 
 import (
-	"Alias_bdsa/Back/internal/ports"
+	"Alias_bdca/Back/internal/ports"
 )
 
 // SIMFHandler expone los endpoints del protocolo SIMF.

@@ -1,38 +1,52 @@
+import type { SimfHttpClient } from '../../peticiones/simfHttpClient';
+import type { SimfTraceSessionKey } from '../../../../domain/peticiones';
 import { SIMF_BASE_URL } from './simf.config';
 import { buildSimfBlockPayload } from './simfBlockPayload.builder';
 
-export async function blockAliasViaSimf(
-  aliasValue: string,
-  bankCode: string,
-  signal?: AbortSignal,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  const response = await fetch(
-    `${SIMF_BASE_URL}/aliases/delete/${encodeURIComponent(aliasValue)}/${bankCode}`,
-    {
+type SimfVerificationReport = {
+  IdVrfctnRpt?: {
+    Rpt?: {
+      Result?: string;
+      Rsn?: string;
+    };
+  };
+};
+
+export function createBlockAliasViaSimf(simfHttpClient: SimfHttpClient) {
+  return async function blockAliasViaSimf(
+    aliasValue: string,
+    bankCode: string,
+    sessionKey: SimfTraceSessionKey,
+    signal?: AbortSignal,
+  ): Promise<{ ok: true } | { ok: false; message: string }> {
+    const body = buildSimfBlockPayload(aliasValue, bankCode);
+
+    const result = await simfHttpClient({
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildSimfBlockPayload(aliasValue, bankCode)),
+      url: `${SIMF_BASE_URL}/aliases/delete/${encodeURIComponent(aliasValue)}/${bankCode}`,
+      sessionKey,
+      body,
       signal,
-    },
-  );
+    });
 
-  if (!response.ok) {
-    return {
-      ok: false,
-      message: 'No se pudo bloquear el alias.',
-    };
-  }
+    if (!result.ok) {
+      return {
+        ok: false,
+        message: 'No se pudo bloquear el alias.',
+      };
+    }
 
-  const data = await response.json().catch(() => null);
-  const resultCode = data?.IdVrfctnRpt?.Rpt?.Result?.trim();
+    const data = result.data as SimfVerificationReport | null;
+    const resultCode = data?.IdVrfctnRpt?.Rpt?.Result?.trim();
 
-  if (resultCode !== 'ACCP') {
-    const reason = data?.IdVrfctnRpt?.Rpt?.Rsn?.trim() || 'RJCT';
-    return {
-      ok: false,
-      message: `Bloqueo rechazado (${reason}).`,
-    };
-  }
+    if (resultCode !== 'ACCP') {
+      const reason = data?.IdVrfctnRpt?.Rpt?.Rsn?.trim() || 'RJCT';
+      return {
+        ok: false,
+        message: `Bloqueo rechazado (${reason}).`,
+      };
+    }
 
-  return { ok: true };
+    return { ok: true };
+  };
 }

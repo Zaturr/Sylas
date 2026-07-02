@@ -1,8 +1,8 @@
 package response
 
 import (
-	"Alias_bdsa/Back/internal/adapters/simf/mapper"
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	"Alias_bdca/Back/internal/adapters/simf/mapper"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // BuildFormatErrorMessage responde RJCT + RR10 por parámetros de path inválidos.

@@ -3,7 +3,7 @@ package validate
 import (
 	"strings"
 
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // ValidateBlockSimfParams valida path params + body IdModAdvc de bloqueo/eliminación global.

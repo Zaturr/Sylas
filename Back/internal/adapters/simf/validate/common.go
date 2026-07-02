@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 // ErrFormat indica que un valor no cumple el esquema SIMF (Rsn: RR10).

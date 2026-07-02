@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	simfdomain "Alias_bdsa/Back/internal/domain/simf"
+	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
 const defaultProcessingCenter = "01"

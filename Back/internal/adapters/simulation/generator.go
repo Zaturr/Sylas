@@ -1,7 +1,7 @@
 package simulation
 
 import (
-	"Alias_bdsa/Back/internal/domain"
+	"Alias_bdca/Back/internal/domain"
 	"fmt"
 	"math/rand"
 	"strings"

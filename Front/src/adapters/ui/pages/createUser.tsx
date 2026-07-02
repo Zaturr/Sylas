@@ -13,8 +13,6 @@ const initialForm = {
   document_number: '',
   first_name: '',
   last_name: '',
-  email: '',
-  phone: '',
   alias_value: '',
 };
 
@@ -42,8 +40,6 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
           document_number: form.document_number.trim(),
           first_name: form.first_name.trim(),
           last_name: form.last_name.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
         },
         alias: {
           alias_value: form.alias_value.trim(),
@@ -123,30 +119,6 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
                 disabled={submitting}
                 value={form.last_name}
                 onChange={(event) => updateField('last_name', event.target.value)}
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                id="email"
-                type="email"
-                required
-                disabled={submitting}
-                value={form.email}
-                onChange={(event) => updateField('email', event.target.value)}
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="phone">Teléfono</label>
-              <input
-                id="phone"
-                type="tel"
-                required
-                disabled={submitting}
-                value={form.phone}
-                onChange={(event) => updateField('phone', event.target.value)}
               />
             </div>
 
