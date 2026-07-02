@@ -27,6 +27,7 @@ export function createResolveAliasViaSimf(simfHttpClient: SimfHttpClient) {
       url,
       sessionKey,
       signal,
+      recordTrace: true,
     });
 
     return {

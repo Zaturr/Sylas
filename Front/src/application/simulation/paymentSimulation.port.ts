@@ -1,3 +1,4 @@
+import type { SimfTraceSessionKey } from '../../domain/peticiones';
 import type { PaymentRecipient } from '../../domain/simulation';
 
 export type ResolvePaymentAliasResult =
@@ -11,6 +12,7 @@ export type ExecutePaymentResult =
 export interface PaymentSimulationService {
   resolvePaymentAlias(
     aliasValue: string,
+    sessionKey: SimfTraceSessionKey,
     signal?: AbortSignal,
   ): Promise<ResolvePaymentAliasResult>;
 

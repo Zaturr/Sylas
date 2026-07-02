@@ -1,42 +1,18 @@
-import type { AliasService } from '../../../application/aliasService';
 import { isPendingAlias } from '../../../domain/simulation/auth.types';
-import { isAliasGloballyBlocked } from '../../../domain/simulation/aliasStatus';
-import { DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE } from '../../../domain/simulation/paymentValidation';
-import type { PaymentRecipient } from '../../../domain/simulation';
 import type {
   ExecutePaymentResult,
   PaymentSimulationService,
   ResolvePaymentAliasResult,
 } from '../../../application/simulation/paymentSimulation.port';
+import { appConfig } from '../app.config';
+import { mapAntiphishingResponseToPaymentAlias } from './simf/simfAntiphishing.mapper';
+import type { createResolveAntiphishingViaSimf } from './simf/simfAntiphishing.client';
 
 const PAYMENT_PROCESSING_DELAY_MS = 1800;
 
-function buildRecipient(
-  aliasValue: string,
-  customer: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    document_type: string;
-    document_number: string;
-  },
-): PaymentRecipient | null {
-  const firstName = customer.first_name.trim();
-  const lastName = customer.last_name.trim();
-
-  if (!firstName && !lastName) {
-    return null;
-  }
-
-  return {
-    firstName,
-    lastName,
-    email: customer.email.trim(),
-    documentType: customer.document_type.trim(),
-    documentNumber: customer.document_number.trim(),
-    alias: aliasValue.trim(),
-  };
-}
+type PaymentSimulationDependencies = {
+  resolveAntiphishingViaSimf: ReturnType<typeof createResolveAntiphishingViaSimf>;
+};
 
 function delay(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -64,10 +40,17 @@ function delay(ms: number, signal?: AbortSignal): Promise<void> {
 }
 
 export function createPaymentSimulationService(
-  aliasService: AliasService,
+  dependencies: PaymentSimulationDependencies,
 ): PaymentSimulationService {
+  const { resolveAntiphishingViaSimf } = dependencies;
+  const bankCode = appConfig.simulation.bankCode;
+
   return {
-    async resolvePaymentAlias(aliasValue, signal): Promise<ResolvePaymentAliasResult> {
+    async resolvePaymentAlias(
+      aliasValue,
+      sessionKey,
+      signal,
+    ): Promise<ResolvePaymentAliasResult> {
       const trimmedValue = aliasValue.trim();
 
       if (!trimmedValue) {
@@ -79,23 +62,21 @@ export function createPaymentSimulationService(
       }
 
       try {
-        const resolved = await aliasService.resolveByAliasValue(trimmedValue, signal);
+        const response = await resolveAntiphishingViaSimf(
+          trimmedValue,
+          bankCode,
+          sessionKey,
+          signal,
+        );
 
-        if (isPendingAlias(resolved.alias)) {
-          return { ok: false, error: 'El alias destino no está activo.' };
+        if (!response.ok) {
+          return {
+            ok: false,
+            error: 'No se pudo consultar el alias destino en SIMF.',
+          };
         }
 
-        if (isAliasGloballyBlocked(resolved.alias_status)) {
-          return { ok: false, error: DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE };
-        }
-
-        const recipient = buildRecipient(resolved.alias, resolved.customer);
-
-        if (!recipient) {
-          return { ok: false, error: 'Titular no se encuentra en el sistema' };
-        }
-
-        return { ok: true, recipient };
+        return mapAntiphishingResponseToPaymentAlias(trimmedValue, bankCode, response.data);
       } catch (error) {
         return {
           ok: false,

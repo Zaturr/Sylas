@@ -11,8 +11,7 @@ export function createInMemorySimfRequestTraceStore(): SimfRequestTracePort {
 
   return {
     record(trace) {
-      const current = tracesBySession.get(trace.sessionKey) ?? [];
-      tracesBySession.set(trace.sessionKey, [trace, ...current]);
+      tracesBySession.set(trace.sessionKey, [trace]);
       notify();
     },
 

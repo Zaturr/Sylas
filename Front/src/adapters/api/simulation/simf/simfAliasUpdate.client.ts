@@ -29,6 +29,7 @@ export function createUpdateAliasViaSimf(simfHttpClient: SimfHttpClient) {
       sessionKey,
       body,
       signal,
+      recordTrace: true,
     });
 
     if (!result.ok) {

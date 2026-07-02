@@ -7,6 +7,7 @@ export type SimfHttpClientInput = {
   sessionKey: SimfTraceSessionKey;
   body?: unknown;
   signal?: AbortSignal;
+  recordTrace?: boolean;
 };
 
 export type SimfHttpClientResult = {
@@ -65,17 +66,19 @@ export function createSimfHttpClient(tracePort: SimfRequestTracePort): SimfHttpC
       responseStatus = response.status;
       responseBody = parseResponseBody(await response.text());
 
-      tracePort.record({
-        id: createTraceId(),
-        sessionKey: input.sessionKey,
-        timestamp,
-        method: input.method,
-        path,
-        requestBody,
-        responseStatus,
-        responseBody,
-        durationMs: Math.round(performance.now() - startedAt),
-      });
+      if (input.recordTrace) {
+        tracePort.record({
+          id: createTraceId(),
+          sessionKey: input.sessionKey,
+          timestamp,
+          method: input.method,
+          path,
+          requestBody,
+          responseStatus,
+          responseBody,
+          durationMs: Math.round(performance.now() - startedAt),
+        });
+      }
 
       return {
         ok: response.ok,
@@ -87,17 +90,19 @@ export function createSimfHttpClient(tracePort: SimfRequestTracePort): SimfHttpC
         error: error instanceof Error ? error.message : 'Error de red',
       };
 
-      tracePort.record({
-        id: createTraceId(),
-        sessionKey: input.sessionKey,
-        timestamp,
-        method: input.method,
-        path,
-        requestBody,
-        responseStatus,
-        responseBody,
-        durationMs: Math.round(performance.now() - startedAt),
-      });
+      if (input.recordTrace) {
+        tracePort.record({
+          id: createTraceId(),
+          sessionKey: input.sessionKey,
+          timestamp,
+          method: input.method,
+          path,
+          requestBody,
+          responseStatus,
+          responseBody,
+          durationMs: Math.round(performance.now() - startedAt),
+        });
+      }
 
       throw error;
     }

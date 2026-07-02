@@ -91,3 +91,15 @@ export const hasConfiguredAliasValue = (alias: string | null): boolean => {
   }
   return true;
 };
+
+export function isAliasManagerAuthStep(step: SimulationAuthStep): boolean {
+  return (
+    step === 'alias-splash' ||
+    step === 'alias-management' ||
+    step === 'alias-link-account' ||
+    step === 'create-alias' ||
+    step === 'alias-create-success' ||
+    step === 'alias-status-success' ||
+    step === 'alias-error'
+  );
+}

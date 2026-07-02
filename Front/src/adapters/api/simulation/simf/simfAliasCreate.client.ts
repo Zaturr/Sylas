@@ -36,6 +36,7 @@ export function createRegisterAliasViaSimf(simfHttpClient: SimfHttpClient) {
       sessionKey,
       body: payload,
       signal,
+      recordTrace: true,
     });
 
     if (!result.ok) {

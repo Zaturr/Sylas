@@ -26,14 +26,11 @@
   color: #5a738e;
 }
 
-.peticiones-panel__list {
+.peticiones-panel__content {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-right: 4px;
 }
 
 .peticiones-panel__empty {

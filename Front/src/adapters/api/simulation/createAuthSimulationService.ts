@@ -1,18 +1,13 @@
 import type { AuthSimulationService } from '../../../application/simulation/authSimulation.port';
-import type { AliasSimulationService, SimfAliasClients } from './alias/aliasSimulation.service';
-import { createAuthSimulationHandlers } from './auth/authSimulation.service';
+import { loginByDocument, createAccount } from './auth/authSimulation.service';
+import type { AliasSimulationService } from './alias/aliasSimulation.service';
 
 export function createAuthSimulationService(
   aliasSimulation: AliasSimulationService,
-  simfClients: Pick<SimfAliasClients, 'resolveAliasViaSimf'>,
 ): AuthSimulationService {
-  const authHandlers = createAuthSimulationHandlers({
-    resolveAliasViaSimf: simfClients.resolveAliasViaSimf,
-  });
-
   return {
-    loginByDocument: authHandlers.loginByDocument,
-    createAccount: authHandlers.createAccount,
+    loginByDocument,
+    createAccount,
     checkAliasByDocument: aliasSimulation.checkAliasByDocument,
     updateAliasStatus: aliasSimulation.updateAliasStatus,
     registerAlias: aliasSimulation.registerAlias,

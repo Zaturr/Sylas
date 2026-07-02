@@ -8,6 +8,7 @@ import { createAuthSimulationService } from '../../api/simulation/createAuthSimu
 import { createPaymentSimulationService } from '../../api/simulation/paymentSimulationAdapter';
 import { createBlockAliasViaSimf } from '../../api/simulation/simf/simfAliasBlock.client';
 import { createRegisterAliasViaSimf } from '../../api/simulation/simf/simfAliasCreate.client';
+import { createResolveAntiphishingViaSimf } from '../../api/simulation/simf/simfAntiphishing.client';
 import { createResolveAliasViaSimf } from '../../api/simulation/simf/simfAliasResolve.client';
 import { createUpdateAliasViaSimf } from '../../api/simulation/simf/simfAliasUpdate.client';
 
@@ -20,18 +21,22 @@ export type SimulationServices = {
 export function createSimulationServices(
   aliasService: AliasService,
 ): SimulationServices {
+  void aliasService;
   const { simfRequestTracePort, simfHttpClient } = createPeticionesInfrastructure();
   const simfClients = {
     resolveAliasViaSimf: createResolveAliasViaSimf(simfHttpClient),
     registerAliasViaSimf: createRegisterAliasViaSimf(simfHttpClient),
     blockAliasViaSimf: createBlockAliasViaSimf(simfHttpClient),
     updateAliasViaSimf: createUpdateAliasViaSimf(simfHttpClient),
+    resolveAntiphishingViaSimf: createResolveAntiphishingViaSimf(simfHttpClient),
   };
   const aliasSimulation = createAliasSimulationService(simfClients);
 
   return {
-    authSimulationService: createAuthSimulationService(aliasSimulation, simfClients),
-    paymentSimulationService: createPaymentSimulationService(aliasService),
+    authSimulationService: createAuthSimulationService(aliasSimulation),
+    paymentSimulationService: createPaymentSimulationService({
+      resolveAntiphishingViaSimf: simfClients.resolveAntiphishingViaSimf,
+    }),
     simfRequestTracePort,
   };
 }

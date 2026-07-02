@@ -1,4 +1,5 @@
 import { useCallback, useReducer, useState } from 'react';
+import type { SimfTraceSessionKey } from '../../../../domain/peticiones';
 import {
   createInitialPaymentSimulationState,
   paymentSimulationReducer,
@@ -8,7 +9,7 @@ import {
 } from '../../../../domain/simulation';
 import { usePaymentSimulationService } from '../providers/SimulationServicesProvider';
 
-export function usePaymentSimulation() {
+export function usePaymentSimulation(sessionKey: SimfTraceSessionKey | null) {
   const paymentSimulationService = usePaymentSimulationService();
   const [context, dispatch] = useReducer(
     paymentSimulationReducer,
@@ -42,12 +43,18 @@ export function usePaymentSimulation() {
       return;
     }
 
+    if (!sessionKey) {
+      dispatch({ type: 'SET_ERROR', message: 'Inicia sesión para continuar con el pago.' });
+      return;
+    }
+
     setIsResolvingAlias(true);
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
       const resolveResult = await paymentSimulationService.resolvePaymentAlias(
         context.aliasValue.trim(),
+        sessionKey,
       );
 
       if (!resolveResult.ok) {
@@ -64,7 +71,7 @@ export function usePaymentSimulation() {
     } finally {
       setIsResolvingAlias(false);
     }
-  }, [context.aliasValue, context.amount, paymentSimulationService]);
+  }, [context.aliasValue, context.amount, paymentSimulationService, sessionKey]);
 
   const confirmPayment = useCallback(async () => {
     dispatch({ type: 'CONFIRM_PAYMENT' });

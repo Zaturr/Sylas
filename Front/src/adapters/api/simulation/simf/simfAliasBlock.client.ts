@@ -27,6 +27,7 @@ export function createBlockAliasViaSimf(simfHttpClient: SimfHttpClient) {
       sessionKey,
       body,
       signal,
+      recordTrace: true,
     });
 
     if (!result.ok) {

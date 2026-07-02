@@ -53,6 +53,7 @@ export type {
 export {
   createInitialSimulationAuthState,
   isPendingAlias,
+  isAliasManagerAuthStep,
 } from './auth.types';
 
 export {
