@@ -1,5 +1,7 @@
 import type { AliasService } from '../../../application/aliasService';
 import { isPendingAlias } from '../../../domain/simulation/auth.types';
+import { isAliasGloballyBlocked } from '../../../domain/simulation/aliasStatus';
+import { DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE } from '../../../domain/simulation/paymentValidation';
 import type { PaymentRecipient } from '../../../domain/simulation';
 import type {
   ExecutePaymentResult,
@@ -81,6 +83,10 @@ export function createPaymentSimulationService(
 
         if (isPendingAlias(resolved.alias)) {
           return { ok: false, error: 'El alias destino no está activo.' };
+        }
+
+        if (isAliasGloballyBlocked(resolved.alias_status)) {
+          return { ok: false, error: DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE };
         }
 
         const recipient = buildRecipient(resolved.alias, resolved.customer);

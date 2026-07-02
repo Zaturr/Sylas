@@ -1,14 +1,16 @@
 import { useCallback, useReducer, useState } from 'react';
 import {
   createInitialPaymentSimulationState,
+  getSenderPaymentBlockMessage,
   paymentSimulationReducer,
   validatePaymentDraft,
   type MobileAppTab,
   type PaymentSimulationStep,
+  type SimulationSession,
 } from '../../../../domain/simulation';
 import { usePaymentSimulationService } from '../providers/SimulationServicesProvider';
 
-export function usePaymentSimulation() {
+export function usePaymentSimulation(session: SimulationSession | null) {
   const paymentSimulationService = usePaymentSimulationService();
   const [context, dispatch] = useReducer(
     paymentSimulationReducer,
@@ -23,8 +25,12 @@ export function usePaymentSimulation() {
   }, []);
 
   const startPayment = useCallback(() => {
-    dispatch({ type: 'START_PAYMENT' });
-  }, []);
+    const senderBlockMessage = getSenderPaymentBlockMessage(session);
+    dispatch({
+      type: 'START_PAYMENT',
+      errorMessage: senderBlockMessage ?? undefined,
+    });
+  }, [session]);
 
   const setAliasValue = useCallback((value: string) => {
     dispatch({ type: 'SET_ALIAS', value });
@@ -35,6 +41,12 @@ export function usePaymentSimulation() {
   }, []);
 
   const submitAlias = useCallback(async () => {
+    const senderBlockMessage = getSenderPaymentBlockMessage(session);
+    if (senderBlockMessage) {
+      dispatch({ type: 'SET_ERROR', message: senderBlockMessage });
+      return;
+    }
+
     const draftResult = validatePaymentDraft(context.aliasValue, context.amount);
 
     if (!draftResult.ok) {
@@ -64,9 +76,15 @@ export function usePaymentSimulation() {
     } finally {
       setIsResolvingAlias(false);
     }
-  }, [context.aliasValue, context.amount, paymentSimulationService]);
+  }, [context.aliasValue, context.amount, paymentSimulationService, session]);
 
   const confirmPayment = useCallback(async () => {
+    const senderBlockMessage = getSenderPaymentBlockMessage(session);
+    if (senderBlockMessage) {
+      dispatch({ type: 'PAYMENT_FAILED', message: senderBlockMessage });
+      return;
+    }
+
     dispatch({ type: 'CONFIRM_PAYMENT' });
     setIsProcessingPayment(true);
 
@@ -85,7 +103,7 @@ export function usePaymentSimulation() {
     } finally {
       setIsProcessingPayment(false);
     }
-  }, [context.aliasValue, context.amount, paymentSimulationService]);
+  }, [context.aliasValue, context.amount, paymentSimulationService, session]);
 
   const cancelFlow = useCallback(() => {
     setIsResolvingAlias(false);

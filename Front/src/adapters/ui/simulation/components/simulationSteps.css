@@ -210,6 +210,17 @@
   color: var(--sim-text-muted);
 }
 
+.sim-flow__notice {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sim-orange-bg);
+  border: 1px solid rgba(184, 110, 0, 0.2);
+  color: var(--sim-orange);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .sim-flow__error {
   margin: 0;
   padding: 10px 12px;

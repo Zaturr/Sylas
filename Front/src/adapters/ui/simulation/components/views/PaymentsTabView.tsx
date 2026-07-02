@@ -2,9 +2,15 @@ import '../simulationSteps.css';
 
 type PaymentsTabViewProps = {
   onStartPayment: () => void;
+  senderBlockMessage?: string | null;
 };
 
-export function PaymentsTabView({ onStartPayment }: PaymentsTabViewProps) {
+export function PaymentsTabView({
+  onStartPayment,
+  senderBlockMessage = null,
+}: PaymentsTabViewProps) {
+  const isSenderBlocked = Boolean(senderBlockMessage);
+
   return (
     <div className="sim-view">
       <div className="sim-section">
@@ -14,7 +20,21 @@ export function PaymentsTabView({ onStartPayment }: PaymentsTabViewProps) {
         </p>
       </div>
 
-      <button type="button" className="sim-action-btn sim-action-btn--primary sim-action-btn--full" onClick={onStartPayment}>
+      {isSenderBlocked ? (
+        <p className="sim-flow__error">{senderBlockMessage}</p>
+      ) : (
+        <p className="sim-flow__notice">
+          Si su alias está bloqueado (BLKD), no podrá pagar. Si el alias destino está bloqueado
+          (BLKD), no se puede realizar el pago.
+        </p>
+      )}
+
+      <button
+        type="button"
+        className="sim-action-btn sim-action-btn--primary sim-action-btn--full"
+        disabled={isSenderBlocked}
+        onClick={onStartPayment}
+      >
         <span className="sim-action-btn__icon">+</span>
         <span>Nuevo pago con alias</span>
       </button>

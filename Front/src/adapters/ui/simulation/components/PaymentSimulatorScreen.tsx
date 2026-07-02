@@ -4,6 +4,7 @@ import type {
 } from '../../../../domain/simulation';
 import type { SimulationAuthState } from '../../../../domain/simulation/auth.types';
 import { isPaymentFlowActive } from '../../../../domain/simulation';
+import { getSenderPaymentBlockMessage } from '../../../../domain/simulation/paymentEligibility';
 import { AliasSplashStep } from './steps/AliasSplashStep';
 import { AliasLinkAccountStep } from './steps/AliasLinkAccountStep';
 import { AliasCreateSuccessStep } from './steps/AliasCreateSuccessStep';
@@ -396,12 +397,16 @@ export function PaymentSimulatorScreen({
 
     switch (context.activeTab) {
       case 'payments':
-        return <PaymentsTabView onStartPayment={onStartPayment} />;
+        return (
+          <PaymentsTabView
+            onStartPayment={onStartPayment}
+            senderBlockMessage={getSenderPaymentBlockMessage(auth.session)}
+          />
+        );
       default:
         return (
           <HomeTabView
             session={auth.session}
-            onStartPayment={onStartPayment}
             onManageAlias={onManageAlias}
             onLogout={onLogout}
           />

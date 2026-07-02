@@ -3,7 +3,7 @@ import { createInitialPaymentSimulationState, isPaymentFlowActive } from './type
 
 export type PaymentSimulationAction =
   | { type: 'SET_TAB'; tab: MobileAppTab }
-  | { type: 'START_PAYMENT' }
+  | { type: 'START_PAYMENT'; errorMessage?: string }
   | { type: 'SET_ALIAS'; value: string }
   | { type: 'SET_AMOUNT'; value: string }
   | { type: 'SUBMIT_ALIAS_SUCCESS'; aliasValue: string; amount: string; recipient: PaymentRecipient }
@@ -41,7 +41,7 @@ export function paymentSimulationReducer(
         aliasValue: '',
         amount: '',
         recipient: null,
-        errorMessage: '',
+        errorMessage: action.errorMessage ?? '',
       };
 
     case 'SET_ALIAS':

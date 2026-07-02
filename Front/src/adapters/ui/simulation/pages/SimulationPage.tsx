@@ -53,7 +53,7 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     cancelFlow,
     goBack,
     resetPayment,
-  } = usePaymentSimulation();
+  } = usePaymentSimulation(auth.session);
 
   const isAuthenticated = auth.step === 'authenticated';
   const canGoBack =

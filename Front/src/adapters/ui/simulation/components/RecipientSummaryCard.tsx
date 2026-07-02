@@ -34,11 +34,7 @@ export function RecipientSummaryCard({
           <strong>{recipient.lastName}</strong>
         </div>
         <div className="sim-recipient-card__row">
-          <span>Correo</span>
-          <strong>{recipient.email}</strong>
-        </div>
-        <div className="sim-recipient-card__row">
-          <span>Documento de identidad</span>
+          <span>Cédula</span>
           <strong>{formatRecipientDocument(recipient)}</strong>
         </div>
       </div>

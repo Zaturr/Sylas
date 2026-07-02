@@ -11,7 +11,6 @@ import './HomeTabView.css';
 
 type HomeTabViewProps = {
   session: SimulationSession;
-  onStartPayment: () => void;
   onManageAlias: () => void;
   onLogout: () => void;
 };
@@ -34,7 +33,6 @@ type HomeMenuItem = {
 
 export function HomeTabView({
   session,
-  onStartPayment,
   onManageAlias,
   onLogout,
 }: HomeTabViewProps) {
@@ -58,7 +56,6 @@ export function HomeTabView({
 
   const menuItems: HomeMenuItem[] = [
     { id: 'info', label: 'Información', icon: 'ℹ', enabled: false },
-    { id: 'payment', label: 'Pago Móvil', icon: '📱', enabled: true, onClick: onStartPayment },
     { id: 'services', label: 'Servicios', icon: '🛠', enabled: false },
     { id: 'topup', label: 'Recargas', icon: '↻', enabled: false },
     { id: 'transfer', label: 'Transferir', icon: '⇄', enabled: false },
