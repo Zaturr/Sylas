@@ -169,10 +169,7 @@ export function PaymentSimulatorScreen({
     auth.session !== null && auth.step !== 'login' && auth.step !== 'create-account';
   const flowActive =
     auth.step === 'authenticated' && isPaymentFlowActive(context.step);
-  const showTabs =
-    auth.step === 'authenticated' &&
-    !flowActive &&
-    (context.step === 'idle' || context.step === 'success');
+  const showTabs = auth.step === 'authenticated' && !isAliasFlow;
 
   const isHomeDashboard =
     showTabs && context.activeTab === 'home' && auth.step === 'authenticated';
@@ -449,8 +446,11 @@ export function PaymentSimulatorScreen({
           {bottomTabs.map((tab) => {
             const isActive =
               tab.enabled &&
+              !flowActive &&
               tab.id === context.activeTab &&
               context.step === 'idle';
+
+            const isTabDisabled = !tab.enabled || flowActive;
 
             return (
               <button
@@ -458,8 +458,8 @@ export function PaymentSimulatorScreen({
                 type="button"
                 className={`payment-simulator__tab ${
                   isActive ? 'payment-simulator__tab--active' : ''
-                } ${!tab.enabled ? 'payment-simulator__tab--disabled' : ''}`}
-                disabled={!tab.enabled}
+                } ${isTabDisabled ? 'payment-simulator__tab--disabled' : ''}`}
+                disabled={isTabDisabled}
                 onClick={() => {
                   if (tab.id === 'alias') {
                     onManageAlias();

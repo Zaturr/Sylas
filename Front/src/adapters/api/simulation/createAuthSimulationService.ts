@@ -12,5 +12,6 @@ export function createAuthSimulationService(
     updateAliasStatus: aliasSimulation.updateAliasStatus,
     registerAlias: aliasSimulation.registerAlias,
     deleteAlias: aliasSimulation.deleteAlias,
+    verifyAliasViaSimf: aliasSimulation.verifyAliasViaSimf,
   };
 }

@@ -22,9 +22,11 @@ export function PeticionesRequestCard({ trace }: PeticionesRequestCardProps) {
           <span className="peticiones-card__icon" aria-hidden="true">
             &gt;_
           </span>
-          <h3 className="peticiones-card__title">Detalles de la Petición</h3>
+          <div className="peticiones-card__heading">
+            <p className="peticiones-card__eyebrow">Detalles de la Petición</p>
+            <p className="peticiones-card__endpoint">{endpointBadge}</p>
+          </div>
         </div>
-        <span className="peticiones-card__endpoint">{endpointBadge}</span>
       </header>
 
       <PeticionesJsonBlock label="REQUEST JSON" value={trace.requestBody} />

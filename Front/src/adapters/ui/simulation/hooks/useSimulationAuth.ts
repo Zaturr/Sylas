@@ -143,9 +143,18 @@ export function useSimulationAuth() {
   }, []);
 
   const continueAliasSplash = useCallback(async () => {
+    if (state.session) {
+      simfRequestTracePort.clearSession(
+        buildSimfTraceSessionKey(
+          state.session.mappedDocument.documentType,
+          state.session.mappedDocument.documentNumber,
+        ),
+      );
+    }
+
     dispatch({ type: 'OPEN_ALIAS_MANAGEMENT' });
     await runAliasCheck();
-  }, [runAliasCheck]);
+  }, [runAliasCheck, simfRequestTracePort, state.session]);
 
   const openCreateAlias = useCallback(() => {
     if (state.session && state.session.accounts.length > 0) {
@@ -299,9 +308,16 @@ export function useSimulationAuth() {
     dispatch({ type: 'UPDATE_ALIAS_STATUS_FAILED', message: result.message });
   }, [authSimulationService, state.session]);
 
-  const finishAliasFlow = useCallback(() => {
+  const finishAliasFlow = useCallback(async () => {
+    if (state.session) {
+      await authSimulationService.verifyAliasViaSimf(
+        state.session,
+        state.aliasCheck?.bankCode,
+      );
+    }
+
     dispatch({ type: 'FINISH_ALIAS_FLOW' });
-  }, []);
+  }, [authSimulationService, state.aliasCheck?.bankCode, state.session]);
 
   const backToAliasManagement = useCallback(async () => {
     dispatch({ type: 'OPEN_ALIAS_MANAGEMENT' });

@@ -67,9 +67,16 @@
 .mobile-device__content {
   position: relative;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.mobile-device__content > * {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
 .mobile-device__home-indicator {

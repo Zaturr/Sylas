@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { buildSimfTraceSessionKey } from '../../../../domain/peticiones';
 import { isAliasManagerAuthStep, isPaymentFlowActive, parseDocumentInput } from '../../../../domain/simulation';
 import { AppShell } from '../../components/AppShell';
@@ -7,7 +6,6 @@ import { MobileDeviceFrame } from '../components/MobileDeviceFrame';
 import { PaymentSimulatorScreen } from '../components/PaymentSimulatorScreen';
 import { usePaymentSimulation } from '../hooks/usePaymentSimulation';
 import { useSimulationAuth } from '../hooks/useSimulationAuth';
-import { useSimfRequestTracePort } from '../providers/SimulationServicesProvider';
 import type { AppPage } from '../../navigation';
 import '../../pages/forms.css';
 import '../simulation-layout.css';
@@ -71,10 +69,11 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     resetPayment,
   } = usePaymentSimulation(sessionKey);
 
-  const simfRequestTracePort = useSimfRequestTracePort();
   const isAliasManagerActive = isAliasManagerAuthStep(auth.step);
   const isSimfTracePanelActive =
-    isAliasManagerActive || isPaymentFlowActive(context.step);
+    isAliasManagerActive ||
+    isPaymentFlowActive(context.step) ||
+    auth.step === 'authenticated';
 
   const isAuthenticated = auth.step === 'authenticated';
   const canGoBack =
@@ -82,12 +81,6 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     isPaymentFlowActive(context.step) &&
     context.step !== 'processing' &&
     context.step !== 'success';
-
-  useEffect(() => {
-    if (auth.step === 'authenticated' && sessionKey) {
-      simfRequestTracePort.clearSession(sessionKey);
-    }
-  }, [auth.step, sessionKey, simfRequestTracePort]);
 
   return (
     <AppShell

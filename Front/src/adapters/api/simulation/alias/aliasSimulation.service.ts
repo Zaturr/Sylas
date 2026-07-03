@@ -53,6 +53,11 @@ export type AliasSimulationService = {
     session: SimulationSession,
     signal?: AbortSignal,
   ): Promise<DeleteAliasResult>;
+  verifyAliasViaSimf(
+    session: SimulationSession,
+    bankCode?: string,
+    signal?: AbortSignal,
+  ): Promise<void>;
 };
 
 function getSessionKeyFromSimulationSession(session: SimulationSession): string {
@@ -129,14 +134,6 @@ export function createAliasSimulationService(
         return { ok: false, message: updated.message };
       }
 
-      await simfClients.resolveAliasViaSimf(
-        session.mappedDocument.documentType,
-        session.mappedDocument.documentNumber,
-        input.bankCode,
-        sessionKey,
-        signal,
-      );
-
       const document = session.mappedDocument;
       const resolved = await resolveByDocument(
         document.documentType,
@@ -198,14 +195,6 @@ export function createAliasSimulationService(
         return { ok: false, message: created.message };
       }
 
-      await simfClients.resolveAliasViaSimf(
-        document.documentType,
-        document.documentNumber,
-        appConfig.simulation.bankCode,
-        getSessionKeyFromSimulationSession(session),
-        signal,
-      );
-
       const resolved = await resolveByDocument(
         document.documentType,
         document.documentNumber,
@@ -244,14 +233,6 @@ export function createAliasSimulationService(
         return { ok: false, message: blocked.message };
       }
 
-      await simfClients.resolveAliasViaSimf(
-        session.mappedDocument.documentType,
-        session.mappedDocument.documentNumber,
-        bankCode,
-        sessionKey,
-        signal,
-      );
-
       const document = session.mappedDocument;
       const resolved = await resolveByDocument(
         document.documentType,
@@ -273,6 +254,19 @@ export function createAliasSimulationService(
         session: buildFilteredSession(resolved.data, document),
         check,
       };
+    },
+
+    async verifyAliasViaSimf(session, bankCode, signal) {
+      const resolvedBankCode = bankCode?.trim() || appConfig.simulation.bankCode;
+      const sessionKey = getSessionKeyFromSimulationSession(session);
+
+      await simfClients.resolveAliasViaSimf(
+        session.mappedDocument.documentType,
+        session.mappedDocument.documentNumber,
+        resolvedBankCode,
+        sessionKey,
+        signal,
+      );
     },
   };
 }

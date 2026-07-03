@@ -1,6 +1,8 @@
 .payment-simulator {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   height: 100%;
   background: var(--sim-bg);
 }
@@ -50,6 +52,7 @@
 
 .payment-simulator__body {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 16px;
@@ -69,6 +72,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0;
+  flex-shrink: 0;
   padding: 10px 8px 12px;
   background: var(--sim-navy-900);
   border-top: none;

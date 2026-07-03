@@ -99,4 +99,10 @@ export interface AuthSimulationService {
     session: SimulationSession,
     signal?: AbortSignal,
   ): Promise<DeleteAliasResult>;
+
+  verifyAliasViaSimf(
+    session: SimulationSession,
+    bankCode?: string,
+    signal?: AbortSignal,
+  ): Promise<void>;
 }

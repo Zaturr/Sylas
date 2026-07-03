@@ -4,8 +4,10 @@
   gap: 16px;
   width: 100%;
   min-width: 0;
-  height: 100%;
-  max-height: calc(100vh - 180px);
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100dvh - 160px);
+  overflow: hidden;
 }
 
 .peticiones-panel__header {
@@ -31,6 +33,11 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  padding-top: 24px;
 }
 
 .peticiones-panel__empty {
@@ -54,8 +61,11 @@
 .peticiones-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px;
+  gap: 16px;
+  flex: 1;
+  min-height: min(560px, 68dvh);
+  max-height: 100%;
+  padding: 24px;
   border-radius: 20px;
   background: #ffffff;
   border: 1px solid rgba(195, 213, 229, 0.85);
@@ -64,57 +74,64 @@
 
 .peticiones-card__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .peticiones-card__title-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 12px;
   min-width: 0;
+}
+
+.peticiones-card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.peticiones-card__eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8aa0b8;
+}
+
+.peticiones-card__endpoint {
+  margin: 0;
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-weight: 700;
+  line-height: 1.3;
+  color: #004d99;
+  word-break: break-all;
 }
 
 .peticiones-card__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   background: #e8f2ff;
   color: #004d99;
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
-}
-
-.peticiones-card__title {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.3;
-  color: #1f3347;
-}
-
-.peticiones-card__endpoint {
-  flex-shrink: 0;
-  max-width: 52%;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #e8f2ff;
-  color: #004d99;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.3;
-  text-align: right;
-  word-break: break-all;
+  margin-top: 2px;
 }
 
 .peticiones-json-block {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
+  flex: 1;
 }
 
 .peticiones-json-block__header {
@@ -183,9 +200,37 @@
   color: #dbeafe;
   font-size: 12px;
   line-height: 1.55;
-  overflow-x: auto;
+  flex: 1;
+  min-height: 140px;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: contain;
   white-space: pre-wrap;
   word-break: break-word;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.65) rgba(15, 23, 42, 0.85);
+}
+
+.peticiones-json-block__code::-webkit-scrollbar,
+.peticiones-panel__content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.peticiones-json-block__code::-webkit-scrollbar-track,
+.peticiones-panel__content::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.35);
+  border-radius: 999px;
+}
+
+.peticiones-json-block__code::-webkit-scrollbar-thumb,
+.peticiones-panel__content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.65);
+  border-radius: 999px;
+}
+
+.peticiones-panel__content::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.8);
 }
 
 .peticiones-card__meta {

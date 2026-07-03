@@ -1,9 +1,9 @@
 .simulation-page {
   display: grid;
-  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
-  grid-template-rows: auto;
+  grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
   flex: 1;
   width: 100%;
   max-width: 100%;
@@ -17,13 +17,19 @@
   grid-row: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 12px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
+  padding-top: 32px;
+}
+
+.simulation-page__peticiones .peticiones-panel {
+  width: 100%;
 }
 
 .simulation-page__header {
@@ -100,13 +106,17 @@
   }
 
   .peticiones-panel {
-    max-height: 420px;
+    max-height: min(560px, 72dvh);
+  }
+
+  .peticiones-card {
+    min-height: min(480px, 60dvh);
   }
 }
 
 @media (max-width: 1180px) {
   .simulation-page {
-    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
     gap: 16px;
   }
 }
