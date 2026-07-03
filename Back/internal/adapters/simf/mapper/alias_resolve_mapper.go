@@ -86,7 +86,7 @@ func AccountStatusToSIMF(accountStatus string) string {
 		return simfdomain.StatusInactive
 	case simfdomain.StatusPendingDrop:
 		return simfdomain.StatusPendingDrop
-	case simfdomain.StatusBlocked:
+	case "BLOCKED", simfdomain.StatusBlocked:
 		return simfdomain.StatusBlocked
 	case simfdomain.StatusUnregistered:
 		return simfdomain.StatusUnregistered
@@ -96,7 +96,12 @@ func AccountStatusToSIMF(accountStatus string) string {
 }
 
 // AgentStatusForBank devuelve Sts del banco indicado o UNRG si no hay cuenta vinculada.
-func AgentStatusForBank(accounts []domain.Account, bankID string) string {
+// Si el alias está bloqueado globalmente, devuelve BLKD sin importar el status de la cuenta.
+func AgentStatusForBank(alias *domain.Alias, accounts []domain.Account, bankID string) string {
+	if alias != nil && domain.IsAliasGloballyBlocked(alias.Status) {
+		return simfdomain.StatusBlocked
+	}
+
 	for _, account := range accounts {
 		if account.BankID == bankID {
 			return AccountStatusToSIMF(account.Status)
@@ -106,12 +111,40 @@ func AgentStatusForBank(accounts []domain.Account, bankID string) string {
 }
 
 // BuildAgentStatusList arma AgtList según la consulta (todos los bancos o uno solo).
-func BuildAgentStatusList(query simfdomain.AliasResolveQuery, accounts []domain.Account) []simfdomain.AliasResolveAgentStatus {
+func BuildAgentStatusList(
+	query simfdomain.AliasResolveQuery,
+	alias *domain.Alias,
+	accounts []domain.Account,
+) []simfdomain.AliasResolveAgentStatus {
+	if alias != nil && domain.IsAliasGloballyBlocked(alias.Status) {
+		if query.HasAgent() {
+			return []simfdomain.AliasResolveAgentStatus{
+				{
+					Agt: query.AgentCode,
+					Sts: simfdomain.StatusBlocked,
+				},
+			}
+		}
+
+		if len(accounts) == 0 {
+			return nil
+		}
+
+		agentStatusList := make([]simfdomain.AliasResolveAgentStatus, 0, len(accounts))
+		for _, account := range accounts {
+			agentStatusList = append(agentStatusList, simfdomain.AliasResolveAgentStatus{
+				Agt: account.BankID,
+				Sts: simfdomain.StatusBlocked,
+			})
+		}
+		return agentStatusList
+	}
+
 	if query.HasAgent() {
 		return []simfdomain.AliasResolveAgentStatus{
 			{
 				Agt: query.AgentCode,
-				Sts: AgentStatusForBank(accounts, query.AgentCode),
+				Sts: AgentStatusForBank(alias, accounts, query.AgentCode),
 			},
 		}
 	}
@@ -139,7 +172,7 @@ func BuildAliasEntryList(query simfdomain.AliasResolveQuery, alias *domain.Alias
 	return []simfdomain.AliasResolveEntry{
 		{
 			Alias:   alias.AliasValue,
-			AgtList: BuildAgentStatusList(query, accounts),
+			AgtList: BuildAgentStatusList(query, alias, accounts),
 		},
 	}
 }

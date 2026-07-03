@@ -33,7 +33,7 @@ func (h *HTTPHandler) DisableAlias(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"alias":    aliasValue,
-		"status":   "DISABLED",
+		"status":   "BLKD",
 		"customer": customer,
 	})
 }

@@ -25,7 +25,7 @@ func BuildAntiphishingReport(
 		}
 	}
 
-	agentStatus := AgentStatusForBank(coreData.Accounts, query.DestinationAgent)
+	agentStatus := AgentStatusForBank(coreData.Alias, coreData.Accounts, query.DestinationAgent)
 	aliasList := []simfdomain.AliasResolveEntry{
 		{
 			Alias: query.Alias,

@@ -1,12 +1,26 @@
 package domain
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	AliasStatusEnabled      = "ENABLED"
 	AliasStatusDisabled     = "DISABLED"
+	AliasStatusBlocked      = "BLKD"
 	AliasStatusUnregistered = "UNRG"
 )
+
+// IsAliasGloballyBlocked indica si el alias tiene baja global (SIMF BLKD).
+func IsAliasGloballyBlocked(status string) bool {
+	switch strings.ToUpper(strings.TrimSpace(status)) {
+	case AliasStatusDisabled, AliasStatusBlocked, "BLOCKED":
+		return true
+	default:
+		return false
+	}
+}
 
 type Alias struct {
 	ID         string    `json:"id"`

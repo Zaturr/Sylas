@@ -14,11 +14,11 @@ func (s *AppService) DisableAlias(ctx context.Context, aliasValue string) (*doma
 	if alias == nil {
 		return nil, ErrSimfAliasNotFound
 	}
-	if alias.Status == domain.AliasStatusDisabled {
+	if domain.IsAliasGloballyBlocked(alias.Status) {
 		return nil, ErrSimfAliasBlocked
 	}
 
-	if err := s.repo.UpdateAliasStatus(ctx, alias.ID, domain.AliasStatusDisabled); err != nil {
+	if err := s.repo.UpdateAliasStatus(ctx, alias.ID, domain.AliasStatusBlocked); err != nil {
 		return nil, err
 	}
 
