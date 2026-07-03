@@ -4,8 +4,11 @@ import type {
   LoginByDocumentResult,
 } from '../../../../application/simulation/authSimulation.port';
 import { generateBankAccountNumber } from '../../../../domain/simulation/accountNumber';
-import { parseDocumentInput } from '../../../../domain/simulation/documentParser';
 import { validateCreateAccountDraft } from '../../../../domain/simulation/createAccountValidation';
+import {
+  parseDocumentInput,
+  validateDocumentInput,
+} from '../../../../domain/validations';
 import { appConfig } from '../../app.config';
 import { buildRegistrationPayload } from '../shared/registrationPayload.builder';
 import { resolveByDocument, postRegisterUser } from '../alias/aliasHttp.client';
@@ -16,14 +19,19 @@ export async function loginByDocument(
   documentInput: string,
   signal?: AbortSignal,
 ): Promise<LoginByDocumentResult> {
-  const document = parseDocumentInput(documentInput);
-  if (!document) {
+  const documentValidation = validateDocumentInput(documentInput);
+  if (documentValidation.ok === false) {
     return {
       ok: false,
       reason: 'invalid-document',
-      message: 'Formato de cédula inválido (ej. V12345678).',
+      message: documentValidation.error,
     };
   }
+
+  const document = {
+    documentType: documentValidation.documentType,
+    documentNumber: documentValidation.documentNumber,
+  };
 
   const resolved = await resolveByDocument(
     document.documentType,

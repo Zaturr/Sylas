@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"Alias_bdca/Back/internal/domain"
+	"Alias_bdca/Back/internal/validations"
 	"context"
 	"database/sql"
 	"fmt"
@@ -504,19 +505,26 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 
 	if err == sql.ErrNoRows {
 		// El cliente NO existe. Lo insertamos como nuevo.
+		if strings.TrimSpace(customer.Email) == "" {
+			customer.Email = validations.BuildGmailFromCustomer(
+				customer.FirstName,
+				customer.LastName,
+				customer.DocumentNumber,
+			)
+		} else {
+			customer.Email = validations.EnsureGmailAddress(customer.Email)
+		}
+		if strings.TrimSpace(customer.Phone) == "" {
+			customer.Phone = validations.BuildVenezuelanPhoneFromDocument(customer.DocumentNumber)
+		}
 		queryCustomer := `INSERT INTO customers (id, document_type, document_number, first_name, last_name, email, phone, created_at) VALUES (?,?,?,?,?,?,?,?)`
 		_, err = tx.ExecContext(ctx, queryCustomer, customer.ID, customer.DocumentType, customer.DocumentNumber, customer.FirstName, customer.LastName, customer.Email, customer.Phone, customer.CreatedAt)
 		if err != nil {
 			tx.Rollback()
 			errStr := err.Error()
-			if strings.Contains(errStr, "customers.document_number") {
-				return fmt.Errorf("la cédula %s ya se encuentra registrada en otro cliente", customer.DocumentNumber)
-			}
-			if strings.Contains(errStr, "customers.email") {
-				return fmt.Errorf("el correo electrónico %s ya está en uso", customer.Email)
-			}
-			if strings.Contains(errStr, "customers.phone") {
-				return fmt.Errorf("el número de teléfono %s ya está en uso", customer.Phone)
+			if strings.Contains(errStr, "customers.document_number") ||
+				strings.Contains(errStr, "customers.document_type, customers.document_number") {
+				return fmt.Errorf("la cédula %s-%s ya se encuentra registrada en otro cliente", customer.DocumentType, customer.DocumentNumber)
 			}
 			return fmt.Errorf("error insertando nuevo cliente: %w", err)
 		}

@@ -1,4 +1,6 @@
 import type { SimulationSession } from '../../../../domain/simulation/auth.types';
+import { buildSimfTransactionIds } from '../../../../domain/validations/formatos';
+import { appConfig } from '../../app.config';
 import {
   buildSimfDocumentId,
   mapDocumentTypeToSimfScheme,
@@ -9,8 +11,11 @@ export function buildSimfCreateUserPayload(
   aliasValue: string,
   bankCode: string,
 ) {
-  const timestamp = Date.now();
-  const creDtTm = new Date().toISOString().slice(0, 19);
+  const { msgId, endToEndId, creDtTm } = buildSimfTransactionIds({
+    emisor: bankCode,
+    processingCenter: appConfig.simulation.processingCenter,
+    channelPspIbp: appConfig.simulation.channelPspIbp,
+  });
   const documentType = session.mappedDocument.documentType;
   const documentNumber = session.mappedDocument.documentNumber;
   const schemeName = mapDocumentTypeToSimfScheme(documentType);
@@ -22,12 +27,12 @@ export function buildSimfCreateUserPayload(
     payload: {
       IdModAdvc: {
         GrpHdr: {
-          MsgID: `sim-reg-${timestamp}`,
+          MsgID: msgId,
           CreDtTm: creDtTm,
         },
         Mod: {
           Agt: bankCode,
-          EndToEndId: `sim-reg-e2e-${timestamp}`,
+          EndToEndId: endToEndId,
           Alias: aliasValue,
           Pty: {
             Nm: titularName,

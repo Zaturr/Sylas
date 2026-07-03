@@ -61,7 +61,26 @@ export {
   type SimulationAuthAction,
 } from './auth.reducer';
 
-export { parseDocumentInput, formatDocumentInput } from './documentParser';
+export {
+  parseDocumentInput,
+  formatDocumentInput,
+  validateDocumentInput,
+  validateDocumentFields,
+  mapDocumentTypeToSimfScheme,
+  buildSimfDocumentId,
+  isValidDocumentType,
+  ALLOWED_DOCUMENT_TYPES,
+  type ParsedDocument,
+  type DocumentValidationResult,
+  type SimfSchemeName,
+  VENEZUELA_MOBILE_PREFIXES,
+  isValidVenezuelanPhone,
+  buildVenezuelanPhoneFromDocument,
+  GMAIL_DOMAIN,
+  ensureGmailAddress,
+  buildGmailFromCustomer,
+  buildGmailFromAlias,
+} from '../validations';
 
 export {
   generateBankAccountNumber,

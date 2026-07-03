@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { AliasService } from '../../../application/aliasService';
+import type { RandomizerService } from '../../../application/randomizerService';
 import {
   defaultAppServices,
   type AppServices,
@@ -27,4 +28,8 @@ export function useAppServices(): AppServices {
 
 export function useAliasService(): AliasService {
   return useAppServices().aliasService;
+}
+
+export function useRandomizerService(): RandomizerService {
+  return useAppServices().randomizerService;
 }

@@ -33,7 +33,7 @@ export function LoginStep({
               inputMode="text"
               autoComplete="off"
               disabled={isSubmitting}
-              placeholder="ej. V12345678"
+              placeholder="ej. V12345678 o J123456789"
               value={documentInput}
               onChange={(event) => onDocumentChange(event.target.value)}
             />

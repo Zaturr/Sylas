@@ -1,4 +1,4 @@
-import { parseDocumentInput } from './documentParser';
+import { validateDocumentInput } from '../validations';
 
 export type ValidateCreateAccountDraftResult =
   | { ok: true }
@@ -9,16 +9,12 @@ export function validateCreateAccountDraft(
   firstName: string,
   lastName: string,
 ): ValidateCreateAccountDraftResult {
-  const trimmedDocument = documentInput.trim();
   const trimmedFirstName = firstName.trim();
   const trimmedLastName = lastName.trim();
 
-  if (!trimmedDocument) {
-    return { ok: false, error: 'Ingresa la cédula del titular.' };
-  }
-
-  if (!parseDocumentInput(trimmedDocument)) {
-    return { ok: false, error: 'Formato de cédula inválido (ej. V12345678).' };
+  const documentValidation = validateDocumentInput(documentInput);
+  if (!documentValidation.ok) {
+    return { ok: false, error: documentValidation.error };
   }
 
   if (!trimmedFirstName) {

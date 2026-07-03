@@ -1,6 +1,7 @@
 import { generateBankAccountNumber } from '../../../../domain/simulation/accountNumber';
 import { getPrimaryAccount } from '../../../../domain/simulation/aliasFlow';
 import type { SimulationSession } from '../../../../domain/simulation/auth.types';
+import { buildGmailFromCustomer, buildVenezuelanPhoneFromDocument } from '../../../../domain/validations';
 import { appConfig } from '../../app.config';
 
 export function buildRegistrationPayload(
@@ -12,15 +13,14 @@ export function buildRegistrationPayload(
   aliasValue?: string,
 ) {
   const normalizedType = documentType.toUpperCase();
-  const docKey = `${normalizedType.toLowerCase()}${documentNumber}`;
 
   const payload: Record<string, unknown> = {
     document_type: normalizedType,
     document_number: documentNumber,
     first_name: firstName.trim(),
     last_name: lastName.trim(),
-    email: `${docKey}@simf.local`,
-    phone: `SIMF${normalizedType}${documentNumber}`,
+    email: buildGmailFromCustomer(firstName, lastName, documentNumber),
+    phone: buildVenezuelanPhoneFromDocument(documentNumber),
     accounts: [
       {
         bank_id: appConfig.simulation.bankCode,

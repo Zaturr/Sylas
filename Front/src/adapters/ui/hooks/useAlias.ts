@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { type AliasDetail, type PaginationMeta } from '../../../domain/alias';
+import { parseDocumentInput } from '../../../domain/validations';
 import { type ResolveAliasService } from '../../../application/aliasService';
 import { useAliasService } from '../providers/AppServicesProvider';
 
@@ -21,17 +22,6 @@ function mapResolveToAliasDetail(resolved: ResolveAliasService): AliasDetail {
       account_number: account.account_number,
       status: account.status,
     })),
-  };
-}
-
-function parseDocumentSearch(term: string): { documentType: string; documentNumber: string } | null {
-  const match = term.trim().match(/^([VEJPG])-?(\d+)$/i);
-  if (!match) {
-    return null;
-  }
-  return {
-    documentType: match[1].toUpperCase(),
-    documentNumber: match[2],
   };
 }
 
@@ -62,7 +52,7 @@ export const useAlias = () => {
       setError(null);
       const term = search.trim();
 
-      const document = parseDocumentSearch(term);
+      const document = parseDocumentInput(term);
       if (document) {
         try {
           const resolved = await aliasService.resolveByDocument(

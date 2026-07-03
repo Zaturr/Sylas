@@ -2,6 +2,7 @@ package handler
 
 import (
 	"Alias_bdca/Back/internal/domain"
+	"Alias_bdca/Back/internal/validations"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,8 +11,8 @@ import (
 
 type AddAccountRequest struct {
 	DocumentNumber string `json:"document_number" binding:"required"`
-	Email          string `json:"email""`
-	AliasValue     string `json:"alias_value""`
+	Email          string `json:"email"`
+	AliasValue     string `json:"alias_value"`
 	BankID         string `json:"bank_id" binding:"required"`
 	AccountNumber  string `json:"account_number" binding:"required"`
 	AccountType    string `json:"account_type" binding:"required"`
@@ -23,6 +24,11 @@ func (h *HTTPHandler) AddAccount(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		respondError(c, 400, "Datos invalidos o incompletos")
+		return
+	}
+
+	if !validations.IsDigitsOnly(req.AccountNumber) {
+		respondError(c, 400, "account_number debe contener solo numeros")
 		return
 	}
 

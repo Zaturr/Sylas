@@ -8,6 +8,7 @@ import (
 
 	"Alias_bdca/Back/internal/application"
 	"Alias_bdca/Back/internal/domain"
+	"Alias_bdca/Back/internal/validations"
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 
 	"github.com/google/uuid"
@@ -72,11 +73,11 @@ func SplitTitularName(fullName string) (firstName, lastName string) {
 }
 
 func placeholderEmail(alias string) string {
-	return fmt.Sprintf("%s@simf.local", alias)
+	return validations.BuildGmailFromAlias(alias)
 }
 
-func placeholderPhone(documentType, documentNumber string) string {
-	return fmt.Sprintf("SIMF%s%s", documentType, documentNumber)
+func placeholderPhone(_ string, documentNumber string) string {
+	return validations.BuildVenezuelanPhoneFromDocument(documentNumber)
 }
 
 func placeholderAccountNumber(agentCode, endToEndID string) string {

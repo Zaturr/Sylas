@@ -1,15 +1,21 @@
+import { buildSimfTransactionIds } from '../../../../domain/validations/formatos';
+import { appConfig } from '../../app.config';
+
 export function buildSimfBlockPayload(aliasValue: string, bankCode: string) {
-  const timestamp = Date.now();
-  const creDtTm = new Date().toISOString().slice(0, 19);
+  const { msgId, endToEndId, creDtTm } = buildSimfTransactionIds({
+    emisor: bankCode,
+    processingCenter: appConfig.simulation.processingCenter,
+    channelPspIbp: appConfig.simulation.channelPspIbp,
+  });
 
   return {
     IdModAdvc: {
       GrpHdr: {
-        MsgID: `sim-blk-${timestamp}`,
+        MsgID: msgId,
         CreDtTm: creDtTm,
       },
       Mod: {
-        EndToEndId: `sim-blk-e2e-${timestamp}`,
+        EndToEndId: endToEndId,
         Alias: aliasValue,
         Agt: bankCode,
         Sts: 'BLKD',

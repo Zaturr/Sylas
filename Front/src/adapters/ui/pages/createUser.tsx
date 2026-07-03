@@ -1,4 +1,9 @@
 import { useState, type FormEvent } from 'react';
+import { validateAliasValue } from '../../../domain/simulation/aliasValidation';
+import {
+  mapDocumentTypeToSimfScheme,
+  validateDocumentFields,
+} from '../../../domain/validations';
 import { AppShell } from '../components/AppShell';
 import { useAliasService } from '../providers/AppServicesProvider';
 import type { AppPage } from '../navigation';
@@ -23,30 +28,56 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const selectedScheme = mapDocumentTypeToSimfScheme(form.document_type);
+
   const updateField = (field: keyof typeof initialForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateDocumentNumber = (value: string) => {
+    updateField('document_number', value.replace(/\D/g, ''));
+  };
+
+  const updateAliasValue = (value: string) => {
+    updateField('alias_value', value.toLowerCase());
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+
+    const documentValidation = validateDocumentFields(
+      form.document_type,
+      form.document_number,
+    );
+    if (documentValidation.ok === false) {
+      setError(documentValidation.error);
+      return;
+    }
+
+    const aliasValidation = validateAliasValue(form.alias_value);
+    if (aliasValidation.ok === false) {
+      setError(aliasValidation.error);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       await aliasService.createFullUser({
         customer: {
-          document_type: form.document_type,
-          document_number: form.document_number.trim(),
+          document_type: documentValidation.documentType,
+          document_number: documentValidation.documentNumber,
           first_name: form.first_name.trim(),
           last_name: form.last_name.trim(),
         },
         alias: {
-          alias_value: form.alias_value.trim(),
+          alias_value: aliasValidation.value,
         },
       });
 
-      setSuccess(`Usuario creado correctamente con alias "${form.alias_value.trim()}".`);
+      setSuccess(`Usuario creado correctamente con alias "${aliasValidation.value}".`);
       setForm(initialForm);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear el usuario');
@@ -82,6 +113,8 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
                 <option value="V">V</option>
                 <option value="E">E</option>
                 <option value="J">J</option>
+                <option value="G">G</option>
+                <option value="C">C</option>
                 <option value="P">P</option>
               </select>
             </div>
@@ -91,11 +124,27 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
               <input
                 id="document_number"
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]+"
+                title="Solo se permiten números"
                 required
                 disabled={submitting}
                 value={form.document_number}
-                onChange={(event) => updateField('document_number', event.target.value)}
+                onChange={(event) => updateDocumentNumber(event.target.value)}
               />
+              {selectedScheme === 'SRIF' && (
+                <small className="form-hint">
+                  Tipo J, G o C usa esquema SRIF: el número debe tener exactamente 9 dígitos.
+                </small>
+              )}
+              {selectedScheme === 'SCID' && (
+                <small className="form-hint">Tipo V o E usa esquema SCID.</small>
+              )}
+              {selectedScheme === 'SPAS' && (
+                <small className="form-hint">
+                  Tipo P usa esquema SPAS: el número debe tener entre 1 y 34 dígitos.
+                </small>
+              )}
             </div>
 
             <div className="form-field">
@@ -128,11 +177,15 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
                 id="alias_value"
                 type="text"
                 required
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
                 disabled={submitting}
                 placeholder="ej. maria.gonzalez123456"
                 value={form.alias_value}
-                onChange={(event) => updateField('alias_value', event.target.value)}
+                onChange={(event) => updateAliasValue(event.target.value)}
               />
+              <small className="form-hint">Solo minúsculas, números y un punto (.).</small>
             </div>
           </div>
 

@@ -1,5 +1,9 @@
 import type { AliasService, CreateFullUserService } from '../../application/aliasService';
 import type { PaginatedAliasResponse } from '../../domain/alias';
+import {
+  buildGmailFromCustomer,
+  buildVenezuelanPhoneFromDocument,
+} from '../../domain/validations';
 import { appConfig } from './app.config';
 
 async function readApiError(response: Response, fallback: string): Promise<string> {
@@ -10,19 +14,8 @@ async function readApiError(response: Response, fallback: string): Promise<strin
   return fallback;
 }
 
-function buildCustomerContactFromAlias(
-  documentType: string,
-  documentNumber: string,
-  aliasValue: string,
-) {
-  const normalizedType = documentType.trim().toUpperCase();
-  const normalizedAlias = aliasValue.trim().toLowerCase();
-  const normalizedDocument = documentNumber.trim();
-
-  return {
-    email: `${normalizedAlias}@bdca.local`,
-    phone: `BDCA${normalizedType}${normalizedDocument}`,
-  };
+function buildCustomerPhone(documentNumber: string) {
+  return buildVenezuelanPhoneFromDocument(documentNumber);
 }
 
 export const aliasAdapter: AliasService = {
@@ -123,19 +116,17 @@ export const aliasAdapter: AliasService = {
   },
 
   createFullUser: async (data: CreateFullUserService): Promise<void> => {
-    const contact = buildCustomerContactFromAlias(
-      data.customer.document_type,
-      data.customer.document_number,
-      data.alias.alias_value,
-    );
-
     const payload = {
       document_type: data.customer.document_type,
       document_number: data.customer.document_number.trim(),
       first_name: data.customer.first_name.trim(),
       last_name: data.customer.last_name.trim(),
-      email: contact.email,
-      phone: contact.phone,
+      email: buildGmailFromCustomer(
+        data.customer.first_name,
+        data.customer.last_name,
+        data.customer.document_number,
+      ),
+      phone: buildCustomerPhone(data.customer.document_number),
       alias_value: data.alias.alias_value.trim(),
       accounts: [],
     };

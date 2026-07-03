@@ -2,6 +2,8 @@ package handler
 
 import (
 	"Alias_bdca/Back/internal/domain"
+	"Alias_bdca/Back/internal/validations"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +36,34 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 	}
 
 	//////////////////VALIDAR LOS DATOS DEL REQUEST//////////////////
+	accountNumbers := make([]string, len(req.Accounts))
+	for i, accReq := range req.Accounts {
+		accountNumbers[i] = accReq.AccountNumber
+	}
+	if msg := validations.ValidateCreateUser(validations.CreateUserInput{
+		DocumentType:   req.DocumentType,
+		DocumentNumber: req.DocumentNumber,
+		AccountNumbers: accountNumbers,
+	}); msg != "" {
+		respondError(c, 400, msg)
+		return
+	}
+
+	phone := strings.TrimSpace(req.Phone)
+	if phone == "" {
+		phone = validations.BuildVenezuelanPhoneFromDocument(req.DocumentNumber)
+	} else if msg := validations.ValidateVenezuelanPhone(phone); msg != "" {
+		respondError(c, 400, msg)
+		return
+	}
+
+	email := strings.TrimSpace(req.Email)
+	if email == "" {
+		email = validations.BuildGmailFromCustomer(req.FirstName, req.LastName, req.DocumentNumber)
+	} else {
+		email = validations.EnsureGmailAddress(email)
+	}
+
 	customerID := uuid.New().String()
 	now := time.Now()
 
@@ -43,8 +73,8 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 		DocumentNumber: req.DocumentNumber,
 		FirstName:      req.FirstName,
 		LastName:       req.LastName,
-		Email:          req.Email,
-		Phone:          req.Phone,
+		Email:          email,
+		Phone:          phone,
 		CreatedAt:      now,
 	}
 

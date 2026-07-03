@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dashboard } from './adapters/ui/pages/dashboard';
 import { CreateUserPage } from './adapters/ui/pages/createUser';
+import { GenerateDataPage } from './adapters/ui/pages/generateData';
 import {
   SimulationPage,
   SimulationServicesProvider,
@@ -12,6 +13,10 @@ function App() {
 
   if (page === 'users') {
     return <CreateUserPage onNavigate={setPage} />;
+  }
+
+  if (page === 'generateData') {
+    return <GenerateDataPage onNavigate={setPage} />;
   }
 
   if (page === 'simulation') {
