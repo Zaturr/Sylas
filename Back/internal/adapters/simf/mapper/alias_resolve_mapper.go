@@ -177,7 +177,7 @@ func BuildAliasEntryList(query simfdomain.AliasResolveQuery, alias *domain.Alias
 	}
 }
 
-// BuildAliasResolveReport arma el cuerpo del mensaje (JSON: InqRpt) a partir del core y el query.
+// arma el cuerpo del mensaje (JSON: InqRpt) a partir del core y el query.
 func BuildAliasResolveReport(
 	query simfdomain.AliasResolveQuery,
 	coreData AliasResolveCoreData,

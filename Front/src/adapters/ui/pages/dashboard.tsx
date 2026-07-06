@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import type { AliasDetail } from '../../../domain/alias';
+import { isAliasGloballyBlocked, SIMF_ALIAS_STATUS } from '../../../domain/simulation/aliasStatus';
 import { useAlias } from '../hooks/useAlias';
 import { AppShell } from '../components/AppShell';
 import type { AppPage } from '../navigation';
@@ -7,6 +9,19 @@ import './dashboard.css';
 type DashboardProps = {
   onNavigate: (page: AppPage) => void;
 };
+
+function formatStatusAlias(alias: AliasDetail): string {
+  if (isAliasGloballyBlocked(alias.alias_status)) {
+    return SIMF_ALIAS_STATUS.BLOCKED;
+  }
+
+  const status = alias.alias_status?.trim().toUpperCase();
+  if (status === SIMF_ALIAS_STATUS.UNREGISTERED || !alias.alias?.trim()) {
+    return SIMF_ALIAS_STATUS.UNREGISTERED;
+  }
+
+  return alias.accounts.map((account) => account.status).join(', ') || '—';
+}
 
 export function Dashboard({ onNavigate }: DashboardProps) {
   const [searchInput, setSearchInput] = useState('');
@@ -140,7 +155,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   <th className="col-documento">Documento</th>
                   <th className="col-alias">Alias</th>
                   <th className="col-banco">Código banco</th>
-                  <th className="col-status-cuenta">Status cuenta</th>
                   <th className="col-status-alias">Status alias</th>
                   <th className="col-acciones">Acciones</th>
                 </tr>
@@ -159,14 +173,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                       <td className="col-documento">
                         {alias.document_type}-{alias.document_number}
                       </td>
-                      <td className="col-alias text-blue">{alias.alias || '—'}</td>
+                      <td className="col-alias text-blue">{alias.alias?.trim() || '—'}</td>
                       <td className="col-banco">
                         {alias.accounts.map((account) => account.bank).join(', ') || '—'}
                       </td>
-                      <td className="col-status-cuenta">
-                        {alias.accounts.map((account) => account.status).join(', ') || '—'}
-                      </td>
-                      <td className="col-status-alias">{alias.alias_status || '—'}</td>
+                      <td className="col-status-alias">{formatStatusAlias(alias)}</td>
                       <td className="col-acciones">
                         <button
                           type="button"

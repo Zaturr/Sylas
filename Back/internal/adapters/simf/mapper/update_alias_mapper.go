@@ -9,7 +9,7 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// TitularFromCustomer arma Pty para respuestas IdVrfctnRpt de actualización.
+// arma Pty para respuestas IdVrfctnRpt de actualización.
 func TitularFromCustomer(customer *domain.Customer) simfdomain.CreateUserSimfTitular {
 	return simfdomain.CreateUserSimfTitular{
 		Name:       CustomerFullNameUppercase(customer),
@@ -18,7 +18,7 @@ func TitularFromCustomer(customer *domain.Customer) simfdomain.CreateUserSimfTit
 	}
 }
 
-// SchemeNameFromDocumentType infiere SchmeNm SIMF desde el tipo de documento del core.
+// infiere SchmeNm SIMF desde el tipo de documento del core.
 func SchemeNameFromDocumentType(documentType string) string {
 	documentType = strings.ToUpper(strings.TrimSpace(documentType))
 	if documentType == "" {

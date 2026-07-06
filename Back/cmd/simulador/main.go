@@ -55,6 +55,7 @@ func main() {
 
 		// Randomizer
 		api.POST("/randomizer", randomizerController.RunRandomizer)
+		api.POST("/seed/test-scenarios", httpHandler.SeedTestScenarios)
 	}
 
 	simfadapter.RegisterRoutes(r, simfHandler)

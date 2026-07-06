@@ -4,7 +4,7 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// BuildAntiphishingFormatReport responde RJCT + RR10 por parámetros inválidos.
+// responde RJCT + RR10 por parámetros inválidos.
 func BuildAntiphishingFormatReport(query simfdomain.AntiphishingSimfQuery) simfdomain.AliasResolveReport {
 	_ = query
 	return simfdomain.AliasResolveReport{
@@ -13,7 +13,7 @@ func BuildAntiphishingFormatReport(query simfdomain.AntiphishingSimfQuery) simfd
 	}
 }
 
-// BuildAntiphishingReport arma InqRpt para GET anti-phishing por alias y banco destino.
+// arma InqRpt para GET antiphishing por alias y banco destino.
 func BuildAntiphishingReport(
 	query simfdomain.AntiphishingSimfQuery,
 	coreData AliasResolveCoreData,

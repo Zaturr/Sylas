@@ -56,6 +56,8 @@ export function GenerateDataPage({ onNavigate }: GenerateDataPageProps) {
     }
   };
 
+  const isBusy = submitting;
+
   return (
     <AppShell activeItem="generateData" onNavigate={onNavigate}>
       <div className="form-page">
@@ -83,7 +85,7 @@ export function GenerateDataPage({ onNavigate }: GenerateDataPageProps) {
                 min={MIN_CUSTOMERS}
                 max={MAX_CUSTOMERS}
                 step={1}
-                disabled={submitting}
+                disabled={isBusy}
                 value={totalCustomers}
                 onChange={(event) => handleTotalChange(event.target.value)}
               />
@@ -92,7 +94,7 @@ export function GenerateDataPage({ onNavigate }: GenerateDataPageProps) {
                 min={MIN_CUSTOMERS}
                 max={MAX_CUSTOMERS}
                 step={1}
-                disabled={submitting}
+                disabled={isBusy}
                 value={totalCustomers}
                 onChange={(event) => handleTotalChange(event.target.value)}
               />
@@ -110,13 +112,13 @@ export function GenerateDataPage({ onNavigate }: GenerateDataPageProps) {
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="primary-btn" disabled={submitting}>
+            <button type="submit" className="primary-btn" disabled={isBusy}>
               {submitting ? 'Generando...' : 'Generar data'}
             </button>
             <button
               type="button"
               className="secondary-btn"
-              disabled={submitting}
+              disabled={isBusy}
               onClick={() => onNavigate('alias')}
             >
               Volver al panel

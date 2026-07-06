@@ -569,23 +569,29 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 	}
 
 	// 3. Manejo del Alias (solo si el usuario envió un valor)
-	aliasValue := strings.TrimSpace(alias.AliasValue)
-	if aliasValue != "" {
-		alias.CustomerID = customer.ID
-		alias.AliasValue = aliasValue
+	if alias != nil {
+		aliasValue := strings.TrimSpace(alias.AliasValue)
+		if aliasValue != "" {
+			alias.CustomerID = customer.ID
+			alias.AliasValue = aliasValue
 
-		queryAlias := `INSERT INTO alias (id, customer_id, alias_value, created_at) VALUES (?,?,?,?)`
-		_, err = tx.ExecContext(ctx, queryAlias, alias.ID, alias.CustomerID, alias.AliasValue, alias.CreatedAt)
-		if err != nil {
-			tx.Rollback()
-			errStr := err.Error()
-			if strings.Contains(errStr, "alias.alias_value") {
-				return fmt.Errorf("el alias '%s' ya está en uso por otro usuario", alias.AliasValue)
+			aliasStatus := strings.TrimSpace(alias.Status)
+			if aliasStatus == "" {
+				aliasStatus = domain.AliasStatusEnabled
 			}
-			if strings.Contains(errStr, "alias.customer_id") {
-				return fmt.Errorf("este usuario ya tiene un alias registrado, solo se permite uno por cliente")
+			queryAlias := `INSERT INTO alias (id, customer_id, alias_value, status, created_at) VALUES (?,?,?,?,?)`
+			_, err = tx.ExecContext(ctx, queryAlias, alias.ID, alias.CustomerID, alias.AliasValue, aliasStatus, alias.CreatedAt)
+			if err != nil {
+				tx.Rollback()
+				errStr := err.Error()
+				if strings.Contains(errStr, "alias.alias_value") {
+					return fmt.Errorf("el alias '%s' ya está en uso por otro usuario", alias.AliasValue)
+				}
+				if strings.Contains(errStr, "alias.customer_id") {
+					return fmt.Errorf("este usuario ya tiene un alias registrado, solo se permite uno por cliente")
+				}
+				return fmt.Errorf("error insertando alias: %w", err)
 			}
-			return fmt.Errorf("error insertando alias: %w", err)
 		}
 	}
 

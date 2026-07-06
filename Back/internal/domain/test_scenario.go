@@ -1,0 +1,29 @@
+package domain
+
+type TestScenarioAccount struct {
+	BankID string `json:"bank_id"`
+	Status string `json:"status"`
+}
+
+type TestScenario struct {
+	ID             string                `json:"id"`
+	Label          string                `json:"label"`
+	DocumentNumber string                `json:"document_number"`
+	AliasValue     string                `json:"alias_value"`
+	FirstName      string                `json:"first_name"`
+	LastName       string                `json:"last_name"`
+	AliasStatus    string                `json:"alias_status,omitempty"`
+	Accounts       []TestScenarioAccount `json:"accounts"`
+}
+
+type TestScenarioSeedRequest struct {
+	UserBankID  string         `json:"user_bank_id"`
+	AccountType string         `json:"account_type"`
+	Scenarios   []TestScenario `json:"scenarios"`
+}
+
+type TestScenarioSeedResult struct {
+	Created int      `json:"created"`
+	Skipped int      `json:"skipped"`
+	Errors  []string `json:"errors,omitempty"`
+}

@@ -8,7 +8,7 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// MapBlockSimfBusinessReason traduce errores de bloqueo SIMF a Rsn en IdVrfctnRpt.
+// traduce errores de bloqueo SIMF a Rsn en IdVrfctnRpt.
 func MapBlockSimfBusinessReason(err error) string {
 	if err == nil {
 		return simfdomain.ReasonNone
