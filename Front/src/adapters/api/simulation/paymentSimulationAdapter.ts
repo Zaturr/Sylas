@@ -72,7 +72,7 @@ export function createPaymentSimulationService(
         if (!response.ok) {
           return {
             ok: false,
-            error: 'No se pudo consultar el alias destino en SIMF.',
+            error: 'No se pudo consultar el alias destino.',
           };
         }
 

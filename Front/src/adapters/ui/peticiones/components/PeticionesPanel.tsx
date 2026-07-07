@@ -13,11 +13,11 @@ function getEmptyMessage(
   isTracePanelActive: boolean,
 ): string {
   if (!sessionKey) {
-    return 'Inicia sesión en el simulador para ver las peticiones SIMF.';
+    return 'Inicia sesión en el simulador para ver las peticiones de alias.';
   }
 
   if (!isTracePanelActive) {
-    return 'Entra al gestor de alias o inicia un pago para ver las peticiones SIMF.';
+    return 'Entra al gestor de alias o inicia un pago para ver las peticiones de alias.';
   }
 
   return 'Esperando nuevos eventos...';
@@ -30,11 +30,11 @@ export function PeticionesPanel({
   const latestTrace = useSimfLatestRequestTrace(sessionKey, isTracePanelActive);
 
   return (
-    <aside className="peticiones-panel" aria-label="Peticiones SIMF del simulador">
+    <aside className="peticiones-panel" aria-label="Peticiones de alias del simulador">
       <div className="peticiones-panel__header">
         <h2 className="peticiones-panel__title">Peticiones</h2>
         <p className="peticiones-panel__subtitle">
-          Petición SIMF activa del gestor de alias o del flujo de pago para la cédula en sesión.
+          Petición de alias activa del gestor de alias o del flujo de pago para la cédula en sesión.
         </p>
       </div>
 

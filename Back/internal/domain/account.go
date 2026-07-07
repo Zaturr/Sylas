@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type Account struct {
 	ID            string    `json:"id"`
@@ -10,4 +13,14 @@ type Account struct {
 	AccountType   string    `json:"account_type"`
 	Status        string    `json:"status"`
 	CreatedAt     time.Time `json:"created_at"`
+}
+
+// IsAccountInactive indica si el vínculo cuenta-banco está inactivo (INAC).
+func IsAccountInactive(status string) bool {
+	switch strings.ToUpper(strings.TrimSpace(status)) {
+	case "INAC", "INACTIVE":
+		return true
+	default:
+		return false
+	}
 }

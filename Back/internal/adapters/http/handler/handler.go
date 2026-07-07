@@ -36,7 +36,8 @@ func (h *HTTPHandler) CreatedAlias(c *gin.Context) {
 
 	alias, err := h.service.CreateAlias(c.Request.Context(), req.CustomerID, req.AliasValue)
 	if err != nil {
-		respondError(c, 422, err.Error())
+		status, message := mapSimfRegisterError(err)
+		respondError(c, status, message)
 		return
 	}
 

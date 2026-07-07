@@ -59,13 +59,16 @@ export function AliasManagementStep({
     mappedDocument.documentNumber,
   );
 
-  const hasAlias = aliasCheck?.status === 'found';
-  const canCreateAlias =
-    aliasCheck?.status === 'not-found' &&
-    isSimfNotFoundReason(aliasCheck.reason);
-
   const currentStatus = aliasCheck?.agentStatus ?? null;
   const isBlocked = currentStatus === SIMF_ALIAS_STATUS.BLOCKED;
+
+  const hasAlias = aliasCheck?.status === 'found';
+  const canCreateAlias =
+    (aliasCheck?.status === 'not-found' &&
+      isSimfNotFoundReason(aliasCheck.reason)) ||
+    (hasAlias && isBlocked);
+
+  const showCreateAliasCard = canCreateAlias && !hasAlias;
   const selectValue: UserModifiableAliasStatus =
     aliasStatusInput || USER_MODIFIABLE_ALIAS_STATUSES[0];
 
@@ -128,13 +131,13 @@ export function AliasManagementStep({
           )}
           {isBlocked && (
             <p className="sim-card__subtitle">
-              Este alias fue bloqueado (BLKD). No se elimina del sistema; la baja es global BDCA.
+              Este alias fue bloqueado (BLKD). Permanece visible hasta que registres uno nuevo.
             </p>
           )}
         </div>
       )}
 
-      {!isSubmitting && canCreateAlias && (
+      {!isSubmitting && showCreateAliasCard && (
         <div className="sim-card">
           <p className="sim-card__title">Sin alias registrado</p>
           <p className="sim-card__subtitle">{aliasCheck?.message}</p>
@@ -191,7 +194,7 @@ export function AliasManagementStep({
             disabled={!primaryAccount}
             onClick={onCreateAlias}
           >
-            Crear alias
+            {isBlocked ? 'Registrar nuevo alias' : 'Crear alias'}
           </button>
         )}
 

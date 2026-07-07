@@ -112,7 +112,7 @@ export function mapAntiphishingResponseToPaymentAlias(
   const report = message?.AlisIdInqRes?.InqRpt;
 
   if (!report) {
-    return { ok: false, error: 'Respuesta SIMF inválida.' };
+    return { ok: false, error: 'Respuesta de alias inválida.' };
   }
 
   const result = (report.Result ?? '').trim().toUpperCase();

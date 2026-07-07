@@ -6,6 +6,7 @@ import (
 )
 
 // UpdateSimfAliasAgentStatus actualiza el Sts del vínculo alias-agente (cuenta en la IBP).
+// Solo permite ACTV, INAC y PNDL. BLKD se gestiona únicamente vía DisableAlias (baja global).
 func (s *AppService) UpdateSimfAliasAgentStatus(
 	ctx context.Context,
 	aliasValue, bankID, simfStatus string,
@@ -16,6 +17,9 @@ func (s *AppService) UpdateSimfAliasAgentStatus(
 	}
 	if alias == nil {
 		return nil, ErrSimfAliasNotFound
+	}
+	if domain.IsAliasGloballyBlocked(alias.Status) {
+		return nil, ErrSimfAliasBlocked
 	}
 
 	accounts, err := s.repo.GetAccountsByCustomerID(ctx, alias.CustomerID)
@@ -54,8 +58,6 @@ func simfStatusToCore(simfStatus string) string {
 		return "INACTIVE"
 	case "PNDL":
 		return "PNDL"
-	case "BLKD":
-		return "BLOCKED"
 	default:
 		return "INACTIVE"
 	}

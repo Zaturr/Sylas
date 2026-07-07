@@ -67,7 +67,7 @@ function validateDocumentNumberForScheme(
       return null;
     case 'SRIF':
       if (!/^\d{9}$/.test(trimmed)) {
-        return 'El RIF (J, G o C) debe tener exactamente 9 dígitos para cumplir con SIMF (esquema SRIF).';
+        return 'El RIF (J, G o C) debe tener exactamente 9 dígitos para cumplir con el esquema de alias (SRIF).';
       }
       return null;
     case 'SPAS':

@@ -239,9 +239,46 @@ func (r *RealRepository) UpdateAliasStatus(ctx context.Context, aliasID, status 
 	return err
 }
 
-// GetAliasByCustomerID busca el alias asociado a un cliente (relación 1:1).
+// activeAliasSQLFilter excluye alias con baja global (BLKD) para tope AG01 / alta de uno nuevo.
+const activeAliasSQLFilter = `UPPER(COALESCE(status, 'ENABLED')) NOT IN ('BLKD', 'DISABLED', 'BLOCKED')`
+
+// currentAliasJoinCondition une el alias más reciente del titular (incluye BLKD hasta que se registre otro).
+const currentAliasJoinCondition = `al.id = (
+	SELECT al2.id FROM alias al2
+	WHERE al2.customer_id = c.id
+	ORDER BY al2.created_at DESC
+	LIMIT 1
+)`
+
+// GetActiveAliasByCustomerID devuelve el alias operativo del titular (sin BLKD/DISABLED).
+func (r *RealRepository) GetActiveAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error) {
+	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at
+	FROM alias
+	WHERE customer_id = ? AND ` + activeAliasSQLFilter + `
+	ORDER BY created_at DESC
+	LIMIT 1`
+	row := r.db.QueryRowContext(ctx, query, customerID)
+
+	var alias domain.Alias
+	var createdAtStr string
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &alias.Status, &createdAtStr)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	alias.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+	return &alias, nil
+}
+
+// GetAliasByCustomerID devuelve el alias más reciente del titular (incluye BLKD).
 func (r *RealRepository) GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error) {
-	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at FROM alias WHERE customer_id = ?`
+	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at
+	FROM alias
+	WHERE customer_id = ?
+	ORDER BY created_at DESC
+	LIMIT 1`
 	row := r.db.QueryRowContext(ctx, query, customerID)
 
 	var alias domain.Alias
@@ -401,7 +438,7 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 	countQuery := `
 	SELECT COUNT(*)
 	FROM customers c
-	LEFT JOIN alias al ON al.customer_id = c.id
+	LEFT JOIN alias al ON ` + currentAliasJoinCondition + `
 	WHERE 1=1` + searchFilter
 
 	var totalRecords int
@@ -436,13 +473,13 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 	FROM (
 		SELECT c.id
 		FROM customers c
-		LEFT JOIN alias al ON al.customer_id = c.id
+		LEFT JOIN alias al ON ` + currentAliasJoinCondition + `
 		WHERE 1=1` + searchFilter + `
 		ORDER BY c.first_name, c.last_name, COALESCE(al.alias_value, '')
 		LIMIT ? OFFSET ?
 	) page
 	JOIN customers c ON c.id = page.id
-	LEFT JOIN alias al ON al.customer_id = c.id
+	LEFT JOIN alias al ON ` + currentAliasJoinCondition + `
 	LEFT JOIN accounts ac ON c.id = ac.customer_id
 	GROUP BY c.id, al.id, al.alias_value, al.status
 	ORDER BY c.first_name, c.last_name, COALESCE(al.alias_value, '')
@@ -587,8 +624,9 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 				if strings.Contains(errStr, "alias.alias_value") {
 					return fmt.Errorf("el alias '%s' ya está en uso por otro usuario", alias.AliasValue)
 				}
-				if strings.Contains(errStr, "alias.customer_id") {
-					return fmt.Errorf("este usuario ya tiene un alias registrado, solo se permite uno por cliente")
+				if strings.Contains(errStr, "alias.customer_id") ||
+					strings.Contains(errStr, "idx_alias_one_active_per_customer") {
+					return fmt.Errorf("este usuario ya tiene un alias activo registrado")
 				}
 				return fmt.Errorf("error insertando alias: %w", err)
 			}

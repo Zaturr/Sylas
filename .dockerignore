@@ -1,0 +1,29 @@
+# Backend (no lo necesita el build del front)
+Back/
+
+# Git y metadatos
+.git/
+.gitignore
+
+# Carpeta del Dockerfile (no se copia al contenedor)
+dockerfront/
+
+# Dependencias y build local del front (se regeneran en el contenedor)
+Front/node_modules/
+Front/dist/
+Front/dist-ssr/
+
+# Logs y archivos locales
+*.log
+Front/*.local
+
+# Bases SQLite locales
+*.db
+*.db-wal
+*.db-shm
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

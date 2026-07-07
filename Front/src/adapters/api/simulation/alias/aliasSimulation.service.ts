@@ -10,7 +10,7 @@ import { isPendingAlias } from '../../../../domain/simulation/auth.types';
 import { parseDocumentInput } from '../../../../domain/simulation/documentParser';
 import { validateAliasValue } from '../../../../domain/simulation/aliasValidation';
 import { SIMF_REASON_NOT_FOUND } from '../../../../domain/simulation/simf.constants';
-import { SIMF_ALIAS_STATUS } from '../../../../domain/simulation/aliasStatus';
+import { SIMF_ALIAS_STATUS, isAliasGloballyBlocked } from '../../../../domain/simulation/aliasStatus';
 import { buildSimfTraceSessionKey } from '../../../../domain/peticiones';
 import { appConfig } from '../../app.config';
 import {
@@ -167,7 +167,9 @@ export function createAliasSimulationService(
       const document = session.mappedDocument;
       const currentAlias = session.alias?.trim() || null;
 
-      if (session.hasConfiguredAlias) {
+      const aliasIsBlocked = isAliasGloballyBlocked(session.aliasCoreStatus);
+
+      if (session.hasConfiguredAlias && !aliasIsBlocked) {
         return {
           ok: false,
           message: 'Este titular ya tiene un alias configurado.',

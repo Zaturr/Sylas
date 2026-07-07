@@ -312,7 +312,7 @@ export function useSimulationAuth() {
     if (state.session) {
       await authSimulationService.verifyAliasViaSimf(
         state.session,
-        state.aliasCheck?.bankCode,
+        state.aliasCheck?.bankCode ?? undefined,
       );
     }
 

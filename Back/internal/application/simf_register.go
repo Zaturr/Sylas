@@ -8,7 +8,8 @@ import (
 )
 
 // RegisterSimfUser registra titular, alias y vínculo IBP según reglas SIMF (IdModAdvc).
-// ACRD solo si el alias pertenece a otro documento; AG01 si el documento ya tiene alias distinto.
+// AC06 si el alias está BLKD (aislado); ACRD si pertenece a otro titular;
+// AG01 si el titular ya tiene un alias activo distinto.
 func (s *AppService) RegisterSimfUser(
 	ctx context.Context,
 	customer *domain.Customer,
@@ -20,25 +21,37 @@ func (s *AppService) RegisterSimfUser(
 		return err
 	}
 
-	existingAliasByValue, err := s.repo.GetAliasByValue(ctx, alias.AliasValue)
-	if err != nil {
-		return err
+	aliasValue := ""
+	if alias != nil {
+		aliasValue = strings.TrimSpace(alias.AliasValue)
 	}
 
-	if existingAliasByValue != nil {
-		if existingCustomer != nil && existingAliasByValue.CustomerID == existingCustomer.ID {
-			return s.ensureSimfAccounts(ctx, existingCustomer.ID, accounts)
-		}
-		return ErrSimfAliasTaken
-	}
-
-	if existingCustomer != nil {
-		existingAliasByCustomer, err := s.repo.GetAliasByCustomerID(ctx, existingCustomer.ID)
+	if aliasValue != "" {
+		existingAliasByValue, err := s.repo.GetAliasByValue(ctx, aliasValue)
 		if err != nil {
 			return err
 		}
-		if existingAliasByCustomer != nil {
-			return ErrSimfAliasLimitExceeded
+
+		if existingAliasByValue != nil {
+			if domain.IsAliasGloballyBlocked(existingAliasByValue.Status) {
+				return ErrSimfAliasBlocked
+			}
+			if existingCustomer != nil && existingAliasByValue.CustomerID == existingCustomer.ID {
+				return s.ensureSimfAccounts(ctx, existingCustomer.ID, accounts)
+			}
+			return ErrSimfAliasTaken
+		}
+	}
+
+	if existingCustomer != nil {
+		if aliasValue != "" {
+			existingActiveAlias, err := s.repo.GetActiveAliasByCustomerID(ctx, existingCustomer.ID)
+			if err != nil {
+				return err
+			}
+			if existingActiveAlias != nil {
+				return ErrSimfAliasLimitExceeded
+			}
 		}
 		customer.ID = existingCustomer.ID
 	}

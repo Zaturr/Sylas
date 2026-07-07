@@ -64,6 +64,8 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 		email = validations.EnsureGmailAddress(email)
 	}
 
+	aliasValue := strings.TrimSpace(req.AliasValue)
+
 	customerID := uuid.New().String()
 	now := time.Now()
 
@@ -91,23 +93,26 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 		})
 	}
 
-	alias := &domain.Alias{
-		ID:         uuid.New().String(),
-		CustomerID: customerID,
-		AliasValue: req.AliasValue,
-		CreatedAt:  now,
+	var alias *domain.Alias
+	if aliasValue != "" {
+		alias = &domain.Alias{
+			ID:         uuid.New().String(),
+			CustomerID: customerID,
+			AliasValue: aliasValue,
+			CreatedAt:  now,
+		}
 	}
 
-	//////////////////LLAMAR AL SERVICIO DE CREACION DE USUARIO//////////////////
-	err := h.service.CreateFullUser(c.Request.Context(), customer, accounts, alias)
+	err := h.service.RegisterSimfUser(c.Request.Context(), customer, accounts, alias)
 	if err != nil {
-		respondError(c, 422, err.Error())
+		status, message := mapSimfRegisterError(err)
+		respondError(c, status, message)
 		return
 	}
 
-	//////////////////FINALIZAR LA RESPUESTA//////////////////
+	responseAlias := aliasValue
 	c.JSON(201, gin.H{
 		"message": "Usuario creado correctamente",
-		"alias":   alias.AliasValue,
+		"alias":   responseAlias,
 	})
 }

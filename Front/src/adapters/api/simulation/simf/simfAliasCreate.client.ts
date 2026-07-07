@@ -26,7 +26,7 @@ export function createRegisterAliasViaSimf(simfHttpClient: SimfHttpClient) {
     if (!schemeName) {
       return {
         ok: false,
-        message: 'Tipo de documento no soportado para SIMF.',
+        message: 'Tipo de documento no soportado para alias.',
       };
     }
 
@@ -42,7 +42,7 @@ export function createRegisterAliasViaSimf(simfHttpClient: SimfHttpClient) {
     if (!result.ok) {
       return {
         ok: false,
-        message: 'No se pudo registrar el alias vía SIMF.',
+        message: 'No se pudo registrar el alias.',
       };
     }
 

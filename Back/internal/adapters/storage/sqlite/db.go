@@ -118,7 +118,7 @@ func createTables(ctx context.Context, db *sql.DB) error {
 
 	CREATE TABLE IF NOT EXISTS alias(
 	id TEXT PRIMARY KEY,
-	customer_id TEXT NOT NULL UNIQUE,
+	customer_id TEXT NOT NULL,
 	alias_value TEXT NOT NULL UNIQUE,
 	status TEXT NOT NULL DEFAULT 'ENABLED',
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -128,6 +128,9 @@ func createTables(ctx context.Context, db *sql.DB) error {
 
 	CREATE INDEX IF NOT EXISTS idx_alias_value ON alias(alias_value);
 	CREATE INDEX IF NOT EXISTS idx_alias_customer_id ON alias(customer_id);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_alias_one_active_per_customer
+	ON alias(customer_id)
+	WHERE status NOT IN ('BLKD', 'DISABLED', 'BLOCKED');
 	CREATE INDEX IF NOT EXISTS idx_customers_first_name ON customers(first_name);
 	CREATE INDEX IF NOT EXISTS idx_customers_last_name ON customers(last_name);
 	CREATE INDEX IF NOT EXISTS idx_customers_document_number ON customers(document_number);
@@ -146,7 +149,15 @@ func migrateSchema(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	return migrateRemoveCustomersPhoneUnique(ctx, db)
+	if err := migrateRemoveCustomersPhoneUnique(ctx, db); err != nil {
+		return err
+	}
+
+	if err := migrateAliasAllowMultiplePerCustomer(ctx, db); err != nil {
+		return err
+	}
+
+	return ensureAliasOneActivePerCustomerIndex(ctx, db)
 }
 
 func migrateRemoveCustomersPhoneUnique(ctx context.Context, db *sql.DB) error {
@@ -257,4 +268,64 @@ func needsCustomersDocumentMigration(ctx context.Context, db *sql.DB) (bool, err
 
 	normalized := strings.ToUpper(tableSQL)
 	return strings.Contains(normalized, "DOCUMENT_NUMBER TEXT NOT NULL UNIQUE"), nil
+}
+
+func migrateAliasAllowMultiplePerCustomer(ctx context.Context, db *sql.DB) error {
+	needsMigration, err := needsAliasCustomerUniqueRemoval(ctx, db)
+	if err != nil || !needsMigration {
+		return err
+	}
+
+	stmts := []string{
+		"PRAGMA foreign_keys=OFF",
+		"BEGIN TRANSACTION",
+		`CREATE TABLE alias_migrated (
+			id TEXT PRIMARY KEY,
+			customer_id TEXT NOT NULL,
+			alias_value TEXT NOT NULL UNIQUE,
+			status TEXT NOT NULL DEFAULT 'ENABLED',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+		)`,
+		`INSERT INTO alias_migrated
+			SELECT id, customer_id, alias_value, status, created_at
+			FROM alias`,
+		"DROP TABLE alias",
+		"ALTER TABLE alias_migrated RENAME TO alias",
+		"CREATE INDEX IF NOT EXISTS idx_alias_value ON alias(alias_value)",
+		"CREATE INDEX IF NOT EXISTS idx_alias_customer_id ON alias(customer_id)",
+		"COMMIT",
+		"PRAGMA foreign_keys=ON",
+	}
+
+	for _, stmt := range stmts {
+		if _, err := db.ExecContext(ctx, stmt); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func needsAliasCustomerUniqueRemoval(ctx context.Context, db *sql.DB) (bool, error) {
+	var tableSQL string
+	err := db.QueryRowContext(ctx, `SELECT sql FROM sqlite_master WHERE type='table' AND name='alias'`).Scan(&tableSQL)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	normalized := strings.ToUpper(tableSQL)
+	return strings.Contains(normalized, "CUSTOMER_ID TEXT NOT NULL UNIQUE"), nil
+}
+
+func ensureAliasOneActivePerCustomerIndex(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, `
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_alias_one_active_per_customer
+		ON alias(customer_id)
+		WHERE status NOT IN ('BLKD', 'DISABLED', 'BLOCKED')
+	`)
+	return err
 }

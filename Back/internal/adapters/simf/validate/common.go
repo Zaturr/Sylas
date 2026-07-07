@@ -140,13 +140,13 @@ func ValidateCreDtTm(creDtTm string) error {
 	return nil
 }
 
-// ValidateSimfStatus valida Sts para actualización (ACTV | INAC | PNDL | BLKD).
+// ValidateSimfStatus valida Sts para actualización por banco (ACTV | INAC | PNDL).
+// BLKD solo está permitido en el endpoint de baja global (aliases/delete).
 func ValidateSimfStatus(status string) error {
 	switch status {
 	case simfdomain.StatusActive,
 		simfdomain.StatusInactive,
-		simfdomain.StatusPendingDrop,
-		simfdomain.StatusBlocked:
+		simfdomain.StatusPendingDrop:
 		return nil
 	default:
 		return formatErr("Sts", "estado de alias invalido")

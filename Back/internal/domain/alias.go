@@ -22,6 +22,11 @@ func IsAliasGloballyBlocked(status string) bool {
 	}
 }
 
+// IsAliasActive indica si el alias está vigente (no aislado por BLKD/DISABLED).
+func IsAliasActive(status string) bool {
+	return !IsAliasGloballyBlocked(status)
+}
+
 type Alias struct {
 	ID         string    `json:"id"`
 	CustomerID string    `json:"customer_id"`

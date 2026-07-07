@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { AliasDetail } from '../../../domain/alias';
-import { isAliasGloballyBlocked, SIMF_ALIAS_STATUS } from '../../../domain/simulation/aliasStatus';
+import { getAliasStatusLabel, isAliasGloballyBlocked, SIMF_ALIAS_STATUS } from '../../../domain/simulation/aliasStatus';
 import { useAlias } from '../hooks/useAlias';
 import { AppShell } from '../components/AppShell';
 import type { AppPage } from '../navigation';
@@ -12,15 +12,19 @@ type DashboardProps = {
 
 function formatStatusAlias(alias: AliasDetail): string {
   if (isAliasGloballyBlocked(alias.alias_status)) {
-    return SIMF_ALIAS_STATUS.BLOCKED;
+    return getAliasStatusLabel(SIMF_ALIAS_STATUS.BLOCKED);
   }
 
   const status = alias.alias_status?.trim().toUpperCase();
   if (status === SIMF_ALIAS_STATUS.UNREGISTERED || !alias.alias?.trim()) {
-    return SIMF_ALIAS_STATUS.UNREGISTERED;
+    return getAliasStatusLabel(SIMF_ALIAS_STATUS.UNREGISTERED);
   }
 
   return alias.accounts.map((account) => account.status).join(', ') || '—';
+}
+
+function isAliasBlockedRow(alias: AliasDetail): boolean {
+  return isAliasGloballyBlocked(alias.alias_status);
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
@@ -177,7 +181,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                       <td className="col-banco">
                         {alias.accounts.map((account) => account.bank).join(', ') || '—'}
                       </td>
-                      <td className="col-status-alias">{formatStatusAlias(alias)}</td>
+                      <td className="col-status-alias">
+                        {isAliasBlockedRow(alias) ? (
+                          <span className="dashboard-alias-status dashboard-alias-status--blkd">
+                            {formatStatusAlias(alias)}
+                          </span>
+                        ) : (
+                          formatStatusAlias(alias)
+                        )}
+                      </td>
                       <td className="col-acciones">
                         <button
                           type="button"

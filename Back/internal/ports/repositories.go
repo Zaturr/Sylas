@@ -22,6 +22,7 @@ type AliasRepository interface {
 	UpdateAliasStatus(ctx context.Context, aliasID, status string) error
 	GetAliasByValue(ctx context.Context, value string) (*domain.Alias, error)
 	GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)
+	GetActiveAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)
 	GetAliasByID(ctx context.Context, id string) (*domain.Alias, error)
 	DeleteAlias(ctx context.Context, id string) error
 	DeleteCustomerByID(ctx context.Context, customerID string) error

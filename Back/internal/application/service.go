@@ -30,14 +30,26 @@ func (s *AppService) RegisterCustomerWithAccount(ctx context.Context, customer *
 func (s *AppService) CreateAlias(ctx context.Context, customerID string, aliasValue string) (*domain.Alias, error) {
 	existingAlias, _ := s.repo.GetAliasByValue(ctx, aliasValue)
 	if existingAlias != nil {
+		if domain.IsAliasGloballyBlocked(existingAlias.Status) {
+			return nil, ErrSimfAliasBlocked
+		}
 		return nil, errors.New("El alias ya existe")
 	}
+
+	activeAlias, err := s.repo.GetActiveAliasByCustomerID(ctx, customerID)
+	if err != nil {
+		return nil, err
+	}
+	if activeAlias != nil {
+		return nil, ErrSimfAliasLimitExceeded
+	}
+
 	newAlias := &domain.Alias{
 		ID:         "ALIAS-" + customerID,
 		CustomerID: customerID,
 		AliasValue: aliasValue,
 	}
-	err := s.repo.SaveAlias(ctx, newAlias)
+	err = s.repo.SaveAlias(ctx, newAlias)
 	if err != nil {
 		return nil, err
 	}

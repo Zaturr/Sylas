@@ -24,9 +24,9 @@ const (
 	ReasonFormat            = "RR10"
 	ReasonBlacklist         = "RR04"
 	ReasonNotFound          = "BE23"
-	ReasonAliasLimit        = "AG01"
-	ReasonAliasBlocked      = "AC06"
-	ReasonUnauthorizedIBP   = "AG08"
+	ReasonAliasLimit      = "AG01"
+	ReasonAliasBlocked  = "AC06"
+	ReasonUnauthorizedIBP = "AG08"
 )
 
 // Status — estado del vínculo alias-agente (Sts, 4 caracteres).

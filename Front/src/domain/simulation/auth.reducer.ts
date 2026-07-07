@@ -1,5 +1,5 @@
 import type { SimulationAuthState, SimulationSession, AliasLinkAccountMode } from './auth.types';
-import { SIMF_ALIAS_STATUS, isUserModifiableAliasStatus } from './aliasStatus';
+import { isUserModifiableAliasStatus } from './aliasStatus';
 import type { UserModifiableAliasStatus } from './aliasStatus';
 import { createInitialSimulationAuthState } from './auth.types';
 import { getDefaultLinkedAccountId } from './aliasFlow';
