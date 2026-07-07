@@ -338,7 +338,22 @@
   .dashboard-alias-status--blkd {
     background: #fee2e2;
     color: #991b1b;
-    border: 1px solid #fecaca;
+    border: 1px solid #c91212;
+  }
+  .dashboard-alias-status--unrg {
+    background: #fef9c3;
+    color: #b45309;
+    border: 1px solid #f59e0b;
+  }
+  .dashboard-alias-status--actv {
+    background: #dbeafe;
+    color: #1eaf5a;
+    border: 1px solid #16c91f;
+  }
+  .dashboard-alias-status--inac {
+    background: #ffd17a;
+    color: #ad4f01;
+    border: 1px solid #ff6803;
   }
 
   .dashboard-table .col-acciones {

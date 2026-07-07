@@ -3,11 +3,13 @@ import { Dashboard } from './adapters/ui/pages/dashboard';
 import { CreateUserPage } from './adapters/ui/pages/createUser';
 import { GenerateDataPage } from './adapters/ui/pages/generateData';
 import { useAutoSeedTestScenarios } from './adapters/ui/hooks/useAutoSeedTestScenarios';
+import { RulesPage } from './adapters/ui/rules';
 import {
   SimulationPage,
   SimulationServicesProvider,
 } from './adapters/ui/simulation';
 import type { AppPage } from './adapters/ui/navigation';
+import { SwaggerPage } from './adapters/ui/swagger';
 
 function App() {
   useAutoSeedTestScenarios();
@@ -28,6 +30,12 @@ function App() {
         <SimulationPage onNavigate={setPage} />
       </SimulationServicesProvider>
     );
+  }
+  if (page === 'swagger'){
+    return <SwaggerPage onNavigate={setPage} />;
+  }
+  if (page === 'rules'){
+    return <RulesPage onNavigate={setPage} />;
   }
 
   return <Dashboard onNavigate={setPage} />;

@@ -10,21 +10,79 @@ type DashboardProps = {
   onNavigate: (page: AppPage) => void;
 };
 
-function formatStatusAlias(alias: AliasDetail): string {
-  if (isAliasGloballyBlocked(alias.alias_status)) {
-    return getAliasStatusLabel(SIMF_ALIAS_STATUS.BLOCKED);
-  }
-
-  const status = alias.alias_status?.trim().toUpperCase();
-  if (status === SIMF_ALIAS_STATUS.UNREGISTERED || !alias.alias?.trim()) {
-    return getAliasStatusLabel(SIMF_ALIAS_STATUS.UNREGISTERED);
-  }
-
-  return alias.accounts.map((account) => account.status).join(', ') || '—';
-}
-
 function isAliasBlockedRow(alias: AliasDetail): boolean {
   return isAliasGloballyBlocked(alias.alias_status);
+}
+
+function isAliasUnregisteredRow(alias: AliasDetail): boolean {
+  const status = alias.alias_status?.trim().toUpperCase();
+  return status === SIMF_ALIAS_STATUS.UNREGISTERED || !alias.alias?.trim();
+}
+
+function normalizeAccountStatus(status: string): 'actv' | 'inac' | null {
+  const normalized = status.trim().toUpperCase();
+  if (normalized === 'ACTIVE' || normalized === SIMF_ALIAS_STATUS.ACTIVE) {
+    return 'actv';
+  }
+  if (normalized === 'INACTIVE' || normalized === SIMF_ALIAS_STATUS.INACTIVE) {
+    return 'inac';
+  }
+  return null;
+}
+
+function getAccountStatusLabel(status: string): string {
+  const kind = normalizeAccountStatus(status);
+  if (kind === 'actv') {
+    return getAliasStatusLabel(SIMF_ALIAS_STATUS.ACTIVE);
+  }
+  if (kind === 'inac') {
+    return getAliasStatusLabel(SIMF_ALIAS_STATUS.INACTIVE);
+  }
+  return status.trim() || '—';
+}
+
+function renderAliasStatusCell(alias: AliasDetail) {
+  if (isAliasBlockedRow(alias)) {
+    return (
+      <span className="dashboard-alias-status dashboard-alias-status--blkd">
+        {getAliasStatusLabel(SIMF_ALIAS_STATUS.BLOCKED)}
+      </span>
+    );
+  }
+
+  if (isAliasUnregisteredRow(alias)) {
+    return (
+      <span className="dashboard-alias-status dashboard-alias-status--unrg">
+        {getAliasStatusLabel(SIMF_ALIAS_STATUS.UNREGISTERED)}
+      </span>
+    );
+  }
+
+  if (alias.accounts.length === 0) {
+    return '—';
+  }
+
+  return alias.accounts.map((account, index) => {
+    const kind = normalizeAccountStatus(account.status);
+    const label = getAccountStatusLabel(account.status);
+    const badgeClass =
+      kind === 'actv'
+        ? 'dashboard-alias-status--actv'
+        : kind === 'inac'
+          ? 'dashboard-alias-status--inac'
+          : null;
+
+    return (
+      <span key={`${account.bank}-${index}`}>
+        {index > 0 ? ', ' : null}
+        {badgeClass ? (
+          <span className={`dashboard-alias-status ${badgeClass}`}>{label}</span>
+        ) : (
+          label
+        )}
+      </span>
+    );
+  });
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
@@ -182,13 +240,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                         {alias.accounts.map((account) => account.bank).join(', ') || '—'}
                       </td>
                       <td className="col-status-alias">
-                        {isAliasBlockedRow(alias) ? (
-                          <span className="dashboard-alias-status dashboard-alias-status--blkd">
-                            {formatStatusAlias(alias)}
-                          </span>
-                        ) : (
-                          formatStatusAlias(alias)
-                        )}
+                        {renderAliasStatusCell(alias)}
                       </td>
                       <td className="col-acciones">
                         <button

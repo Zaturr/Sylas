@@ -1,1 +1,1 @@
-export type AppPage = 'alias' | 'users' | 'generateData' | 'simulation';
+export type AppPage = 'alias' | 'users' | 'generateData' | 'simulation' | 'swagger' | 'rules';

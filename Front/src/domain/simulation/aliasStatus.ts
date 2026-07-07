@@ -65,15 +65,15 @@ export function isUserModifiableAliasStatus(
 export function getAliasStatusLabel(status: SimfAliasStatus): string {
   switch (status) {
     case SIMF_ALIAS_STATUS.ACTIVE:
-      return 'Activo (ACTV)';
+      return 'ACTV';
     case SIMF_ALIAS_STATUS.INACTIVE:
-      return 'Inactivo (INAC)';
+      return 'INAC';
     case SIMF_ALIAS_STATUS.PENDING:
-      return 'Pendiente de baja (PNDL)';
+      return 'PNDL';
     case SIMF_ALIAS_STATUS.UNREGISTERED:
-      return 'No registrado (UNRG)';
+      return 'UNRG';
     case SIMF_ALIAS_STATUS.BLOCKED:
-      return 'Bloqueado (BLKD)';
+      return 'BLKD';
     default:
       return status;
   }

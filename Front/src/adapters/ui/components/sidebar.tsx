@@ -15,7 +15,8 @@ const menuItems: Array<{ id: AppPage | 'settings'; label: string; icon: string }
   { id: 'users', label: 'Usuarios', icon: '' },
   { id: 'generateData', label: 'Generar Data', icon: '' },
   { id: 'simulation', label: 'Simulación', icon: '' },
-  { id: 'settings', label: 'Configuración', icon: '' },
+  { id: 'swagger', label: 'API Swagger', icon: ''},
+  { id: 'rules', label: 'Reglas de negocio', icon: '' },
 ];
 
 export function Sidebar({

@@ -1,0 +1,1 @@
+export { SwaggerPage } from './pages/swaggerPage';
