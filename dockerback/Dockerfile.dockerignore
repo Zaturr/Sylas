@@ -1,0 +1,13 @@
+# Para el backend, ignoramos el frontend y otros archivos innecesarios
+Front/
+dockerfront/
+.git/
+.gitignore
+.vscode/
+.idea/
+*.db
+*.db-wal
+*.db-shm
+*.log
+.DS_Store
+Thumbs.db

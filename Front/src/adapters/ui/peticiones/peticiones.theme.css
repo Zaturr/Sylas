@@ -33,11 +33,11 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 2px;
-  padding-top: 24px;
+  padding-top: 0;
 }
 
 .peticiones-panel__empty {

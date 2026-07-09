@@ -194,7 +194,7 @@ export const BUSINESS_RULE_GROUPS: BusinessRuleGroup[] = [
       {
         id: 'r-n-t-2',
         code: 'R.N.T.2',
-        title: 'VResolución del Destino',
+        title: 'Resolución del Destino',
         description:
           'La IBP Destino es la autoridad responsable de procesar la resolución final para el movimiento de los fondos.',
         bullets: [

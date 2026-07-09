@@ -1,4 +1,5 @@
 import type { SwaggerEndpoint } from '../apiCatalog';
+import { SwaggerMessageFieldsTable } from './SwaggerMessageFieldsTable';
 
 type SwaggerEndpointDocProps = {
   endpoint: SwaggerEndpoint | null;
@@ -51,27 +52,23 @@ export function SwaggerEndpointDoc({ endpoint }: SwaggerEndpointDocProps) {
         </section>
       )}
 
-      {endpoint.bodyFields && endpoint.bodyFields.length > 0 && (
+      {endpoint.requestFields && endpoint.requestFields.length > 0 && (
         <section className="swagger-endpoint-doc__section">
-          <h2>Reglas de MsgId y EndToEndId</h2>
-          <table className="swagger-endpoint-doc__table">
-            <thead>
-              <tr>
-                <th>Campo</th>
-                <th>Regla</th>
-                <th>Ejemplo válido</th>
-              </tr>
-            </thead>
-            <tbody>
-              {endpoint.bodyFields.map((field) => (
-                <tr key={field.name}>
-                  <td><code>{field.name}</code></td>
-                  <td>{field.description}</td>
-                  <td><code>{field.example}</code></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <h2>
+            Parámetros del request
+            {endpoint.requestSchemaTitle ? ` (${endpoint.requestSchemaTitle})` : ''}
+          </h2>
+          <SwaggerMessageFieldsTable fields={endpoint.requestFields} />
+        </section>
+      )}
+
+      {endpoint.responseFields && endpoint.responseFields.length > 0 && (
+        <section className="swagger-endpoint-doc__section">
+          <h2>
+            Parámetros del response
+            {endpoint.responseSchemaTitle ? ` (${endpoint.responseSchemaTitle})` : ''}
+          </h2>
+          <SwaggerMessageFieldsTable fields={endpoint.responseFields} />
         </section>
       )}
 

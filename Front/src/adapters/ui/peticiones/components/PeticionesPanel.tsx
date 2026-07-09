@@ -20,7 +20,7 @@ function getEmptyMessage(
     return 'Entra al gestor de alias o inicia un pago para ver las peticiones de alias.';
   }
 
-  return 'Esperando nuevos eventos...';
+  return 'Esperando nuevas peticiones...';
 }
 
 export function PeticionesPanel({
@@ -34,7 +34,7 @@ export function PeticionesPanel({
       <div className="peticiones-panel__header">
         <h2 className="peticiones-panel__title">Peticiones</h2>
         <p className="peticiones-panel__subtitle">
-          Petición de alias activa del gestor de alias o del flujo de pago para la cédula en sesión.
+          Peticiones realizadas por el simulador al servicio del alias.
         </p>
       </div>
 

@@ -1,9 +1,9 @@
-FROM golang:1.23.5-alpine AS builder 
+FROM golang:1.26.3-alpine AS builder 
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
-run go mod download
+RUN go mod download
 
 COPY Back/ ./Back/
 
@@ -20,3 +20,4 @@ COPY --from=builder /simulador ./simulador
 EXPOSE 8080
 
 CMD ["./simulador"]
+

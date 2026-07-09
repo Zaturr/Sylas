@@ -7,13 +7,21 @@ import (
 	"Alias_bdca/Back/internal/application"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db, err := sqlite.InitDatabase("test.db")
+	dbPath := "data/test.db"
+	dbDir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dbDir, os.ModePerm); err != nil {
+		log.Fatalf("Error al crear el directorio de la base de datos: %v", err)
+	}
+
+	db, err := sqlite.InitDatabase(dbPath)
 	if err != nil {
 		log.Fatalf("Error al inicializar la base de datos: %v", err)
 	}

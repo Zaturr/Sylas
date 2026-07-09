@@ -178,7 +178,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               aria-label="Buscar"
               onClick={() => setSearch(searchInput)}
             >
-              🔍
+              
             </button>
           </div>
         </div>

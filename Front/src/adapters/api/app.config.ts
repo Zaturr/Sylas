@@ -268,21 +268,18 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
   ];
 }
 
-const simulationConfig = {
-  bankCode: '0172',
-  bankName: 'Bancamiga',
-  processingCenter: '01',
-  channelPspIbp: '0172',
-  accountSuffixLength: 16,
-  accountType: 'Cta. Corriente',
-  maxAccountGenerationAttempts: 3,
-} as const;
+import { getApiBaseUrl, getSimulationConfig } from '../../configService';
 
 export const appConfig = {
-  apiBaseUrl:
-    import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1',
+  get apiBaseUrl() {
+    return getApiBaseUrl();
+  },
 
-  simulation: simulationConfig,
+  get simulation() {
+    return getSimulationConfig();
+  },
 
-  testScenarios: buildTestScenarios(simulationConfig.bankCode),
-} as const;
+  get testScenarios() {
+    return buildTestScenarios(getSimulationConfig().bankCode);
+  },
+};

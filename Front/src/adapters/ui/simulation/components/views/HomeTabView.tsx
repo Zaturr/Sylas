@@ -97,7 +97,7 @@ export function HomeTabView({
           <p className="sim-home-balance__label">Balance</p>
           <div className="sim-home-balance__amount-row">
             <p className="sim-home-balance__amount">
-              {balanceVisible ? 'Bs 12.450,00' : '••••••••'}
+              {balanceVisible ? 'Bs 12.450,00' : '********'}
             </p>
             <button
               type="button"

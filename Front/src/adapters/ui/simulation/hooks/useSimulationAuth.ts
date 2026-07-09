@@ -70,17 +70,16 @@ export function useSimulationAuth() {
 
     const result = await authSimulationService.loginByDocument(state.documentInput);
 
-    if (result.ok) {
-      dispatch({ type: 'LOGIN_SUCCESS', session: result.session });
+    if (result.ok === false) {
+      if (result.reason === 'not-found') {
+        dispatch({ type: 'LOGIN_NOT_FOUND', message: result.message });
+      } else {
+        dispatch({ type: 'LOGIN_FAILED', message: result.message });
+      }
       return;
     }
 
-    if (result.reason === 'not-found') {
-      dispatch({ type: 'LOGIN_NOT_FOUND', message: result.message });
-      return;
-    }
-
-    dispatch({ type: 'LOGIN_FAILED', message: result.message });
+    dispatch({ type: 'LOGIN_SUCCESS', session: result.session });
   }, [authSimulationService, state.documentInput]);
 
   const openCreateAccount = useCallback(() => {
@@ -100,12 +99,12 @@ export function useSimulationAuth() {
       lastName: state.lastNameInput,
     });
 
-    if (result.ok) {
-      dispatch({ type: 'CREATE_ACCOUNT_SUCCESS', session: result.session });
+    if (result.ok === false) {
+      dispatch({ type: 'CREATE_ACCOUNT_FAILED', message: result.message });
       return;
     }
 
-    dispatch({ type: 'CREATE_ACCOUNT_FAILED', message: result.message });
+    dispatch({ type: 'CREATE_ACCOUNT_SUCCESS', session: result.session });
   }, [
     authSimulationService,
     state.documentInput,
@@ -235,16 +234,16 @@ export function useSimulationAuth() {
       targetStatus,
     });
 
-    if (result.ok) {
-      dispatch({
-        type: 'UPDATE_ALIAS_STATUS_SUCCESS',
-        session: result.session,
-        check: mapServiceCheckToState(result.check),
-      });
+    if (result.ok === false) {
+      dispatch({ type: 'UPDATE_ALIAS_STATUS_FAILED', message: result.message });
       return;
     }
 
-    dispatch({ type: 'UPDATE_ALIAS_STATUS_FAILED', message: result.message });
+    dispatch({
+      type: 'UPDATE_ALIAS_STATUS_SUCCESS',
+      session: result.session,
+      check: mapServiceCheckToState(result.check),
+    });
   }, [
     authSimulationService,
     state.session,
@@ -258,7 +257,7 @@ export function useSimulationAuth() {
     }
 
     const validation = validateAliasValue(state.aliasInput);
-    if (!validation.ok) {
+    if (validation.ok === false) {
       dispatch({ type: 'CREATE_ALIAS_FAILED', message: validation.error });
       return;
     }
@@ -270,12 +269,12 @@ export function useSimulationAuth() {
       validation.value,
     );
 
-    if (result.ok) {
-      dispatch({ type: 'CREATE_ALIAS_SUCCESS', session: result.session });
+    if (result.ok === false) {
+      dispatch({ type: 'CREATE_ALIAS_FAILED', message: result.message });
       return;
     }
 
-    dispatch({ type: 'CREATE_ALIAS_FAILED', message: result.message });
+    dispatch({ type: 'CREATE_ALIAS_SUCCESS', session: result.session });
   }, [authSimulationService, state.session, state.aliasInput]);
 
   const requestDeleteAlias = useCallback(async () => {
@@ -296,16 +295,16 @@ export function useSimulationAuth() {
 
     const result = await authSimulationService.deleteAlias(state.session);
 
-    if (result.ok) {
-      dispatch({
-        type: 'UPDATE_ALIAS_STATUS_SUCCESS',
-        session: result.session,
-        check: mapServiceCheckToState(result.check),
-      });
+    if (result.ok === false) {
+      dispatch({ type: 'UPDATE_ALIAS_STATUS_FAILED', message: result.message });
       return;
     }
 
-    dispatch({ type: 'UPDATE_ALIAS_STATUS_FAILED', message: result.message });
+    dispatch({
+      type: 'UPDATE_ALIAS_STATUS_SUCCESS',
+      session: result.session,
+      check: mapServiceCheckToState(result.check),
+    });
   }, [authSimulationService, state.session]);
 
   const finishAliasFlow = useCallback(async () => {

@@ -25,7 +25,7 @@
   min-height: 0;
   height: 100%;
   overflow: hidden;
-  padding-top: 32px;
+  padding-top: 8px;
 }
 
 .simulation-page__peticiones .peticiones-panel {
