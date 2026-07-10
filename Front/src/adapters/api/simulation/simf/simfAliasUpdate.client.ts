@@ -1,7 +1,7 @@
 import type { UserModifiableAliasStatus } from '../../../../domain/simulation/aliasStatus';
 import type { SimfTraceSessionKey } from '../../../../domain/peticiones';
 import type { SimfHttpClient } from '../../peticiones/simfHttpClient';
-import { SIMF_BASE_URL } from './simf.config';
+import { getSimfBaseUrl } from './simf.config';
 import { buildSimfUpdatePayload } from './simfUpdatePayload.builder';
 
 type SimfVerificationReport = {
@@ -25,7 +25,7 @@ export function createUpdateAliasViaSimf(simfHttpClient: SimfHttpClient) {
 
     const result = await simfHttpClient({
       method: 'PUT',
-      url: `${SIMF_BASE_URL}/aliases/update/${encodeURIComponent(aliasValue)}/${bankCode}`,
+      url: `${getSimfBaseUrl()}/aliases/update/${encodeURIComponent(aliasValue)}/${bankCode}`,
       sessionKey,
       body,
       signal,

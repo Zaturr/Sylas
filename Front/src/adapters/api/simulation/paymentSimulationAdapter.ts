@@ -43,7 +43,6 @@ export function createPaymentSimulationService(
   dependencies: PaymentSimulationDependencies,
 ): PaymentSimulationService {
   const { resolveAntiphishingViaSimf } = dependencies;
-  const bankCode = appConfig.simulation.bankCode;
 
   return {
     async resolvePaymentAlias(
@@ -51,6 +50,7 @@ export function createPaymentSimulationService(
       sessionKey,
       signal,
     ): Promise<ResolvePaymentAliasResult> {
+      const bankCode = appConfig.simulation.bankCode;
       const trimmedValue = aliasValue.trim();
 
       if (!trimmedValue) {

@@ -1,7 +1,7 @@
 import type { SimulationSession } from '../../../../domain/simulation/auth.types';
 import type { SimfTraceSessionKey } from '../../../../domain/peticiones';
 import type { SimfHttpClient } from '../../peticiones/simfHttpClient';
-import { SIMF_BASE_URL } from './simf.config';
+import { getSimfBaseUrl } from './simf.config';
 import { buildSimfCreateUserPayload } from './simfCreateUserPayload.builder';
 
 type SimfVerificationReport = {
@@ -32,7 +32,7 @@ export function createRegisterAliasViaSimf(simfHttpClient: SimfHttpClient) {
 
     const result = await simfHttpClient({
       method: 'POST',
-      url: `${SIMF_BASE_URL}/aliases`,
+      url: `${getSimfBaseUrl()}/aliases`,
       sessionKey,
       body: payload,
       signal,

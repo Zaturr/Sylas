@@ -1,6 +1,6 @@
 import type { SimfTraceSessionKey } from '../../../../domain/peticiones';
 import type { SimfHttpClient } from '../../peticiones/simfHttpClient';
-import { SIMF_BASE_URL } from './simf.config';
+import { getSimfBaseUrl } from './simf.config';
 import {
   buildSimfDocumentId,
   mapDocumentTypeToSimfScheme,
@@ -20,7 +20,7 @@ export function createResolveAliasViaSimf(simfHttpClient: SimfHttpClient) {
     }
 
     const documentId = buildSimfDocumentId(documentType, documentNumber);
-    const url = `${SIMF_BASE_URL}/identities/${scheme}/${encodeURIComponent(documentId)}/alias/${bankCode}`;
+    const url = `${getSimfBaseUrl()}/identities/${scheme}/${encodeURIComponent(documentId)}/alias/${bankCode}`;
 
     const result = await simfHttpClient({
       method: 'GET',

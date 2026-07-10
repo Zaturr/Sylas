@@ -1,6 +1,6 @@
 import type { SimfHttpClient } from '../../peticiones/simfHttpClient';
 import type { SimfTraceSessionKey } from '../../../../domain/peticiones';
-import { SIMF_BASE_URL } from './simf.config';
+import { getSimfBaseUrl } from './simf.config';
 import { buildSimfBlockPayload } from './simfBlockPayload.builder';
 
 type SimfVerificationReport = {
@@ -23,7 +23,7 @@ export function createBlockAliasViaSimf(simfHttpClient: SimfHttpClient) {
 
     const result = await simfHttpClient({
       method: 'PUT',
-      url: `${SIMF_BASE_URL}/aliases/delete/${encodeURIComponent(aliasValue)}/${bankCode}`,
+      url: `${getSimfBaseUrl()}/aliases/delete/${encodeURIComponent(aliasValue)}/${bankCode}`,
       sessionKey,
       body,
       signal,
