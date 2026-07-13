@@ -27,8 +27,8 @@ func (h *HTTPHandler) AddAccount(c *gin.Context) {
 		return
 	}
 
-	if !validations.IsDigitsOnly(req.AccountNumber) {
-		respondError(c, 400, "account_number debe contener solo numeros")
+	if !validations.IsValidAccount(req.AccountNumber) {
+		respondError(c, 400, "account_number invalido o no cumple con el formato requerido")
 		return
 	}
 

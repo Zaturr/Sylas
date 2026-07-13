@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"Alias_bdca/Back/internal/domain"
+	"Alias_bdca/Back/internal/validations"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -41,10 +42,17 @@ func GenerateCustomer(config domain.RandomizerConfig, rng *rand.Rand) domain.Gen
 
 	for a := 0; a < numAccounts; a++ {
 		bankID := availableBanks[a].ID
+		office := fmt.Sprintf("%04d", rng.Intn(10000))
+		account := fmt.Sprintf("%010d", rng.Int63n(10000000000))
+		firstDigit := validations.GetDigitValue(bankID + office)
+		secondDigit := validations.GetDigitValue(office + account)
+		controlStr := fmt.Sprintf("%d%d", firstDigit, secondDigit)
+		validAccount := bankID + office + controlStr + account
+
 		cust.Accounts = append(cust.Accounts, domain.GeneratedAccount{
 			ID:            uuid.New().String(),
 			BankID:        bankID,
-			AccountNumber: fmt.Sprintf("%s%016d", bankID, rng.Int63n(9999999999999999)),
+			AccountNumber: validAccount,
 		})
 	}
 

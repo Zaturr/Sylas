@@ -139,11 +139,17 @@ func testScenarioStatusToCore(status string) string {
 func buildScenarioAccountNumber(bankID, documentNumber string) string {
 	docNumber, err := strconv.ParseInt(documentNumber, 10, 64)
 	if err != nil {
-		suffix := documentNumber
-		if len(suffix) > 16 {
-			suffix = suffix[len(suffix)-16:]
-		}
-		return bankID + suffix
+		docNumber = 1234567890
 	}
-	return fmt.Sprintf("%s%016d", bankID, docNumber)
+	
+	// Para construir una cuenta válida necesitamos 20 dígitos:
+	// bankCode (4) + office (4) + control (2) + account (10)
+	office := fmt.Sprintf("%04d", (docNumber%9000)+1000) // 4 digitos
+	account := fmt.Sprintf("%010d", docNumber)          // 10 digitos
+
+	firstDigit := validations.GetDigitValue(bankID + office)
+	secondDigit := validations.GetDigitValue(office + account)
+	controlStr := fmt.Sprintf("%d%d", firstDigit, secondDigit)
+
+	return bankID + office + controlStr + account
 }

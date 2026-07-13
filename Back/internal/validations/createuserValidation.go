@@ -31,8 +31,8 @@ func ValidateCreateUser(input CreateUserInput) string {
 		return "document_number debe contener solo numeros"
 	}
 	for _, accountNumber := range input.AccountNumbers {
-		if !IsDigitsOnly(accountNumber) {
-			return "account_number debe contener solo numeros"
+		if !IsValidAccount(accountNumber) {
+			return "account_number invalido o no cumple con el formato requerido"
 		}
 	}
 	return ""
