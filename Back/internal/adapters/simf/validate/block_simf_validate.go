@@ -59,7 +59,6 @@ func ValidateBlockSimfParams(
 	return cmd, nil
 }
 
-// ValidateBlockStatus exige Sts=BLKD en el endpoint de baja global.
 func ValidateBlockStatus(status string) error {
 	if strings.TrimSpace(status) != simfdomain.StatusBlocked {
 		return formatErr("Sts", "estado debe ser BLKD para bloqueo")

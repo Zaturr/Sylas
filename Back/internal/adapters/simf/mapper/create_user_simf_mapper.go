@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	coreAccountStatusInactive = "INACTIVE"
+	coreAccountStatusActive   = "ACTIVE"
 	coreAccountTypeDefault    = "CHECKING"
 )
 
@@ -46,7 +46,7 @@ func ToCoreCreateUserEntities(cmd simfdomain.CreateUserSimfCommand) (*domain.Cus
 		CustomerID:    customerID,
 		AccountNumber: placeholderAccountNumber(cmd.AgentCode, cmd.EndToEndID),
 		AccountType:   coreAccountTypeDefault,
-		Status:        coreAccountStatusInactive,
+		Status:        coreAccountStatusActive,
 		CreatedAt:     now,
 	}
 

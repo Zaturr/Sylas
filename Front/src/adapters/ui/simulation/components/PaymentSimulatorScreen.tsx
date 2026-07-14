@@ -4,6 +4,7 @@ import type {
 } from '../../../../domain/simulation';
 import type { SimulationAuthState } from '../../../../domain/simulation/auth.types';
 import { isPaymentFlowActive } from '../../../../domain/simulation';
+import { resolveSessionAliasLinkStatus } from '../../../../domain/simulation/sessionAliasBadge';
 import { AliasSplashStep } from './steps/AliasSplashStep';
 import { AliasLinkAccountStep } from './steps/AliasLinkAccountStep';
 import { AliasCreateSuccessStep } from './steps/AliasCreateSuccessStep';
@@ -272,9 +273,11 @@ export function PaymentSimulatorScreen({
     }
 
     if (auth.step === 'alias-create-success') {
+      const realStatus = auth.session ? resolveSessionAliasLinkStatus(auth.session) : null;
       return (
         <AliasCreateSuccessStep
           aliasValue={auth.lastCreatedAlias ?? auth.session?.alias ?? ''}
+          status={realStatus}
           onFinish={onFinishAliasFlow}
         />
       );

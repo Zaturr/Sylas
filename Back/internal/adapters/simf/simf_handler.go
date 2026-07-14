@@ -5,7 +5,6 @@ import (
 )
 
 // SIMFHandler expone los endpoints del protocolo SIMF.
-// Delega toda la lógica de negocio al core (AliasService / AppService).
 type SIMFHandler struct {
 	core ports.AliasService
 }

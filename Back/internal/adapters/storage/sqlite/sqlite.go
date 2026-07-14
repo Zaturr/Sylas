@@ -601,8 +601,16 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 		} else if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("error verificando cuenta existente: %w", err)
+		} else {
+			// La cuenta ya existe. Actualizamos su estado para forzar la regla de negocio.
+			queryUpdateAcc := `UPDATE accounts SET status = ? WHERE id = ?`
+			_, err = tx.ExecContext(ctx, queryUpdateAcc, acc.Status, existingAccountID)
+			if err != nil {
+				tx.Rollback()
+				return fmt.Errorf("error actualizando estado de cuenta existente: %w", err)
+			}
 		}
-		// Si la cuenta ya existe, simplemente la ignoramos y no hacemos el INSERT
+		// Continuamos con la siguiente cuenta
 	}
 
 	// 3. Manejo del Alias (solo si el usuario envió un valor)

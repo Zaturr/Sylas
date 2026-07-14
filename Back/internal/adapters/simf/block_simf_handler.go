@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// BlockSimf PUT/POST /simf/bdca/v1/aliases/delete/{Alias}/{Agt} — baja global (Sts BLKD).
 func (h *SIMFHandler) BlockSimf(c *gin.Context) {
 	var message simfdomain.BlockSimfMessage
 	if err := c.ShouldBindJSON(&message); err != nil {

@@ -1,7 +1,14 @@
 import type { PaymentRecipient } from './types';
 
 export function formatRecipientDocument(recipient: PaymentRecipient): string {
-  return `${recipient.documentType}-${recipient.documentNumber}`;
+  const docNum = recipient.documentNumber;
+  if (docNum.length <= 5) {
+    return `${recipient.documentType}-${docNum}`;
+  }
+  const first = docNum.charAt(0);
+  const lastFour = docNum.slice(-4);
+  const asterisks = '*'.repeat(docNum.length - 5);
+  return `${recipient.documentType}-${first}${asterisks}${lastFour}`;
 }
 
 export function getRecipientInitials(recipient: PaymentRecipient): string {

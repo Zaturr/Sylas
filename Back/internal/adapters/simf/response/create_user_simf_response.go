@@ -15,12 +15,12 @@ func BuildCreateUserRejectMessage(cmd simfdomain.CreateUserSimfCommand, reasonCo
 	return buildCreateUserSimfResponse(cmd, simfdomain.ResultReject, reasonCode, nil)
 }
 
-// BuildCreateUserAcceptMessage responde IdVrfctnRpt con ACCP, Mod y Sts INAC (inactivo local).
+// BuildCreateUserAcceptMessage responde IdVrfctnRpt con ACCP, Mod y Sts ACTV (activo local).
 func BuildCreateUserAcceptMessage(cmd simfdomain.CreateUserSimfCommand) simfdomain.CreateUserSimfResponseMessage {
 	mod := &simfdomain.CreateUserSimfResponseMod{
 		Alias:     cmd.Alias,
 		AgentCode: cmd.AgentCode,
-		Status:    simfdomain.StatusInactive,
+		Status:    simfdomain.StatusActive,
 		Titular:   mapper.TitularFromCreateUserCommand(cmd),
 	}
 	return buildCreateUserSimfResponse(cmd, simfdomain.ResultAccept, simfdomain.ReasonNone, mod)

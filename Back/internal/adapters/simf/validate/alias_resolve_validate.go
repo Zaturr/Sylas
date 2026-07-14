@@ -7,11 +7,6 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// ValidateAliasResolveParams valida los path params del endpoint alias resolve
-// y devuelve el query de dominio listo para la capa de aplicación.
-//
-// requireAgent=true  → GET .../identities/{SchmeNm}/{Id}/alias/{Agt}
-// requireAgent=false → GET .../identities/{SchmeNm}/{Id}/Alias
 func ValidateAliasResolveParams(schemeName, documentID, agentCode string, requireAgent bool) (simfdomain.AliasResolveQuery, error) {
 	schemeName = strings.TrimSpace(schemeName)
 	documentID = strings.TrimSpace(documentID)

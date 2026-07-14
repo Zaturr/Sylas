@@ -1,13 +1,14 @@
 import { SimStatusBadge } from '../ui/SimStatusBadge';
-import { SIMF_ALIAS_STATUS } from '../../../../../domain/simulation/aliasStatus';
+import { SIMF_ALIAS_STATUS, type SimfAliasStatus } from '../../../../../domain/simulation/aliasStatus';
 import '../simulationSteps.css';
 
 type AliasCreateSuccessStepProps = {
   aliasValue: string;
+  status?: SimfAliasStatus | null;
   onFinish: () => void;
 };
 
-export function AliasCreateSuccessStep({ aliasValue, onFinish }: AliasCreateSuccessStepProps) {
+export function AliasCreateSuccessStep({ aliasValue, status, onFinish }: AliasCreateSuccessStepProps) {
   return (
     <div className="sim-flow">
       <div className="sim-flow sim-flow--centered sim-flow--compact">
@@ -18,7 +19,7 @@ export function AliasCreateSuccessStep({ aliasValue, onFinish }: AliasCreateSucc
         <p className="sim-flow__subtitle">
           Tu alias <strong>{aliasValue}</strong> fue registrado correctamente.
         </p>
-        <SimStatusBadge status={SIMF_ALIAS_STATUS.ACTIVE} />
+        <SimStatusBadge status={status ?? SIMF_ALIAS_STATUS.INACTIVE} />
       </div>
 
       <button type="button" className="sim-mobile-btn sim-mobile-btn--primary" onClick={onFinish}>

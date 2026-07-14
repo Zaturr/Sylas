@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   formatDocumentInput,
   getAccountLastDigits,
-  getHomeAliasBadge,
+  
   getPrimaryAccount,
   type SimulationSession,
 } from '../../../../../domain/simulation';
@@ -15,12 +15,6 @@ type HomeTabViewProps = {
   onLogout: () => void;
 };
 
-const badgeClassByVariant = {
-  success: 'sim-home-hero__notice--success',
-  warning: 'sim-home-hero__notice--warning',
-  danger: 'sim-home-hero__notice--danger',
-  info: '',
-} as const;
 
 type HomeMenuItem = {
   id: string;
@@ -51,7 +45,6 @@ export function HomeTabView({
     session.mappedDocument.documentNumber,
   );
 
-  const aliasBadge = getHomeAliasBadge(session);
   const aliasPending = !session.hasConfiguredAlias;
 
   const menuItems: HomeMenuItem[] = [
@@ -83,13 +76,6 @@ export function HomeTabView({
           </div>
         </div>
 
-        {aliasBadge && (
-          <p
-            className={`sim-home-hero__notice ${badgeClassByVariant[aliasBadge.variant]}`}
-          >
-            {aliasBadge.text}
-          </p>
-        )}
       </section>
 
       <section className="sim-home-balance" aria-label="Balance disponible">
