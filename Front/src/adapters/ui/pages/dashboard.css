@@ -240,8 +240,18 @@
     border-radius: 16px;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-md);
-    overflow: hidden;
+    /* overflow: hidden; Eliminado para que el tooltip no se corte */
     transition: opacity 0.2s ease;
+    position: relative;
+    z-index: 10;
+  }
+
+  .dashboard-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 16px;
+  }
+
+  .dashboard-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 16px;
   }
 
   .table-wrapper--loading {
@@ -381,6 +391,200 @@
     cursor: not-allowed;
   }
   
+  .dashboard-actions-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .dashboard-status-wrapper {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .dashboard-status-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    color: var(--text-accent);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: help;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .dashboard-status-info:hover {
+    background: #f7fbff;
+    border-color: var(--text-accent);
+  }
+
+  .dashboard-status-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    /* Posicionamos el tooltip debajo del icono por defecto, pero le daremos espacio */
+    top: calc(100% + 10px);
+    right: 0;
+    transform: translateY(-10px);
+    width: 320px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0, 40, 80, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    /* Aseguramos que esté por encima de todo */
+    z-index: 9999;
+    text-align: left;
+    font-size: 13px;
+    color: var(--text-dark);
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+
+  /* Flecha apuntando hacia arriba (cuando el tooltip está debajo del icono) */
+  .dashboard-status-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    right: 6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #ffffff transparent;
+  }
+
+  .dashboard-status-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    right: 5px;
+    border-width: 7px;
+    border-style: solid;
+    border-color: transparent transparent var(--border-color) transparent;
+  }
+
+  .dashboard-status-wrapper:hover .dashboard-status-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 
+   * Lógica para evitar el desbordamiento inferior (overflow bottom).
+   * Si es una de las últimas 4 filas Y NO es una de las primeras 3 filas,
+   * mostramos el tooltip hacia arriba. Así evitamos que en páginas cortas
+   * el tooltip choque con el borde superior.
+   */
+  .dashboard-table tbody tr:nth-last-child(-n+4):not(:nth-child(-n+3)) .dashboard-status-tooltip {
+    top: auto;
+    bottom: calc(100% + 10px);
+    transform: translateY(10px);
+  }
+
+  .dashboard-table tbody tr:nth-last-child(-n+4):not(:nth-child(-n+3)) .dashboard-status-wrapper:hover .dashboard-status-tooltip {
+    transform: translateY(0);
+  }
+
+  /* Invertir las flechas para que apunten hacia abajo cuando el tooltip está arriba */
+  .dashboard-table tbody tr:nth-last-child(-n+4):not(:nth-child(-n+3)) .dashboard-status-tooltip::after {
+    top: 100%;
+    bottom: auto;
+    border-color: #ffffff transparent transparent transparent;
+  }
+
+  .dashboard-table tbody tr:nth-last-child(-n+4):not(:nth-child(-n+3)) .dashboard-status-tooltip::before {
+    top: 100%;
+    bottom: auto;
+    border-color: var(--border-color) transparent transparent transparent;
+  }
+
+  .dashboard-tooltip-content .tooltip-title {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--text-accent);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 6px;
+  }
+
+  .dashboard-tooltip-content .tooltip-title.blkd {
+    color: #991b1b;
+    border-bottom-color: #fecaca;
+  }
+
+  .dashboard-tooltip-content .tooltip-title.unrg {
+    color: #b45309;
+    border-bottom-color: #fef08a;
+  }
+
+  .dashboard-tooltip-content p {
+    margin: 0;
+    line-height: 1.4;
+    color: var(--text-muted);
+  }
+
+  .tooltip-bank-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tooltip-bank-list li {
+    background: var(--bg-main);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+  }
+
+  .tooltip-bank-list .bank-code {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .tooltip-bank-list .status-text {
+    font-size: 12px;
+  }
+
+  .tooltip-bank-list .status-text.actv {
+    color: #1eaf5a;
+  }
+
+  .tooltip-bank-list .status-text.inac {
+    color: #ad4f01;
+  }
+
+  .delete-row-btn.icon-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .delete-row-btn.icon-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .spinner-icon {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    100% { transform: rotate(360deg); }
+  }
+
   .text-blue {
     color: var(--text-accent);
     font-weight: 500;
@@ -439,6 +643,8 @@
     border: 1px solid var(--border-color);
     border-radius: 16px;
     box-shadow: var(--shadow-md);
+    position: relative;
+    z-index: 5;
   }
 
   .pagination-info {

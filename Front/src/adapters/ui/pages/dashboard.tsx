@@ -85,6 +85,58 @@ function renderAliasStatusCell(alias: AliasDetail) {
   });
 }
 
+function renderDetailedTooltip(alias: AliasDetail) {
+  if (isAliasBlockedRow(alias)) {
+    return (
+      <div className="dashboard-tooltip-content">
+        <strong className="tooltip-title blkd">Bloqueado (BLKD)</strong>
+        <p>El alias se encuentra bloqueado a nivel global. Por motivos de seguridad o a solicitud del cliente, está inhabilitado para recibir pagos en cualquier institución.</p>
+      </div>
+    );
+  }
+
+  if (isAliasUnregisteredRow(alias)) {
+    return (
+      <div className="dashboard-tooltip-content">
+        <strong className="tooltip-title unrg">No Registrado (UNRG)</strong>
+        <p>No tiene registrado el alias.</p>
+      </div>
+    );
+  }
+
+  if (alias.accounts.length === 0) {
+    return (
+      <div className="dashboard-tooltip-content">
+        <strong className="tooltip-title">Sin Cuentas</strong>
+        <p>El usuario no tiene cuentas bancarias asociadas a este alias en el sistema.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-tooltip-content">
+      <strong className="tooltip-title">Estado por Institución:</strong>
+      <ul className="tooltip-bank-list">
+        {alias.accounts.map((acc, idx) => {
+          const kind = normalizeAccountStatus(acc.status);
+          return (
+            <li key={idx}>
+              <span className="bank-code">Banco {acc.bank}:</span>
+              {kind === 'actv' ? (
+                <span className="status-text actv">Activo (ACTV) - Alias activo.</span>
+              ) : kind === 'inac' ? (
+                <span className="status-text inac">Inactivo (INAC) - Alias inactivo.</span>
+              ) : (
+                <span className="status-text">Estado desconocido ({acc.status}).</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function Dashboard({ onNavigate }: DashboardProps) {
   const [searchInput, setSearchInput] = useState('');
   const skipDebounceRef = useRef(true);
@@ -243,15 +295,32 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                         {renderAliasStatusCell(alias)}
                       </td>
                       <td className="col-acciones">
-                        <button
-                          type="button"
-                          className="delete-row-btn"
-                          disabled={isBusy}
-                          aria-label={`Eliminar alias ${alias.alias}`}
-                          onClick={() => removeAlias(alias.customer_id, alias.alias)}
-                        >
-                          {isDeletingRow ? 'Eliminando...' : 'Eliminar'}
-                        </button>
+                        <div className="dashboard-actions-group">
+                          <div className="dashboard-status-wrapper">
+                            <div className="dashboard-status-info">!</div>
+                            <div className="dashboard-status-tooltip">
+                              {renderDetailedTooltip(alias)}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="delete-row-btn icon-btn"
+                            disabled={isBusy}
+                            aria-label={`Eliminar alias ${alias.alias}`}
+                            onClick={() => removeAlias(alias.customer_id, alias.alias)}
+                            title="Eliminar alias"
+                          >
+                            {isDeletingRow ? (
+                              <span className="spinner-icon">↻</span>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
