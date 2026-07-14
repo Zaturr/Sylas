@@ -8,7 +8,9 @@ export function buildRegistrationPayload(
   documentType: string,
   documentNumber: string,
   firstName: string,
+  middleName: string,
   lastName: string,
+  secondLastName: string,
   accountNumber: string,
   aliasValue?: string,
 ) {
@@ -18,8 +20,10 @@ export function buildRegistrationPayload(
     document_type: normalizedType,
     document_number: documentNumber,
     first_name: firstName.trim(),
+    middle_name: middleName.trim(),
     last_name: lastName.trim(),
-    email: buildGmailFromCustomer(firstName, lastName, documentNumber),
+    second_last_name: secondLastName.trim(),
+    email: buildGmailFromCustomer(firstName, middleName, lastName, secondLastName, documentNumber),
     phone: buildVenezuelanPhoneFromDocument(documentNumber),
     accounts: [
       {
@@ -54,7 +58,9 @@ export function buildRegistrationPayloadFromSession(
     session.mappedDocument.documentType,
     session.mappedDocument.documentNumber,
     session.customer.first_name,
+    session.customer.middle_name || '',
     session.customer.last_name,
+    session.customer.second_last_name,
     accountNumber,
     aliasValue,
   );

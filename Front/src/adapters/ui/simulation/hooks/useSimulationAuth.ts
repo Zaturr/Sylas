@@ -61,8 +61,16 @@ export function useSimulationAuth() {
     dispatch({ type: 'SET_FIRST_NAME', value });
   }, []);
 
+  const setMiddleNameInput = useCallback((value: string) => {
+    dispatch({ type: 'SET_MIDDLE_NAME', value });
+  }, []);
+
   const setLastNameInput = useCallback((value: string) => {
     dispatch({ type: 'SET_LAST_NAME', value });
+  }, []);
+
+  const setSecondLastNameInput = useCallback((value: string) => {
+    dispatch({ type: 'SET_SECOND_LAST_NAME', value });
   }, []);
 
   const submitLogin = useCallback(async () => {
@@ -96,7 +104,9 @@ export function useSimulationAuth() {
     const result = await authSimulationService.createAccount({
       documentInput: state.documentInput,
       firstName: state.firstNameInput,
+      middleName: state.middleNameInput,
       lastName: state.lastNameInput,
+      secondLastName: state.secondLastNameInput,
     });
 
     if (result.ok === false) {
@@ -109,7 +119,9 @@ export function useSimulationAuth() {
     authSimulationService,
     state.documentInput,
     state.firstNameInput,
+    state.middleNameInput,
     state.lastNameInput,
+    state.secondLastNameInput,
   ]);
 
   const runAliasCheck = useCallback(async () => {
@@ -344,7 +356,9 @@ export function useSimulationAuth() {
     auth: state,
     setDocumentInput,
     setFirstNameInput,
+    setMiddleNameInput,
     setLastNameInput,
+    setSecondLastNameInput,
     submitLogin,
     openCreateAccount,
     backToLogin,

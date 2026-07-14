@@ -28,7 +28,7 @@ func EnsureGmailAddress(email string) string {
 }
 
 // BuildGmailFromCustomer genera un correo @gmail.com desde nombre y documento.
-func BuildGmailFromCustomer(firstName, lastName, documentNumber string) string {
+func BuildGmailFromCustomer(firstName, middleName, lastName, secondLastName, documentNumber string) string {
 	first := sanitizeEmailLocalPart(strings.ToLower(strings.TrimSpace(firstName)))
 	last := sanitizeEmailLocalPart(strings.ToLower(strings.TrimSpace(lastName)))
 	suffix := documentEmailSuffix(documentNumber)

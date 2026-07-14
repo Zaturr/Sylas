@@ -8,9 +8,11 @@ export function validateCreateAccountDraft(
   documentInput: string,
   firstName: string,
   lastName: string,
+  secondLastName: string,
 ): ValidateCreateAccountDraftResult {
   const trimmedFirstName = firstName.trim();
   const trimmedLastName = lastName.trim();
+  const trimmedSecondLastName = secondLastName.trim();
 
   const documentValidation = validateDocumentInput(documentInput);
   if (!documentValidation.ok) {
@@ -18,11 +20,15 @@ export function validateCreateAccountDraft(
   }
 
   if (!trimmedFirstName) {
-    return { ok: false, error: 'Ingresa el nombre del titular.' };
+    return { ok: false, error: 'Ingresa el primer nombre del titular.' };
   }
 
   if (!trimmedLastName) {
-    return { ok: false, error: 'Ingresa el apellido del titular.' };
+    return { ok: false, error: 'Ingresa el primer apellido del titular.' };
+  }
+
+  if (!trimmedSecondLastName) {
+    return { ok: false, error: 'Ingresa el segundo apellido del titular.' };
   }
 
   return { ok: true };

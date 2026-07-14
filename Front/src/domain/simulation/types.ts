@@ -12,7 +12,9 @@ export const PAYMENT_SIMULATION_INITIAL_STEP: PaymentSimulationStep = 'idle';
 
 export type PaymentRecipient = {
   firstName: string;
+  middleName?: string;
   lastName: string;
+  secondLastName?: string;
   email: string;
   documentType: string;
   documentNumber: string;
@@ -23,6 +25,7 @@ export type PaymentSimulationState = {
   step: PaymentSimulationStep;
   activeTab: MobileAppTab;
   aliasValue: string;
+  destinationBankCode: string;
   amount: string;
   recipient: PaymentRecipient | null;
   errorMessage: string;
@@ -32,6 +35,7 @@ export const createInitialPaymentSimulationState = (): PaymentSimulationState =>
   step: PAYMENT_SIMULATION_INITIAL_STEP,
   activeTab: 'home',
   aliasValue: '',
+  destinationBankCode: '',
   amount: '',
   recipient: null,
   errorMessage: '',

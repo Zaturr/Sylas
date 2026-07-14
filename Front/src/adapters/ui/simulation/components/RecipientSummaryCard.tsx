@@ -10,10 +10,24 @@ type RecipientSummaryCardProps = {
   title?: string;
 };
 
+export function maskInitialPart(name: string | undefined | null): string {
+  if (!name) return '';
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  return `${trimmed.charAt(0).toUpperCase()}*`;
+}
+
 export function RecipientSummaryCard({
   recipient,
   title = 'Destinatario del pago',
 }: RecipientSummaryCardProps) {
+  const formattedName = [
+    recipient.firstName,
+    maskInitialPart(recipient.middleName),
+    maskInitialPart(recipient.lastName),
+    maskInitialPart(recipient.secondLastName),
+  ].filter(Boolean).join(' ');
+
   return (
     <div className="sim-recipient-card">
       <p className="sim-recipient-card__title">{title}</p>
@@ -27,11 +41,7 @@ export function RecipientSummaryCard({
       <div className="sim-recipient-card__details">
         <div className="sim-recipient-card__row">
           <span>Nombre</span>
-          <strong>{recipient.firstName}</strong>
-        </div>
-        <div className="sim-recipient-card__row">
-          <span>Apellido</span>
-          <strong>{recipient.lastName}</strong>
+          <strong>{formattedName}</strong>
         </div>
         <div className="sim-recipient-card__row">
           <span>Cédula</span>

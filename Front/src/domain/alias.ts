@@ -15,7 +15,9 @@ export interface AliasDetail {
     document_type: string;
     document_number: string;
     first_name: string;
+    middle_name: string;
     last_name: string;
+    second_last_name: string;
     alias: string;
     alias_status: string;
     email: string;

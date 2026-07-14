@@ -1,7 +1,5 @@
 import type { ResolvePaymentAliasResult } from '../../../../application/simulation/paymentSimulation.port';
 import { SIMF_ALIAS_STATUS } from '../../../../domain/simulation/aliasStatus';
-import { isSimfNotFoundReason } from '../../../../domain/simulation/simf.constants';
-import { DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE } from '../../../../domain/simulation/paymentValidation';
 import type { PaymentRecipient } from '../../../../domain/simulation';
 
 const SIMF_RESULT_ACCEPT = 'ACCP';
@@ -45,22 +43,37 @@ function parseSimfDocumentId(documentId: string): { documentType: string; docume
   };
 }
 
-function splitTitularName(fullName: string): { firstName: string; lastName: string } {
-  const normalized = fullName.trim();
+function splitTitularName(fullName: string): {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  secondLastName: string;
+} {
+  const normalized = fullName.trim().replace(/\s+/g, ' ');
 
   if (!normalized) {
-    return { firstName: '', lastName: '' };
+    return { firstName: '', middleName: '', lastName: '', secondLastName: '' };
   }
 
-  const spaceIndex = normalized.indexOf(' ');
+  const parts = normalized.split(' ');
 
-  if (spaceIndex === -1) {
-    return { firstName: normalized, lastName: '' };
+  if (parts.length === 1) {
+    return { firstName: parts[0], middleName: '', lastName: '', secondLastName: '' };
+  }
+
+  if (parts.length === 2) {
+    return { firstName: parts[0], middleName: '', lastName: parts[1], secondLastName: '' };
+  }
+
+  if (parts.length === 3) {
+    return { firstName: parts[0], middleName: '', lastName: parts[1], secondLastName: parts[2] };
   }
 
   return {
-    firstName: normalized.slice(0, spaceIndex).trim(),
-    lastName: normalized.slice(spaceIndex + 1).trim(),
+    firstName: parts[0],
+    middleName: parts[1],
+    lastName: parts[2],
+    secondLastName: parts.slice(3).join(' '),
   };
 }
 
@@ -87,7 +100,7 @@ function buildRecipientFromTitular(
     return null;
   }
 
-  const { firstName, lastName } = splitTitularName(titular.Nm ?? '');
+  const { firstName, middleName, lastName, secondLastName } = splitTitularName(titular.Nm ?? '');
 
   if (!firstName && !lastName) {
     return null;
@@ -96,7 +109,9 @@ function buildRecipientFromTitular(
   return {
     alias: aliasValue.trim(),
     firstName,
+    middleName,
     lastName,
+    secondLastName,
     email: '',
     documentType: document.documentType,
     documentNumber: document.documentNumber,
@@ -118,40 +133,34 @@ export function mapAntiphishingResponseToPaymentAlias(
   const result = (report.Result ?? '').trim().toUpperCase();
   const reason = (report.Rsn ?? '').trim().toUpperCase();
 
-  if (result === SIMF_RESULT_REJECT) {
-    if (isSimfNotFoundReason(reason)) {
-      return { ok: false, error: 'Alias no encontrado en el sistema' };
-    }
+  const GENERIC_ERROR = 'El alias no esta disponible en este momento, por favor valide con el banco destino';
 
+  if (result === SIMF_RESULT_REJECT) {
     if (reason === 'RR10') {
       return { ok: false, error: 'Formato de alias inválido.' };
     }
-
-    return { ok: false, error: 'No se pudo resolver el alias destino.' };
+    return { ok: false, error: GENERIC_ERROR };
   }
 
   if (result !== SIMF_RESULT_ACCEPT) {
-    return { ok: false, error: 'No se pudo resolver el alias destino.' };
+    return { ok: false, error: GENERIC_ERROR };
   }
 
   const agentStatus = resolveAgentStatus(report, aliasValue, bankCode);
 
-  if (agentStatus === SIMF_ALIAS_STATUS.BLOCKED) {
-    return { ok: false, error: DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE };
-  }
-
   if (
+    agentStatus === SIMF_ALIAS_STATUS.BLOCKED ||
+    agentStatus === SIMF_ALIAS_STATUS.UNREGISTERED ||
     agentStatus === SIMF_ALIAS_STATUS.PENDING ||
-    agentStatus === SIMF_ALIAS_STATUS.INACTIVE ||
-    agentStatus === SIMF_ALIAS_STATUS.UNREGISTERED
+    agentStatus === SIMF_ALIAS_STATUS.INACTIVE
   ) {
-    return { ok: false, error: 'El alias destino no está activo.' };
+    return { ok: false, error: GENERIC_ERROR };
   }
 
   const recipient = report.Pty ? buildRecipientFromTitular(aliasValue, report.Pty) : null;
 
   if (!recipient) {
-    return { ok: false, error: 'Titular no se encuentra en el sistema' };
+    return { ok: false, error: GENERIC_ERROR };
   }
 
   return { ok: true, recipient };

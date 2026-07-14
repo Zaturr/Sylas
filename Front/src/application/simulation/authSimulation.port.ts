@@ -15,7 +15,9 @@ export type LoginByDocumentResult =
 export type CreateAccountInput = {
   documentInput: string;
   firstName: string;
+  middleName: string;
   lastName: string;
+  secondLastName: string;
 };
 
 export type CreateAccountResult =

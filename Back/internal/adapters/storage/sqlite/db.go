@@ -96,7 +96,9 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	document_type TEXT NOT NULL,
 	document_number TEXT NOT NULL,
 	first_name TEXT NOT NULL,
-	last_name TEXT NO NULL,
+	middle_name TEXT,
+	last_name TEXT NOT NULL,
+	second_last_name TEXT NOT NULL,
 	email TEXT NOT NULL UNIQUE,
 	phone TEXT NOT NULL,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -140,7 +142,17 @@ func createTables(ctx context.Context, db *sql.DB) error {
 }
 
 func migrateSchema(ctx context.Context, db *sql.DB) error {
-	_, err := db.ExecContext(ctx, `ALTER TABLE alias ADD COLUMN status TEXT NOT NULL DEFAULT 'ENABLED'`)
+	// Migración para agregar columnas middle_name y second_last_name si no existen
+	_, err := db.ExecContext(ctx, `ALTER TABLE customers ADD COLUMN middle_name TEXT`)
+	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "duplicate column") {
+		// Ignoramos si la columna ya existe
+	}
+	_, err = db.ExecContext(ctx, `ALTER TABLE customers ADD COLUMN second_last_name TEXT NOT NULL DEFAULT ''`)
+	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "duplicate column") {
+		// Ignoramos si la columna ya existe
+	}
+
+	_, err = db.ExecContext(ctx, `ALTER TABLE alias ADD COLUMN status TEXT NOT NULL DEFAULT 'ENABLED'`)
 	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "duplicate column") {
 		return err
 	}
@@ -174,14 +186,16 @@ func migrateRemoveCustomersPhoneUnique(ctx context.Context, db *sql.DB) error {
 			document_type TEXT NOT NULL,
 			document_number TEXT NOT NULL,
 			first_name TEXT NOT NULL,
+			middle_name TEXT,
 			last_name TEXT NOT NULL,
+			second_last_name TEXT NOT NULL,
 			email TEXT NOT NULL UNIQUE,
 			phone TEXT NOT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			UNIQUE(document_type, document_number)
 		)`,
 		`INSERT INTO customers_phone_migration
-			SELECT id, document_type, document_number, first_name, last_name, email, phone, created_at
+			SELECT id, document_type, document_number, first_name, middle_name, last_name, second_last_name, email, phone, created_at
 			FROM customers`,
 		"DROP TABLE customers",
 		"ALTER TABLE customers_phone_migration RENAME TO customers",
@@ -229,14 +243,16 @@ func migrateCustomersCompositeDocumentKey(ctx context.Context, db *sql.DB) error
 			document_type TEXT NOT NULL,
 			document_number TEXT NOT NULL,
 			first_name TEXT NOT NULL,
+			middle_name TEXT,
 			last_name TEXT NOT NULL,
+			second_last_name TEXT NOT NULL,
 			email TEXT NOT NULL UNIQUE,
 			phone TEXT NOT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			UNIQUE(document_type, document_number)
 		)`,
 		`INSERT INTO customers_migrated
-			SELECT id, document_type, document_number, first_name, last_name, email, phone, created_at
+			SELECT id, document_type, document_number, first_name, middle_name, last_name, second_last_name, email, phone, created_at
 			FROM customers`,
 		"DROP TABLE customers",
 		"ALTER TABLE customers_migrated RENAME TO customers",

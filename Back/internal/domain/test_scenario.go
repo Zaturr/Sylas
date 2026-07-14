@@ -11,7 +11,9 @@ type TestScenario struct {
 	DocumentNumber string                `json:"document_number"`
 	AliasValue     string                `json:"alias_value"`
 	FirstName      string                `json:"first_name"`
+	MiddleName     string                `json:"middle_name"`
 	LastName       string                `json:"last_name"`
+	SecondLastName string                `json:"second_last_name"`
 	AliasStatus    string                `json:"alias_status,omitempty"`
 	Accounts       []TestScenarioAccount `json:"accounts"`
 }

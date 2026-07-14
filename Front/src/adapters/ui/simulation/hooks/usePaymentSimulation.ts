@@ -31,12 +31,20 @@ export function usePaymentSimulation(sessionKey: SimfTraceSessionKey | null) {
     dispatch({ type: 'SET_ALIAS', value });
   }, []);
 
+  const setDestinationBankCode = useCallback((value: string) => {
+    dispatch({ type: 'SET_DESTINATION_BANK', value });
+  }, []);
+
   const setAmount = useCallback((value: string) => {
     dispatch({ type: 'SET_AMOUNT', value });
   }, []);
 
   const submitAlias = useCallback(async () => {
-    const draftResult = validatePaymentDraft(context.aliasValue, context.amount);
+    const draftResult = validatePaymentDraft(
+      context.aliasValue,
+      context.destinationBankCode,
+      context.amount,
+    );
 
     if (!draftResult.ok) {
       dispatch({ type: 'SET_ERROR', message: draftResult.error });
@@ -54,6 +62,7 @@ export function usePaymentSimulation(sessionKey: SimfTraceSessionKey | null) {
     try {
       const resolveResult = await paymentSimulationService.resolvePaymentAlias(
         context.aliasValue.trim(),
+        context.destinationBankCode.trim(),
         sessionKey,
       );
 
@@ -71,7 +80,11 @@ export function usePaymentSimulation(sessionKey: SimfTraceSessionKey | null) {
     } finally {
       setIsResolvingAlias(false);
     }
-  }, [context.aliasValue, context.amount, paymentSimulationService, sessionKey]);
+  }, [context.aliasValue, context.destinationBankCode, context.amount, paymentSimulationService, sessionKey]);
+
+  const cancelConfirmation = useCallback(() => {
+    dispatch({ type: 'CANCEL_CONFIRMATION' });
+  }, []);
 
   const confirmPayment = useCallback(async () => {
     dispatch({ type: 'CONFIRM_PAYMENT' });
@@ -140,6 +153,7 @@ export function usePaymentSimulation(sessionKey: SimfTraceSessionKey | null) {
     setTab,
     startPayment,
     setAliasValue,
+    setDestinationBankCode,
     setAmount,
     submitAlias,
     confirmPayment,
@@ -148,5 +162,6 @@ export function usePaymentSimulation(sessionKey: SimfTraceSessionKey | null) {
     resetPayment,
     setStep,
     reset,
+    cancelConfirmation,
   };
 }

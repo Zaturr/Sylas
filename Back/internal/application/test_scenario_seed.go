@@ -38,8 +38,10 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 			DocumentType:   "V",
 			DocumentNumber: scenario.DocumentNumber,
 			FirstName:      scenario.FirstName,
+			MiddleName:     scenario.MiddleName,
 			LastName:       scenario.LastName,
-			Email:          validations.BuildGmailFromCustomer(scenario.FirstName, scenario.LastName, scenario.DocumentNumber),
+			SecondLastName: scenario.SecondLastName,
+			Email:          validations.BuildGmailFromCustomer(scenario.FirstName, scenario.MiddleName, scenario.LastName, scenario.SecondLastName, scenario.DocumentNumber),
 			Phone:          validations.BuildVenezuelanPhoneFromDocument(scenario.DocumentNumber),
 			CreatedAt:      now,
 		}

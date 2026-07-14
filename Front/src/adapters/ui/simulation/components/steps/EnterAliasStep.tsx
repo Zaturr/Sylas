@@ -1,26 +1,59 @@
+import { useState, useEffect } from 'react';
+import { appConfig } from '../../../../../adapters/api/app.config';
+import { RecipientSummaryCard } from '../RecipientSummaryCard';
+import { formatPaymentAmount, type PaymentRecipient, type PaymentSimulationStep } from '../../../../../domain/simulation';
 import '../simulationSteps.css';
 
 type EnterAliasStepProps = {
   aliasValue: string;
+  destinationBankCode: string;
   amount: string;
   errorMessage: string;
   isSubmitting: boolean;
   onAliasChange: (value: string) => void;
+  onDestinationBankChange: (value: string) => void;
   onAmountChange: (value: string) => void;
   onSubmit: () => void;
   onCancel: () => void;
+  step: PaymentSimulationStep;
+  recipient: PaymentRecipient | null;
+  onConfirmPayment: () => void;
+  onCancelConfirmation: () => void;
 };
 
 export function EnterAliasStep({
   aliasValue,
+  destinationBankCode,
   amount,
   errorMessage,
   isSubmitting,
   onAliasChange,
+  onDestinationBankChange,
   onAmountChange,
   onSubmit,
   onCancel,
+  step,
+  recipient,
+  onConfirmPayment,
+  onCancelConfirmation,
 }: EnterAliasStepProps) {
+  const [banks, setBanks] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    async function loadBanks() {
+      try {
+        const response = await fetch(`${appConfig.apiBaseUrl}/banks`);
+        if (response.ok) {
+          const data = await response.json();
+          setBanks(data);
+        }
+      } catch (error) {
+        console.error('Error loading banks:', error);
+      }
+    }
+    loadBanks();
+  }, []);
+
   return (
     <div className="sim-flow">
       <div className="sim-flow__intro">
@@ -34,6 +67,23 @@ export function EnterAliasStep({
       </div>
 
       <div className="sim-form">
+        <label className="sim-field">
+          <span>Banco destino</span>
+          <select
+            className="sim-field__select"
+            disabled={isSubmitting}
+            value={destinationBankCode}
+            onChange={(event) => onDestinationBankChange(event.target.value)}
+          >
+            <option value="">Seleccione un banco</option>
+            {banks.map((bank) => (
+              <option key={bank.id} value={bank.id}>
+                {bank.id} - {bank.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="sim-field">
           <span>Alias destino</span>
           <input
@@ -80,6 +130,34 @@ export function EnterAliasStep({
           Cancelar
         </button>
       </div>
+
+      {step === 'confirm' && recipient && (
+        <div className="sim-modal">
+          <div className="sim-modal__backdrop" onClick={onCancelConfirmation} />
+          <div className="sim-modal__panel">
+            <h3 className="sim-modal__title">Confirmar pago</h3>
+            <p className="sim-modal__message">¿Desea confirmar la operación?</p>
+            
+            <RecipientSummaryCard recipient={recipient} title="" />
+            
+            <div className="sim-summary-card" style={{ marginTop: '12px', marginBottom: '16px' }}>
+              <div className="sim-summary-card__row sim-summary-card__row--highlight">
+                <span>Monto a pagar</span>
+                <strong>Bs. {formatPaymentAmount(amount)}</strong>
+              </div>
+            </div>
+
+            <div className="sim-modal__actions">
+              <button type="button" className="sim-mobile-btn sim-mobile-btn--primary" onClick={onConfirmPayment}>
+                Sí, pagar
+              </button>
+              <button type="button" className="sim-mobile-btn sim-mobile-btn--ghost" onClick={onCancelConfirmation}>
+                No, cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

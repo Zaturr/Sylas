@@ -5,10 +5,12 @@ export type PaymentSimulationAction =
   | { type: 'SET_TAB'; tab: MobileAppTab }
   | { type: 'START_PAYMENT'; errorMessage?: string }
   | { type: 'SET_ALIAS'; value: string }
+  | { type: 'SET_DESTINATION_BANK'; value: string }
   | { type: 'SET_AMOUNT'; value: string }
   | { type: 'SUBMIT_ALIAS_SUCCESS'; aliasValue: string; amount: string; recipient: PaymentRecipient }
   | { type: 'SET_ERROR'; message: string }
   | { type: 'CLEAR_ERROR' }
+  | { type: 'CANCEL_CONFIRMATION' }
   | { type: 'CONFIRM_PAYMENT' }
   | { type: 'PAYMENT_SUCCESS' }
   | { type: 'PAYMENT_FAILED'; message: string }
@@ -47,6 +49,9 @@ export function paymentSimulationReducer(
     case 'SET_ALIAS':
       return { ...state, aliasValue: action.value, errorMessage: '' };
 
+    case 'SET_DESTINATION_BANK':
+      return { ...state, destinationBankCode: action.value, errorMessage: '' };
+
     case 'SET_AMOUNT':
       return { ...state, amount: action.value, errorMessage: '' };
 
@@ -65,6 +70,9 @@ export function paymentSimulationReducer(
 
     case 'CLEAR_ERROR':
       return { ...state, errorMessage: '' };
+
+    case 'CANCEL_CONFIRMATION':
+      return { ...state, step: 'enter-alias', recipient: null };
 
     case 'CONFIRM_PAYMENT':
       return { ...state, step: 'processing', errorMessage: '' };

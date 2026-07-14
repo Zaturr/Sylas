@@ -22,15 +22,17 @@ func NewSQLiteRepo(db *sql.DB) *RealRepository {
 
 // SaveCustomer inserta un nuevo cliente en la base de datos de SQLite.
 func (r *RealRepository) SaveCustomer(ctx context.Context, customer *domain.Customer) error {
-	query := `INSERT INTO customers (id, document_type, document_number, first_name, last_name, email, phone, created_at
-	VALUES (?,?,?,?,?,?,?,?))`
+	query := `INSERT INTO customers (id, document_type, document_number, first_name, middle_name, last_name, second_last_name, email, phone, created_at)
+	VALUES (?,?,?,?,?,?,?,?,?,?)`
 
 	_, err := r.db.ExecContext(ctx, query,
 		customer.ID,
 		customer.DocumentType,
 		customer.DocumentNumber,
 		customer.FirstName,
+		customer.MiddleName,
 		customer.LastName,
+		customer.SecondLastName,
 		customer.Email,
 		customer.Phone,
 		customer.CreatedAt,
@@ -40,7 +42,7 @@ func (r *RealRepository) SaveCustomer(ctx context.Context, customer *domain.Cust
 
 // GetCustomerByID busca un cliente por su identificador único.
 func (r *RealRepository) GetCustomerByID(ctx context.Context, id string) (*domain.Customer, error) {
-	query := `SELECT id, document_type, document_number, first_name, last_name, email, phone, created_at FROM customers WHERE id = ?`
+	query := `SELECT id, document_type, document_number, first_name, COALESCE(middle_name, ''), last_name, COALESCE(second_last_name, ''), email, phone, created_at FROM customers WHERE id = ?`
 	row := r.db.QueryRowContext(ctx, query, id)
 
 	var customer domain.Customer
@@ -50,7 +52,9 @@ func (r *RealRepository) GetCustomerByID(ctx context.Context, id string) (*domai
 		&customer.DocumentType,
 		&customer.DocumentNumber,
 		&customer.FirstName,
+		&customer.MiddleName,
 		&customer.LastName,
+		&customer.SecondLastName,
 		&customer.Email,
 		&customer.Phone,
 		&createdAtStr,
@@ -69,7 +73,7 @@ func (r *RealRepository) GetCustomerByID(ctx context.Context, id string) (*domai
 
 // GetCustomerByDocument busca un cliente por document_type y document_number.
 func (r *RealRepository) GetCustomerByDocument(ctx context.Context, documentType, documentNumber string) (*domain.Customer, error) {
-	query := `SELECT id, document_type, document_number, first_name, last_name, email, phone, created_at
+	query := `SELECT id, document_type, document_number, first_name, COALESCE(middle_name, ''), last_name, COALESCE(second_last_name, ''), email, phone, created_at
 	FROM customers WHERE document_type = ? AND document_number = ?`
 	row := r.db.QueryRowContext(ctx, query, documentType, documentNumber)
 
@@ -80,7 +84,9 @@ func (r *RealRepository) GetCustomerByDocument(ctx context.Context, documentType
 		&customer.DocumentType,
 		&customer.DocumentNumber,
 		&customer.FirstName,
+		&customer.MiddleName,
 		&customer.LastName,
+		&customer.SecondLastName,
 		&customer.Email,
 		&customer.Phone,
 		&createdAtStr,
@@ -97,7 +103,7 @@ func (r *RealRepository) GetCustomerByDocument(ctx context.Context, documentType
 
 // GetCustomerByDocumentNumber busca un cliente solo por document_number.
 func (r *RealRepository) GetCustomerByDocumentNumber(ctx context.Context, documentNumber string) (*domain.Customer, error) {
-	query := `SELECT id, document_type, document_number, first_name, last_name, email, phone, created_at
+	query := `SELECT id, document_type, document_number, first_name, COALESCE(middle_name, ''), last_name, COALESCE(second_last_name, ''), email, phone, created_at
 	FROM customers WHERE document_number = ?`
 	row := r.db.QueryRowContext(ctx, query, documentNumber)
 
@@ -108,7 +114,9 @@ func (r *RealRepository) GetCustomerByDocumentNumber(ctx context.Context, docume
 		&customer.DocumentType,
 		&customer.DocumentNumber,
 		&customer.FirstName,
+		&customer.MiddleName,
 		&customer.LastName,
+		&customer.SecondLastName,
 		&customer.Email,
 		&customer.Phone,
 		&createdAtStr,
@@ -126,7 +134,7 @@ func (r *RealRepository) GetCustomerByDocumentNumber(ctx context.Context, docume
 // GetCustomerByVerificationData busca un cliente verificando que su cédula, correo y alias coincidan.
 func (r *RealRepository) GetCustomerByVerificationData(ctx context.Context, documentNumber string, email string, aliasValue string) (*domain.Customer, error) {
 	query := `
-	SELECT c.id, c.document_type, c.document_number, c.first_name, c.last_name, c.email, c.phone, c.created_at 
+	SELECT c.id, c.document_type, c.document_number, c.first_name, COALESCE(c.middle_name, ''), c.last_name, COALESCE(c.second_last_name, ''), c.email, c.phone, c.created_at 
 	FROM customers c
 	JOIN alias al ON c.id = al.customer_id
 	WHERE c.document_number = ? AND c.email = ? AND al.alias_value = ?`
@@ -140,7 +148,9 @@ func (r *RealRepository) GetCustomerByVerificationData(ctx context.Context, docu
 		&customer.DocumentType,
 		&customer.DocumentNumber,
 		&customer.FirstName,
+		&customer.MiddleName,
 		&customer.LastName,
+		&customer.SecondLastName,
 		&customer.Email,
 		&customer.Phone,
 		&createdAtStr,
@@ -458,7 +468,9 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 		c.document_type,
 		c.document_number,
 		c.first_name, 
+		c.middle_name,
 		c.last_name, 
+		c.second_last_name,
 		COALESCE(al.alias_value, '') AS alias_value,
 		CASE
 			WHEN al.id IS NULL THEN '` + domain.AliasStatusUnregistered + `'
@@ -496,13 +508,17 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 	for rows.Next() {
 		var detail domain.AliasDetail
 		var accountsStr string
+		var middleName sql.NullString
+		var secondLastName sql.NullString
 
 		err := rows.Scan(
 			&detail.CustomerID,
 			&detail.DocumentType,
 			&detail.DocumentNumber,
 			&detail.FirstName,
+			&middleName,
 			&detail.LastName,
+			&secondLastName,
 			&detail.AliasValue,
 			&detail.AliasStatus,
 			&detail.Email,
@@ -513,6 +529,8 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 			return nil, err
 		}
 
+		detail.MiddleName = middleName.String
+		detail.SecondLastName = secondLastName.String
 		detail.Accounts = parseAccountDetails(accountsStr)
 		data = append(data, detail)
 	}
@@ -545,7 +563,9 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 		if strings.TrimSpace(customer.Email) == "" {
 			customer.Email = validations.BuildGmailFromCustomer(
 				customer.FirstName,
+				customer.MiddleName,
 				customer.LastName,
+				customer.SecondLastName,
 				customer.DocumentNumber,
 			)
 		} else {
@@ -554,8 +574,8 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 		if strings.TrimSpace(customer.Phone) == "" {
 			customer.Phone = validations.BuildVenezuelanPhoneFromDocument(customer.DocumentNumber)
 		}
-		queryCustomer := `INSERT INTO customers (id, document_type, document_number, first_name, last_name, email, phone, created_at) VALUES (?,?,?,?,?,?,?,?)`
-		_, err = tx.ExecContext(ctx, queryCustomer, customer.ID, customer.DocumentType, customer.DocumentNumber, customer.FirstName, customer.LastName, customer.Email, customer.Phone, customer.CreatedAt)
+		queryCustomer := `INSERT INTO customers (id, document_type, document_number, first_name, middle_name, last_name, second_last_name, email, phone, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`
+		_, err = tx.ExecContext(ctx, queryCustomer, customer.ID, customer.DocumentType, customer.DocumentNumber, customer.FirstName, customer.MiddleName, customer.LastName, customer.SecondLastName, customer.Email, customer.Phone, customer.CreatedAt)
 		if err != nil {
 			tx.Rollback()
 			errStr := err.Error()

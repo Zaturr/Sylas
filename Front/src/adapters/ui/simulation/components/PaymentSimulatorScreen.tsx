@@ -11,7 +11,6 @@ import { AliasCreateSuccessStep } from './steps/AliasCreateSuccessStep';
 import { AliasStatusSuccessStep } from './steps/AliasStatusSuccessStep';
 import { AliasErrorStep } from './steps/AliasErrorStep';
 import { AliasManagementStep } from './steps/AliasManagementStep';
-import { ConfirmPaymentStep } from './steps/ConfirmPaymentStep';
 import { CreateAccountStep } from './steps/CreateAccountStep';
 import { CreateAliasStep } from './steps/CreateAliasStep';
 import { EnterAliasStep } from './steps/EnterAliasStep';
@@ -34,7 +33,9 @@ type PaymentSimulatorScreenProps = {
   onOpenCreateAccount: () => void;
   onBackToLogin: () => void;
   onFirstNameChange: (value: string) => void;
+  onMiddleNameChange: (value: string) => void;
   onLastNameChange: (value: string) => void;
+  onSecondLastNameChange: (value: string) => void;
   onSubmitCreateAccount: () => void;
   onManageAlias: () => void;
   onContinueAliasSplash: () => void;
@@ -55,12 +56,14 @@ type PaymentSimulatorScreenProps = {
   onTabChange: (tab: MobileAppTab) => void;
   onStartPayment: () => void;
   onAliasChange: (value: string) => void;
+  onDestinationBankChange: (value: string) => void;
   onAmountChange: (value: string) => void;
   onSubmitAlias: () => void;
   onConfirmPayment: () => void;
   onCancelFlow: () => void;
   onGoBack: () => void;
   onResetPayment: () => void;
+  cancelConfirmation: () => void;
 };
 
 const bottomTabs: Array<{
@@ -137,7 +140,9 @@ export function PaymentSimulatorScreen({
   onOpenCreateAccount,
   onBackToLogin,
   onFirstNameChange,
+  onMiddleNameChange,
   onLastNameChange,
+  onSecondLastNameChange,
   onSubmitCreateAccount,
   onManageAlias,
   onContinueAliasSplash,
@@ -158,12 +163,14 @@ export function PaymentSimulatorScreen({
   onTabChange,
   onStartPayment,
   onAliasChange,
+  onDestinationBankChange,
   onAmountChange,
   onSubmitAlias,
   onConfirmPayment,
   onCancelFlow,
   onGoBack,
   onResetPayment,
+  cancelConfirmation,
 }: PaymentSimulatorScreenProps) {
   const isAliasFlow = ALIAS_FLOW_STEPS.has(auth.step);
   const isAuthenticated =
@@ -221,18 +228,22 @@ export function PaymentSimulatorScreen({
   const renderAuthFlow = () => {
     if (auth.step === 'create-account') {
       return (
-        <CreateAccountStep
-          documentInput={auth.documentInput}
-          firstNameInput={auth.firstNameInput}
-          lastNameInput={auth.lastNameInput}
-          errorMessage={auth.errorMessage}
-          isSubmitting={auth.isSubmitting}
-          onDocumentChange={onDocumentChange}
-          onFirstNameChange={onFirstNameChange}
-          onLastNameChange={onLastNameChange}
-          onSubmit={onSubmitCreateAccount}
-          onBack={onBackToLogin}
-        />
+          <CreateAccountStep
+            documentInput={auth.documentInput}
+            firstNameInput={auth.firstNameInput}
+            middleNameInput={auth.middleNameInput}
+            lastNameInput={auth.lastNameInput}
+            secondLastNameInput={auth.secondLastNameInput}
+            errorMessage={auth.errorMessage}
+            isSubmitting={auth.isSubmitting}
+            onDocumentChange={onDocumentChange}
+            onFirstNameChange={onFirstNameChange}
+            onMiddleNameChange={onMiddleNameChange}
+            onLastNameChange={onLastNameChange}
+            onSecondLastNameChange={onSecondLastNameChange}
+            onSubmit={onSubmitCreateAccount}
+            onBack={onBackToLogin}
+          />
       );
     }
 
@@ -333,29 +344,23 @@ export function PaymentSimulatorScreen({
   const renderPaymentFlow = () => {
     switch (context.step) {
       case 'enter-alias':
+      case 'confirm':
         return (
           <EnterAliasStep
             aliasValue={context.aliasValue}
+            destinationBankCode={context.destinationBankCode}
             amount={context.amount}
             errorMessage={context.errorMessage}
             isSubmitting={isResolvingAlias}
             onAliasChange={onAliasChange}
+            onDestinationBankChange={onDestinationBankChange}
             onAmountChange={onAmountChange}
             onSubmit={onSubmitAlias}
             onCancel={onCancelFlow}
-          />
-        );
-      case 'confirm':
-        if (!context.recipient) {
-          return null;
-        }
-
-        return (
-          <ConfirmPaymentStep
-            amount={context.amount}
+            step={context.step}
             recipient={context.recipient}
-            onConfirm={onConfirmPayment}
-            onCancel={onGoBack}
+            onConfirmPayment={onConfirmPayment}
+            onCancelConfirmation={cancelConfirmation}
           />
         );
       case 'processing':

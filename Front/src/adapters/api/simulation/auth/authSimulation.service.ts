@@ -66,6 +66,7 @@ export async function createAccount(
     input.documentInput,
     input.firstName,
     input.lastName,
+    input.secondLastName,
   );
 
   if (!validation.ok) {
@@ -92,7 +93,9 @@ export async function createAccount(
       document.documentType,
       document.documentNumber,
       input.firstName,
+      input.middleName,
       input.lastName,
+      input.secondLastName,
       accountNumber,
     );
 

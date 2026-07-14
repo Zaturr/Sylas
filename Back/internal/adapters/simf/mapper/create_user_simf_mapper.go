@@ -25,7 +25,7 @@ func ToCoreCreateUserEntities(cmd simfdomain.CreateUserSimfCommand) (*domain.Cus
 		return nil, nil, nil, err
 	}
 
-	firstName, lastName := SplitTitularName(cmd.TitularName)
+	firstName, middleName, lastName, secondLastName := SplitTitularName(cmd.TitularName)
 	customerID := uuid.New().String()
 	now := time.Now()
 
@@ -34,7 +34,9 @@ func ToCoreCreateUserEntities(cmd simfdomain.CreateUserSimfCommand) (*domain.Cus
 		DocumentType:   documentType,
 		DocumentNumber: documentNumber,
 		FirstName:      firstName,
+		MiddleName:     middleName,
 		LastName:       lastName,
+		SecondLastName: secondLastName,
 		Email:          placeholderEmail(cmd.Alias),
 		Phone:          placeholderPhone(documentType, documentNumber),
 		CreatedAt:      now,
@@ -60,16 +62,26 @@ func ToCoreCreateUserEntities(cmd simfdomain.CreateUserSimfCommand) (*domain.Cus
 	return customer, []domain.Account{account}, alias, nil
 }
 
-// SplitTitularName separa Nm SIMF (mayúsculas) en nombre y apellido del core.
-func SplitTitularName(fullName string) (firstName, lastName string) {
+func SplitTitularName(fullName string) (firstName, middleName, lastName, secondLastName string) {
 	parts := strings.Fields(strings.TrimSpace(fullName))
 	if len(parts) == 0 {
-		return "", ""
+		return "", "", "", ""
 	}
 	if len(parts) == 1 {
-		return parts[0], ""
+		return parts[0], "", "", ""
 	}
-	return parts[0], strings.Join(parts[1:], " ")
+	if len(parts) == 2 {
+		return parts[0], "", parts[1], ""
+	}
+	if len(parts) == 3 {
+		// Si hay 3 palabras, asumimos:
+		// 1er nombre, (sin 2do nombre), 1er apellido, 2do apellido.
+		return parts[0], "", parts[1], parts[2]
+	}
+	
+	// Si hay 4 o más palabras, asumimos:
+	// 1er nombre, 2do nombre, 1er apellido, y el resto es 2do apellido.
+	return parts[0], parts[1], parts[2], strings.Join(parts[3:], " ")
 }
 
 func placeholderEmail(alias string) string {

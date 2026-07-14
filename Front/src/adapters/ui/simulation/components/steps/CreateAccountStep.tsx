@@ -4,12 +4,16 @@ import '../simulationSteps.css';
 type CreateAccountStepProps = {
   documentInput: string;
   firstNameInput: string;
+  middleNameInput: string;
   lastNameInput: string;
+  secondLastNameInput: string;
   errorMessage: string;
   isSubmitting: boolean;
   onDocumentChange: (value: string) => void;
   onFirstNameChange: (value: string) => void;
+  onMiddleNameChange: (value: string) => void;
   onLastNameChange: (value: string) => void;
+  onSecondLastNameChange: (value: string) => void;
   onSubmit: () => void;
   onBack: () => void;
 };
@@ -17,12 +21,16 @@ type CreateAccountStepProps = {
 export function CreateAccountStep({
   documentInput,
   firstNameInput,
+  middleNameInput,
   lastNameInput,
+  secondLastNameInput,
   errorMessage,
   isSubmitting,
   onDocumentChange,
   onFirstNameChange,
+  onMiddleNameChange,
   onLastNameChange,
+  onSecondLastNameChange,
   onSubmit,
   onBack,
 }: CreateAccountStepProps) {
@@ -51,7 +59,7 @@ export function CreateAccountStep({
         </label>
 
         <label className="sim-field">
-          <span>Nombre</span>
+          <span>Primer Nombre</span>
           <input
             type="text"
             autoComplete="given-name"
@@ -63,7 +71,19 @@ export function CreateAccountStep({
         </label>
 
         <label className="sim-field">
-          <span>Apellido</span>
+          <span>Segundo Nombre (Opcional)</span>
+          <input
+            type="text"
+            autoComplete="additional-name"
+            disabled={isSubmitting}
+            placeholder="ej. Carlos"
+            value={middleNameInput}
+            onChange={(event) => onMiddleNameChange(event.target.value)}
+          />
+        </label>
+
+        <label className="sim-field">
+          <span>Primer Apellido</span>
           <input
             type="text"
             autoComplete="family-name"
@@ -71,6 +91,17 @@ export function CreateAccountStep({
             placeholder="ej. Pérez"
             value={lastNameInput}
             onChange={(event) => onLastNameChange(event.target.value)}
+          />
+        </label>
+
+        <label className="sim-field">
+          <span>Segundo Apellido</span>
+          <input
+            type="text"
+            disabled={isSubmitting}
+            placeholder="ej. Gómez"
+            value={secondLastNameInput}
+            onChange={(event) => onSecondLastNameChange(event.target.value)}
           />
         </label>
       </div>

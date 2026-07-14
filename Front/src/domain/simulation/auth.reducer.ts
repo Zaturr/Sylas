@@ -7,7 +7,9 @@ import { getDefaultLinkedAccountId } from './aliasFlow';
 export type SimulationAuthAction =
   | { type: 'SET_DOCUMENT'; value: string }
   | { type: 'SET_FIRST_NAME'; value: string }
+  | { type: 'SET_MIDDLE_NAME'; value: string }
   | { type: 'SET_LAST_NAME'; value: string }
+  | { type: 'SET_SECOND_LAST_NAME'; value: string }
   | { type: 'SUBMIT_LOGIN' }
   | { type: 'LOGIN_SUCCESS'; session: SimulationSession }
   | { type: 'LOGIN_NOT_FOUND'; message: string }
@@ -56,10 +58,22 @@ export function simulationAuthReducer(
         firstNameInput: action.value,
         errorMessage: '',
       };
+    case 'SET_MIDDLE_NAME':
+      return {
+        ...state,
+        middleNameInput: action.value,
+        errorMessage: '',
+      };
     case 'SET_LAST_NAME':
       return {
         ...state,
         lastNameInput: action.value,
+        errorMessage: '',
+      };
+    case 'SET_SECOND_LAST_NAME':
+      return {
+        ...state,
+        secondLastNameInput: action.value,
         errorMessage: '',
       };
     case 'SUBMIT_LOGIN':
@@ -101,7 +115,9 @@ export function simulationAuthReducer(
         step: 'create-account',
         errorMessage: '',
         firstNameInput: '',
+        middleNameInput: '',
         lastNameInput: '',
+        secondLastNameInput: '',
       };
     case 'BACK_TO_LOGIN':
       return {

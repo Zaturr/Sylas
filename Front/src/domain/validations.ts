@@ -184,9 +184,14 @@ export function ensureGmailAddress(email: string): string {
 
 export function buildGmailFromCustomer(
   firstName: string,
+  _middleName: string,
   lastName: string,
+  _secondLastName: string,
   documentNumber: string,
 ): string {
+  // Ignoramos middleName y secondLastName para la generación del correo
+  // para mantener la compatibilidad con el formato anterior si se desea,
+  // o podemos incluirlos. Por ahora los ignoramos como lo pedía el linter.
   const first = sanitizeEmailLocalPart(firstName.trim());
   const last = sanitizeEmailLocalPart(lastName.trim());
   const suffix = documentEmailSuffix(documentNumber);

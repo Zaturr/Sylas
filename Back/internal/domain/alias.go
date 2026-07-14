@@ -47,7 +47,9 @@ type AliasDetail struct {
 	DocumentType   string          `json:"document_type"`
 	DocumentNumber string          `json:"document_number"`
 	FirstName      string          `json:"first_name"`
+	MiddleName     string          `json:"middle_name"`
 	LastName       string          `json:"last_name"`
+	SecondLastName string          `json:"second_last_name"`
 	AliasValue     string          `json:"alias"`
 	AliasStatus    string          `json:"alias_status"`
 	Email          string          `json:"email"`

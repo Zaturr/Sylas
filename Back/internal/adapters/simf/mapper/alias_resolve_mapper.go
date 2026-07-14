@@ -74,7 +74,17 @@ func CustomerFullNameUppercase(customer *domain.Customer) string {
 	if customer == nil {
 		return ""
 	}
-	return strings.ToUpper(strings.TrimSpace(customer.FirstName + " " + customer.LastName))
+	
+	parts := []string{customer.FirstName}
+	if strings.TrimSpace(customer.MiddleName) != "" {
+		parts = append(parts, customer.MiddleName)
+	}
+	parts = append(parts, customer.LastName)
+	if strings.TrimSpace(customer.SecondLastName) != "" {
+		parts = append(parts, customer.SecondLastName)
+	}
+	
+	return strings.ToUpper(strings.Join(parts, " "))
 }
 
 // AccountStatusToSIMF traduce el status de accounts (core) al Sts del protocolo SIMF.

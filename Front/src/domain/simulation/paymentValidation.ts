@@ -7,13 +7,19 @@ export const DESTINATION_BLOCKED_ALIAS_PAYMENT_MESSAGE =
 
 export function validatePaymentDraft(
   aliasValue: string,
+  bankCode: string,
   amount: string,
 ): ValidatePaymentDraftResult {
   const trimmedAlias = aliasValue.trim();
+  const trimmedBankCode = bankCode.trim();
   const trimmedAmount = amount.trim().replace(',', '.');
 
   if (!trimmedAlias) {
     return { ok: false, error: 'Ingresa un alias destino.' };
+  }
+
+  if (!trimmedBankCode) {
+    return { ok: false, error: 'Selecciona el banco destino.' };
   }
 
   if (!trimmedAmount) {

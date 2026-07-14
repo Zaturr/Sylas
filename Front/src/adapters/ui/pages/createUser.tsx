@@ -17,7 +17,9 @@ const initialForm = {
   document_type: 'V',
   document_number: '',
   first_name: '',
+  middle_name: '',
   last_name: '',
+  second_last_name: '',
   alias_value: '',
 };
 
@@ -70,7 +72,9 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
           document_type: documentValidation.documentType,
           document_number: documentValidation.documentNumber,
           first_name: form.first_name.trim(),
+          middle_name: form.middle_name.trim(),
           last_name: form.last_name.trim(),
+          second_last_name: form.second_last_name.trim(),
         },
         alias: {
           alias_value: aliasValidation.value,
@@ -148,7 +152,7 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
             </div>
 
             <div className="form-field">
-              <label htmlFor="first_name">Nombre</label>
+              <label htmlFor="first_name">Primer Nombre</label>
               <input
                 id="first_name"
                 type="text"
@@ -160,7 +164,18 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
             </div>
 
             <div className="form-field">
-              <label htmlFor="last_name">Apellido</label>
+              <label htmlFor="middle_name">Segundo Nombre (Opcional)</label>
+              <input
+                id="middle_name"
+                type="text"
+                disabled={submitting}
+                value={form.middle_name}
+                onChange={(event) => updateField('middle_name', event.target.value)}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="last_name">Primer Apellido</label>
               <input
                 id="last_name"
                 type="text"
@@ -168,6 +183,18 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
                 disabled={submitting}
                 value={form.last_name}
                 onChange={(event) => updateField('last_name', event.target.value)}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="second_last_name">Segundo Apellido</label>
+              <input
+                id="second_last_name"
+                type="text"
+                required
+                disabled={submitting}
+                value={form.second_last_name}
+                onChange={(event) => updateField('second_last_name', event.target.value)}
               />
             </div>
 

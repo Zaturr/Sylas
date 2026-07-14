@@ -38,7 +38,19 @@ export function HomeTabView({
     : 'Sin cuenta bancaria activa';
 
   const firstName = session.customer.first_name.trim() || 'Usuario';
+  const middleName = session.customer.middle_name?.trim() || '';
+  const lastName = session.customer.last_name.trim() || '';
+  const secondLastName = session.customer.second_last_name?.trim() || '';
+
   const avatarInitial = firstName.charAt(0).toUpperCase();
+
+  // Construir el nombre completo sin censurar
+  const fullDisplayName = [
+    firstName,
+    middleName,
+    lastName,
+    secondLastName
+  ].filter(Boolean).join(' ');
 
   const documentLabel = formatDocumentInput(
     session.mappedDocument.documentType,
@@ -71,7 +83,7 @@ export function HomeTabView({
             {avatarInitial}
           </div>
           <div className="sim-home-hero__identity">
-            <p className="sim-home-hero__greeting">Hola, {firstName}</p>
+            <p className="sim-home-hero__greeting">Hola, {fullDisplayName}</p>
             <p className="sim-home-hero__document">{documentLabel}</p>
           </div>
         </div>

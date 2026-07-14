@@ -14,7 +14,9 @@ type CreateUserRequest struct {
 	DocumentType   string                `json:"document_type"`
 	DocumentNumber string                `json:"document_number"`
 	FirstName      string                `json:"first_name"`
+	MiddleName     string                `json:"middle_name"`
 	LastName       string                `json:"last_name"`
+	SecondLastName string                `json:"second_last_name"`
 	Email          string                `json:"email"`
 	Phone          string                `json:"phone"`
 	AliasValue     string                `json:"alias_value"`
@@ -43,6 +45,9 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 	if msg := validations.ValidateCreateUser(validations.CreateUserInput{
 		DocumentType:   req.DocumentType,
 		DocumentNumber: req.DocumentNumber,
+		FirstName:      req.FirstName,
+		LastName:       req.LastName,
+		SecondLastName: req.SecondLastName,
 		AccountNumbers: accountNumbers,
 	}); msg != "" {
 		respondError(c, 400, msg)
@@ -59,7 +64,7 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 
 	email := strings.TrimSpace(req.Email)
 	if email == "" {
-		email = validations.BuildGmailFromCustomer(req.FirstName, req.LastName, req.DocumentNumber)
+		email = validations.BuildGmailFromCustomer(req.FirstName, req.MiddleName, req.LastName, req.SecondLastName, req.DocumentNumber)
 	} else {
 		email = validations.EnsureGmailAddress(email)
 	}
@@ -74,7 +79,9 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 		DocumentType:   req.DocumentType,
 		DocumentNumber: req.DocumentNumber,
 		FirstName:      req.FirstName,
+		MiddleName:     req.MiddleName,
 		LastName:       req.LastName,
+		SecondLastName: req.SecondLastName,
 		Email:          email,
 		Phone:          phone,
 		CreatedAt:      now,

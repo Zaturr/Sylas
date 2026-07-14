@@ -20,7 +20,9 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     auth,
     setDocumentInput,
     setFirstNameInput,
+    setMiddleNameInput,
     setLastNameInput,
+    setSecondLastNameInput,
     submitLogin,
     openCreateAccount,
     backToLogin,
@@ -61,12 +63,14 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
     setTab,
     startPayment,
     setAliasValue,
+    setDestinationBankCode,
     setAmount,
     submitAlias,
     confirmPayment,
     cancelFlow,
     goBack,
     resetPayment,
+    cancelConfirmation,
   } = usePaymentSimulation(sessionKey);
 
   const isAliasManagerActive = isAliasManagerAuthStep(auth.step);
@@ -115,7 +119,9 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
                 isResolvingAlias={isResolvingAlias}
                 onDocumentChange={setDocumentInput}
                 onFirstNameChange={setFirstNameInput}
+                onMiddleNameChange={setMiddleNameInput}
                 onLastNameChange={setLastNameInput}
+                onSecondLastNameChange={setSecondLastNameInput}
                 onSubmitLogin={submitLogin}
                 onOpenCreateAccount={openCreateAccount}
                 onBackToLogin={backToLogin}
@@ -139,12 +145,14 @@ export function SimulationPage({ onNavigate }: SimulationPageProps) {
                 onTabChange={setTab}
                 onStartPayment={startPayment}
                 onAliasChange={setAliasValue}
+                onDestinationBankChange={setDestinationBankCode}
                 onAmountChange={setAmount}
                 onSubmitAlias={submitAlias}
                 onConfirmPayment={confirmPayment}
                 onCancelFlow={cancelFlow}
                 onGoBack={goBack}
                 onResetPayment={resetPayment}
+                cancelConfirmation={cancelConfirmation}
               />
             </MobileDeviceFrame>
           </section>

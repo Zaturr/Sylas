@@ -12,6 +12,7 @@ export type ExecutePaymentResult =
 export interface PaymentSimulationService {
   resolvePaymentAlias(
     aliasValue: string,
+    bankCode: string,
     sessionKey: SimfTraceSessionKey,
     signal?: AbortSignal,
   ): Promise<ResolvePaymentAliasResult>;

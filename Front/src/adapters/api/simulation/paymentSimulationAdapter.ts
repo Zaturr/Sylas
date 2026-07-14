@@ -4,7 +4,6 @@ import type {
   PaymentSimulationService,
   ResolvePaymentAliasResult,
 } from '../../../application/simulation/paymentSimulation.port';
-import { appConfig } from '../app.config';
 import { mapAntiphishingResponseToPaymentAlias } from './simf/simfAntiphishing.mapper';
 import type { createResolveAntiphishingViaSimf } from './simf/simfAntiphishing.client';
 
@@ -47,14 +46,19 @@ export function createPaymentSimulationService(
   return {
     async resolvePaymentAlias(
       aliasValue,
+      bankCode,
       sessionKey,
       signal,
     ): Promise<ResolvePaymentAliasResult> {
-      const bankCode = appConfig.simulation.bankCode;
       const trimmedValue = aliasValue.trim();
+      const trimmedBankCode = bankCode.trim();
 
       if (!trimmedValue) {
         return { ok: false, error: 'Ingresa el alias del destinatario.' };
+      }
+
+      if (!trimmedBankCode) {
+        return { ok: false, error: 'Selecciona el banco destino.' };
       }
 
       if (isPendingAlias(trimmedValue)) {
@@ -64,7 +68,7 @@ export function createPaymentSimulationService(
       try {
         const response = await resolveAntiphishingViaSimf(
           trimmedValue,
-          bankCode,
+          trimmedBankCode,
           sessionKey,
           signal,
         );
@@ -76,7 +80,7 @@ export function createPaymentSimulationService(
           };
         }
 
-        return mapAntiphishingResponseToPaymentAlias(trimmedValue, bankCode, response.data);
+        return mapAntiphishingResponseToPaymentAlias(trimmedValue, trimmedBankCode, response.data);
       } catch (error) {
         return {
           ok: false,

@@ -19,7 +19,8 @@ export function buildSimfCreateUserPayload(
   const documentType = session.mappedDocument.documentType;
   const documentNumber = session.mappedDocument.documentNumber;
   const schemeName = mapDocumentTypeToSimfScheme(documentType);
-  const titularName = `${session.customer.first_name} ${session.customer.last_name}`
+  const titularName = `${session.customer.first_name} ${session.customer.middle_name || ''} ${session.customer.last_name} ${session.customer.second_last_name}`
+    .replace(/\s+/g, ' ')
     .trim()
     .toUpperCase();
 

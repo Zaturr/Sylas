@@ -42,7 +42,9 @@ export type SimulationAuthState = {
   step: SimulationAuthStep;
   documentInput: string;
   firstNameInput: string;
+  middleNameInput: string;
   lastNameInput: string;
+  secondLastNameInput: string;
   session: SimulationSession | null;
   errorMessage: string;
   isSubmitting: boolean;
@@ -60,7 +62,9 @@ export const createInitialSimulationAuthState = (): SimulationAuthState => ({
   step: 'login',
   documentInput: '',
   firstNameInput: '',
+  middleNameInput: '',
   lastNameInput: '',
+  secondLastNameInput: '',
   session: null,
   errorMessage: '',
   isSubmitting: false,

@@ -10,6 +10,9 @@ var reDigitsOnly = regexp.MustCompile(`^\d+$`)
 type CreateUserInput struct {
 	DocumentType   string
 	DocumentNumber string
+	FirstName      string
+	LastName       string
+	SecondLastName string
 	AccountNumbers []string
 }
 
@@ -24,6 +27,15 @@ func IsDigitsOnly(value string) bool {
 // ValidateCreateUser valida tipo y numero de documento, y cada account_number.
 // Devuelve el mensaje de error; cadena vacia si todo es valido.
 func ValidateCreateUser(input CreateUserInput) string {
+	if strings.TrimSpace(input.FirstName) == "" {
+		return "first_name es requerido"
+	}
+	if strings.TrimSpace(input.LastName) == "" {
+		return "last_name es requerido"
+	}
+	if strings.TrimSpace(input.SecondLastName) == "" {
+		return "second_last_name es requerido"
+	}
 	if msg := ValidateDocumentType(input.DocumentType); msg != "" {
 		return msg
 	}
