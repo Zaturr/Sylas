@@ -35,10 +35,10 @@ var (
 	reDocumentIDSCID = regexp.MustCompile(`^[VE][A-Za-z0-9]{0,34}$`)
 	reDocumentIDSRIF = regexp.MustCompile(`^[JGCR][0-9]{9}$`)
 	reDocumentIDSPAS = regexp.MustCompile(`^P[A-Za-z0-9]{0,34}$`)
-	reMsgID      = regexp.MustCompile(`^[A-Za-z0-9]{28}$`)
-	reEndToEndID = regexp.MustCompile(`^[A-Za-z0-9]{26}$`)
-	reCreDtTm    = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}`)
-	reTitularName = regexp.MustCompile(`^[A-Z0-9][A-Z0-9 .,&'\-]*$`)
+	reMsgID          = regexp.MustCompile(`^[A-Za-z0-9]{28}$`)
+	reEndToEndID     = regexp.MustCompile(`^[A-Za-z0-9]{26}$`)
+	reCreDtTm        = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}`)
+	reTitularName    = regexp.MustCompile(`^[A-Z0-9][A-Z0-9 .,&'\-]*$`)
 )
 
 func formatErr(field, message string) error {
@@ -90,7 +90,7 @@ func ValidateAgentCode(agentCode string) error {
 	return nil
 }
 
-// ValidateAlias valida Alias (6-15 minúsculas, punto como único especial).
+// ValidateAlias valida Alias (6-15 minúsculas/números; punto permitido, no consecutivo ni al inicio/fin).
 func ValidateAlias(alias string) error {
 	if len(alias) < 6 || len(alias) > 15 {
 		return formatErr("Alias", "longitud de alias invalida")

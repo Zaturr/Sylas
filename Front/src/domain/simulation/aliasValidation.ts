@@ -1,5 +1,5 @@
 export const ALIAS_FORMAT_ERROR_MESSAGE =
-  'El alias solo puede tener un punto (.), debe estar en minúsculas, tener mínimo 6 caracteres y máximo 15. El punto es el único carácter especial permitido y debe ser solo uno.';
+  'El alias debe estar en minúsculas, tener entre 6 y 15 caracteres, y solo puede incluir letras, números y puntos (.). No puede empezar ni terminar con punto, ni tener dos puntos seguidos (..).';
 
 export type ValidateAliasValueResult =
   | { ok: true; value: string }
@@ -29,11 +29,6 @@ function isValidAliasFormat(alias: string): boolean {
   }
 
   if (alias.startsWith('.') || alias.endsWith('.') || alias.includes('..')) {
-    return false;
-  }
-
-  const dotCount = (alias.match(/\./g) ?? []).length;
-  if (dotCount > 1) {
     return false;
   }
 

@@ -212,7 +212,7 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
                 value={form.alias_value}
                 onChange={(event) => updateAliasValue(event.target.value)}
               />
-              <small className="form-hint">Solo minúsculas, números y un punto (.).</small>
+              <small className="form-hint">Solo minúsculas, números y puntos (.). No uses dos puntos seguidos (..).</small>
             </div>
           </div>
 
