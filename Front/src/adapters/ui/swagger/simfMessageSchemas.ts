@@ -21,7 +21,7 @@ export const ALIS_ID_INQ_RES_RESPONSE_FIELDS: SwaggerMessageField[] = [
   {
     name: 'InqRpt',
     description:
-      'Cuerpo del mensaje en consultas. Agrupa el resultado general, los datos del cliente y la lista de alias.',
+      'Cuerpo del mensaje en consultas. Agrupa el resultado general, los datos del cliente y la lista de MiAlias.',
   },
   {
     name: 'InqRpt.Result',
@@ -31,7 +31,7 @@ export const ALIS_ID_INQ_RES_RESPONSE_FIELDS: SwaggerMessageField[] = [
   {
     name: 'InqRpt.Rsn',
     description:
-      'Motivo específico de la falla cuando Result es RJCT. Valores: ACRD, RR10, RR04, AG08, AC06, AG03, BE23, AG01. Con BE23 la IBP debe interpretar que el ID no tiene alias y habilitar el registro en front-end.',
+      'Motivo específico de la falla cuando Result es RJCT. Valores: ACRD, RR10, RR04, AG08, AC06, AG03, BE23, AG01. Con BE23 la IBP debe interpretar que el ID no tiene MiAlias y habilitar el registro en front-end.',
   },
   {
     name: 'InqRpt.Pty',
@@ -53,7 +53,7 @@ export const ALIS_ID_INQ_RES_RESPONSE_FIELDS: SwaggerMessageField[] = [
   },
   {
     name: 'InqRpt.AliasList',
-    description: 'Arreglo de alias del cliente.',
+    description: 'Arreglo de MiAlias del cliente.',
   },
   {
     name: 'InqRpt.AliasList[].Alias',
@@ -63,7 +63,7 @@ export const ALIS_ID_INQ_RES_RESPONSE_FIELDS: SwaggerMessageField[] = [
   {
     name: 'InqRpt.AliasList[].AgtList',
     description:
-      'Arreglo de bancos del alias. Normalmente retorna un solo ítem asociado al banco que consulta.',
+      'Arreglo de bancos del MiAlias. Normalmente retorna un solo ítem asociado al banco que consulta.',
   },
   {
     name: 'InqRpt.AliasList[].AgtList[].Agt',
@@ -73,7 +73,7 @@ export const ALIS_ID_INQ_RES_RESPONSE_FIELDS: SwaggerMessageField[] = [
   {
     name: 'InqRpt.AliasList[].AgtList[].Sts',
     description:
-      'Estado lógico del vínculo alias-banco: ACTV (activa), INAC (inactiva), PNDL (pending deletion), BLKD (bloqueado), UNRG (no registrado).',
+      'Estado lógico del vínculo MiAlias-banco: ACTV (activa), INAC (inactiva), PNDL (pending deletion), BLKD (bloqueado), UNRG (no registrado).',
   },
 ];
 
@@ -169,7 +169,7 @@ export const ID_MOD_ADVC_MUTATION_REQUEST_FIELDS: SwaggerMessageField[] = [
   {
     name: 'Mod.Sts',
     description:
-      'Estado objetivo del vínculo alias-banco: ACTV, INAC, PNDL, BLKD o UNRG. En baja global se envía BLKD.',
+      'Estado objetivo del vínculo MiAlias-banco: ACTV, INAC, PNDL, BLKD o UNRG. En baja global se envía BLKD.',
   },
 ];
 
@@ -230,7 +230,7 @@ export const ID_VRFCTN_RPT_RESPONSE_FIELDS: SwaggerMessageField[] = [
   {
     name: 'Mod.Alias',
     description:
-      'Alias procesado. Minúsculas, sin acentos. Punto (.) permitido, no al inicio/fin ni doble (..).',
+      'MiAlias procesado. Minúsculas, sin acentos. Punto (.) permitido, no al inicio/fin ni doble (..).',
   },
   {
     name: 'Mod.Agt',
@@ -239,7 +239,7 @@ export const ID_VRFCTN_RPT_RESPONSE_FIELDS: SwaggerMessageField[] = [
   {
     name: 'Mod.Sts',
     description:
-      'Estado del vínculo alias-banco: ACTV, INAC, PNDL, BLKD o UNRG.',
+      'Estado del vínculo MiAlias-banco: ACTV, INAC, PNDL, BLKD o UNRG.',
   },
   {
     name: 'Mod.Pty',

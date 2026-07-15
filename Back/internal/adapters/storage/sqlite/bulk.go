@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type sqliteBulkTx struct {
@@ -89,23 +91,40 @@ func (t *sqliteBulkTx) ResolveBatchCollisions(ctx context.Context, batch *[]doma
 }
 
 func (t *sqliteBulkTx) InsertBatch(ctx context.Context, batch []domain.GeneratedCustomer) error {
-	var custArgs, accArgs, aliasArgs []interface{}
-	var custQuery, accQuery, aliasQuery strings.Builder
+	var custArgs, accArgs, aliasArgs, linkArgs []interface{}
+	var custQuery, accQuery, aliasQuery, linkQuery strings.Builder
 
 	for _, customer := range batch {
-		custQuery.WriteString("(?, 'V', ?, ?, ?, ?, ?),")
-		custArgs = append(custArgs, customer.ID, customer.DocNumber, customer.FirstName, customer.LastName, customer.Email, customer.Phone)
+		custQuery.WriteString("(?, 'V', ?, ?, ?, ?, ?, ?, ?),")
+		custArgs = append(custArgs,
+			customer.ID,
+			customer.DocNumber,
+			customer.FirstName,
+			customer.MiddleName,
+			customer.LastName,
+			customer.SecondLastName,
+			customer.Email,
+			customer.Phone,
+		)
 
 		for _, acc := range customer.Accounts {
 			accQuery.WriteString("(?, ?, ?, ?, 'SAVINGS'),")
 			accArgs = append(accArgs, acc.ID, acc.BankID, customer.ID, acc.AccountNumber)
 		}
 
-		aliasQuery.WriteString("(?, ?, ?),")
-		aliasArgs = append(aliasArgs, customer.AliasID, customer.ID, customer.AliasValue)
+		if len(customer.Accounts) == 0 {
+			return fmt.Errorf("cliente %s sin cuentas para vincular alias", customer.ID)
+		}
+
+		primaryAccount := customer.Accounts[0]
+		aliasQuery.WriteString("(?, ?, ?, ?, 'ENABLED'),")
+		aliasArgs = append(aliasArgs, customer.AliasID, customer.ID, primaryAccount.ID, customer.AliasValue)
+
+		linkQuery.WriteString("(?, ?, ?, ?),")
+		linkArgs = append(linkArgs, uuid.New().String(), customer.AliasID, primaryAccount.BankID, primaryAccount.ID)
 	}
 
-	if err := executeBatch(ctx, t.tx, "INSERT INTO customers (id, document_type, document_number, first_name, last_name, email, phone) VALUES ", custQuery.String(), custArgs); err != nil {
+	if err := executeBatch(ctx, t.tx, "INSERT INTO customers (id, document_type, document_number, first_name, middle_name, last_name, second_last_name, email, phone) VALUES ", custQuery.String(), custArgs); err != nil {
 		return fmt.Errorf("error bulk insert customers: %w", err)
 	}
 
@@ -115,8 +134,14 @@ func (t *sqliteBulkTx) InsertBatch(ctx context.Context, batch []domain.Generated
 		}
 	}
 
-	if err := executeBatch(ctx, t.tx, "INSERT INTO alias (id, customer_id, alias_value) VALUES ", aliasQuery.String(), aliasArgs); err != nil {
+	if err := executeBatch(ctx, t.tx, "INSERT INTO alias (id, customer_id, account_id, alias_value, status) VALUES ", aliasQuery.String(), aliasArgs); err != nil {
 		return fmt.Errorf("error bulk insert alias: %w", err)
+	}
+
+	if len(linkArgs) > 0 {
+		if err := executeBatch(ctx, t.tx, "INSERT INTO alias_bank_links (id, alias_id, bank_id, account_id) VALUES ", linkQuery.String(), linkArgs); err != nil {
+			return fmt.Errorf("error bulk insert alias_bank_links: %w", err)
+		}
 	}
 
 	return nil

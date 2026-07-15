@@ -139,7 +139,7 @@ export const useAlias = () => {
 
   const removeAlias = async (customerId: string, aliasValue: string) => {
     const confirmed = window.confirm(
-      `¿Eliminar el alias "${aliasValue}" y todos sus datos relacionados?`,
+      `¿Eliminar el MiAlias "${aliasValue}" y todos sus datos relacionados?`,
     );
     if (!confirmed) {
       return;
@@ -165,7 +165,7 @@ export const useAlias = () => {
 
   const removeAllAliases = async () => {
     const firstConfirm = window.confirm(
-      '¿Eliminar TODOS los alias, clientes y cuentas? Esta acción no se puede deshacer.',
+      '¿Eliminar TODOS los MiAlias, clientes y cuentas? Esta acción no se puede deshacer.',
     );
     if (!firstConfirm) {
       return;

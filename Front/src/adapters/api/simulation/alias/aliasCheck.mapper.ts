@@ -1,5 +1,7 @@
+import type {
+  CheckAliasSuccessPayload,
+} from '../../../../application/simulation/authSimulation.port';
 import type { Account } from '../../../../domain/account';
-import type { CheckAliasResult } from '../../../../application/simulation/authSimulation.port';
 import { filterAccountsByBankCode } from '../../../../domain/simulation/aliasFlow';
 import { hasConfiguredAliasValue, type AliasResolveEntry } from '../../../../domain/simulation/auth.types';
 import { SIMF_REASON_NOT_FOUND } from '../../../../domain/simulation/simf.constants';
@@ -41,7 +43,7 @@ function resolveAgentStatus(
 export function buildAliasCheckFromAliasEntry(
   entry: AliasResolveEntry,
   accounts: Account[],
-): Extract<CheckAliasResult, { ok: true }> {
+): CheckAliasSuccessPayload {
   const bankCode = appConfig.simulation.bankCode;
   const bankAccounts = filterAccountsByBankCode(accounts, bankCode);
   const agentStatus = isAliasGloballyBlocked(entry.alias_status)
@@ -63,7 +65,7 @@ export function buildAliasCheckFromAliasEntry(
 
 export function buildAliasCheckFromResolve(
   resolved: ResolveAliasResponse,
-): Extract<CheckAliasResult, { ok: true }> {
+): CheckAliasSuccessPayload {
   const alias = resolved.alias?.trim() || null;
   const bankCode = appConfig.simulation.bankCode;
   const bankAccounts = filterAccountsByBankCode(resolved.accounts ?? [], bankCode);
@@ -95,6 +97,6 @@ export function buildAliasCheckFromResolve(
   };
 }
 
-export function mapAliasCheckFromResolve(resolved: ResolveAliasResponse): CheckAliasResult {
+export function mapAliasCheckFromResolve(resolved: ResolveAliasResponse): CheckAliasSuccessPayload {
   return buildAliasCheckFromResolve(resolved);
 }

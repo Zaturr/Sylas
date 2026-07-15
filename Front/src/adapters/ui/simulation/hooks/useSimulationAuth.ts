@@ -1,5 +1,8 @@
 import { useCallback, useReducer } from 'react';
-import type { CheckAliasResult } from '../../../../application/simulation/authSimulation.port';
+import type {
+  CheckAliasResult,
+  CheckAliasSuccessPayload,
+} from '../../../../application/simulation/authSimulation.port';
 import { simulationAuthReducer } from '../../../../domain/simulation/auth.reducer';
 import {
   createInitialSimulationAuthState,
@@ -30,7 +33,7 @@ import {
 } from '../providers/SimulationServicesProvider';
 
 function mapServiceCheckToState(
-  check: Extract<CheckAliasResult, { ok: true }>,
+  check: CheckAliasSuccessPayload | Extract<CheckAliasResult, { ok: true }>,
 ): NonNullable<SimulationAuthState['aliasCheck']> {
   if (check.status === 'found') {
     return {
@@ -248,7 +251,9 @@ export function useSimulationAuth() {
         }
       : refreshed.session;
 
-    const check = buildAliasCheckFromAliasEntry(entry, focusedSession.accounts);
+    const check = mapServiceCheckToState(
+      buildAliasCheckFromAliasEntry(entry, focusedSession.accounts),
+    );
 
     dispatch({
       type: 'OPEN_MANAGE_ALIAS',
@@ -304,7 +309,7 @@ export function useSimulationAuth() {
     ) {
       dispatch({
         type: 'CREATE_ALIAS_FAILED',
-        message: 'La cuenta seleccionada ya está asociada a un alias.',
+        message: 'La cuenta seleccionada ya está asociada a un MiAlias.',
       });
       return;
     }
@@ -447,7 +452,7 @@ export function useSimulationAuth() {
       dispatch({
         type: 'OPEN_ALIAS_ERROR',
         message:
-          'No puedes bloquear este alias porque fue creado hace menos de 30 días.',
+          'No puedes bloquear este MiAlias porque fue creado hace menos de 30 días.',
       });
       return;
     }

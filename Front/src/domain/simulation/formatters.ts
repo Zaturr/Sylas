@@ -2,13 +2,12 @@ import type { PaymentRecipient } from './types';
 
 export function formatRecipientDocument(recipient: PaymentRecipient): string {
   const docNum = recipient.documentNumber;
-  if (docNum.length <= 5) {
+  if (docNum.length <= 3) {
     return `${recipient.documentType}-${docNum}`;
   }
-  const first = docNum.charAt(0);
-  const lastFour = docNum.slice(-4);
-  const asterisks = '*'.repeat(docNum.length - 5);
-  return `${recipient.documentType}-${first}${asterisks}${lastFour}`;
+  const lastThree = docNum.slice(-3);
+  const asterisks = '*'.repeat(docNum.length - 3);
+  return `${recipient.documentType}-${asterisks}${lastThree}`;
 }
 
 export function getRecipientInitials(recipient: PaymentRecipient): string {

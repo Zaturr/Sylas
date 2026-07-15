@@ -17,7 +17,7 @@ export function AliasCreateSuccessStep({ aliasValue, status, onFinish }: AliasCr
         </div>
         <h2 className="sim-flow__title">¡Listo!</h2>
         <p className="sim-flow__subtitle">
-          Tu alias <strong>{aliasValue}</strong> fue registrado correctamente.
+          Tu MiAlias <strong>{aliasValue}</strong> fue registrado correctamente.
         </p>
         <SimStatusBadge status={status ?? SIMF_ALIAS_STATUS.INACTIVE} />
       </div>

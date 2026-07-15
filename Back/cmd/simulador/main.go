@@ -15,6 +15,14 @@ import (
 )
 
 func main() {
+	listenAddr, configPath, cfgErr := loadListenAddr()
+	if cfgErr != nil {
+		log.Printf("Aviso de configuración: %v", cfgErr)
+	}
+	if configPath != "" {
+		fmt.Printf("Configuración cargada desde: %s\n", configPath)
+	}
+
 	dbPath := "data/test.db"
 	dbDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dbDir, os.ModePerm); err != nil {
@@ -69,8 +77,14 @@ func main() {
 
 	simfadapter.RegisterRoutes(r, simfHandler)
 
-	fmt.Println("Simulador escuchando en http://localhost:8080")
-	if err := r.Run(":8080"); err != nil {
+	registerConfigFileRoute(r, configPath)
+
+	if err := registerWebUI(r); err != nil {
+		log.Fatalf("Error al registrar la UI embebida: %v", err)
+	}
+
+	fmt.Printf("Simulador escuchando en http://localhost%s\n", listenAddr)
+	if err := r.Run(listenAddr); err != nil {
 		log.Fatalf("Error al iniciar el simulador: %v", err)
 	}
 }

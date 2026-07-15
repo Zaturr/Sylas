@@ -11,7 +11,7 @@ type SidebarProps = {
 };
 
 const menuItems: Array<{ id: AppPage | 'settings'; label: string; icon: string }> = [
-  { id: 'alias', label: 'Panel de Alias', icon: '' },
+  { id: 'alias', label: 'Panel de MiAlias', icon: '' },
   { id: 'users', label: 'Usuarios', icon: '' },
   { id: 'generateData', label: 'Generar Data', icon: '' },
   { id: 'simulation', label: 'Simulación', icon: '' },
@@ -56,7 +56,7 @@ export function Sidebar({
 
       <aside className={sidebarClassName}>
         <div className="sidebar-header">
-          <div className="sidebar-brand">BDCA Alias</div>
+          <div className="sidebar-brand">BDCA</div>
           <button
             type="button"
             className="sidebar-close"

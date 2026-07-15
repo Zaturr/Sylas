@@ -1,6 +1,7 @@
 import type {
   ChangeLinkedAccountResult,
   CheckAliasResult,
+  CheckAliasSuccessPayload,
   DeleteAliasResult,
   RegisterAliasResult,
   UpdateAliasStatusInput,
@@ -29,13 +30,32 @@ import type { createUpdateAliasViaSimf } from '../simf/simfAliasUpdate.client';
 import type { ResolveAliasResponse } from './alias.types';
 
 function attachSessionToCheck(
-  check: Omit<Extract<CheckAliasResult, { ok: true }>, 'session'>,
+  check: CheckAliasSuccessPayload,
   resolved: ResolveAliasResponse,
   document: ParsedDocument,
 ): Extract<CheckAliasResult, { ok: true }> {
+  const session = buildFilteredSession(resolved, document);
+
+  if (check.status === 'found') {
+    return {
+      ok: true,
+      status: 'found',
+      alias: check.alias,
+      message: check.message,
+      agentStatus: check.agentStatus,
+      bankCode: check.bankCode,
+      session,
+    };
+  }
+
   return {
-    ...check,
-    session: buildFilteredSession(resolved, document),
+    ok: true,
+    status: 'not-found',
+    reason: check.reason,
+    message: check.message,
+    agentStatus: check.agentStatus,
+    bankCode: check.bankCode,
+    session,
   };
 }
 

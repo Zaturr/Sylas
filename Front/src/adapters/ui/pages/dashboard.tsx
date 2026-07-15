@@ -99,7 +99,7 @@ function renderDetailedTooltip(alias: AliasDetail) {
     return (
       <div className="dashboard-tooltip-content">
         <strong className="tooltip-title blkd">Bloqueado (BLKD)</strong>
-        <p>El alias se encuentra bloqueado a nivel global. Por motivos de seguridad o a solicitud del cliente, está inhabilitado para recibir pagos en cualquier institución.</p>
+        <p>El MiAlias se encuentra bloqueado a nivel global. Por motivos de seguridad o a solicitud del cliente, está inhabilitado para recibir pagos en cualquier institución.</p>
       </div>
     );
   }
@@ -108,7 +108,7 @@ function renderDetailedTooltip(alias: AliasDetail) {
     return (
       <div className="dashboard-tooltip-content">
         <strong className="tooltip-title unrg">No Registrado (UNRG)</strong>
-        <p>No tiene registrado el alias.</p>
+        <p>No tiene registrado el MiAlias.</p>
       </div>
     );
   }
@@ -117,7 +117,7 @@ function renderDetailedTooltip(alias: AliasDetail) {
     return (
       <div className="dashboard-tooltip-content">
         <strong className="tooltip-title">Sin Cuentas</strong>
-        <p>El usuario no tiene cuentas bancarias asociadas a este alias en el sistema.</p>
+        <p>El usuario no tiene cuentas bancarias asociadas a este MiAlias en el sistema.</p>
       </div>
     );
   }
@@ -139,9 +139,9 @@ function renderDetailedTooltip(alias: AliasDetail) {
             <li key={bank}>
               <span className="bank-code">Banco {acc.bank}:</span>
               {kind === 'actv' ? (
-                <span className="status-text actv">Activo (ACTV) - Alias activo.</span>
+                <span className="status-text actv">Activo (ACTV) - MiAlias activo.</span>
               ) : kind === 'inac' ? (
-                <span className="status-text inac">Inactivo (INAC) - Alias inactivo.</span>
+                <span className="status-text inac">Inactivo (INAC) - MiAlias inactivo.</span>
               ) : (
                 <span className="status-text">Estado desconocido ({acc.status}).</span>
               )}
@@ -192,7 +192,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   if (loading && aliases.length === 0 && !searchTerm.trim()) {
     return (
       <AppShell activeItem="alias" onNavigate={onNavigate}>
-        <div className="dashboard-state">Cargando alias...</div>
+        <div className="dashboard-state">Cargando MiAlias...</div>
       </AppShell>
     );
   }
@@ -235,8 +235,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <div className="search-box">
             <input
               type="text"
-              placeholder="Buscar por nombre, documento o alias..."
-              aria-label="Buscar alias"
+              placeholder="Buscar por nombre, documento o MiAlias..."
+              aria-label="Buscar MiAlias"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
             />
@@ -271,7 +271,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         <div className="dashboard-empty">
           {searchTerm.trim()
             ? `No se encontraron resultados para "${searchTerm.trim()}".`
-            : 'No hay alias registrados.'}
+            : 'No hay MiAlias registrados.'}
         </div>
       ) : (
         <>
@@ -283,9 +283,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   <th className="col-nombre">Nombre</th>
                   <th className="col-apellido">Apellido</th>
                   <th className="col-documento">Documento</th>
-                  <th className="col-alias">Alias</th>
+                  <th className="col-alias">MiAlias</th>
                   <th className="col-banco">Código banco</th>
-                  <th className="col-status-alias">Status alias</th>
+                  <th className="col-status-alias">Status MiAlias</th>
                   <th className="col-acciones">Acciones</th>
                 </tr>
               </thead>
@@ -322,9 +322,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                             type="button"
                             className="delete-row-btn icon-btn"
                             disabled={isBusy}
-                            aria-label={`Eliminar alias ${alias.alias}`}
+                            aria-label={`Eliminar MiAlias ${alias.alias}`}
                             onClick={() => removeAlias(alias.customer_id, alias.alias)}
-                            title="Eliminar alias"
+                            title="Eliminar MiAlias"
                           >
                             {isDeletingRow ? (
                               <span className="spinner-icon">↻</span>

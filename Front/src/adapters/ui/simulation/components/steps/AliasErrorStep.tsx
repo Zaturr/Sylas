@@ -17,14 +17,14 @@ export function AliasErrorStep({ message, onRetry, onFinish }: AliasErrorStepPro
         <h2 className="sim-flow__title">Operación no permitida</h2>
         <p className="sim-flow__subtitle">{message}</p>
         <p className="sim-field__hint">
-          Regla simulada: no se puede eliminar un alias creado hace menos de{' '}
+          Regla simulada: no se puede eliminar un MiAlias creado hace menos de{' '}
           {ALIAS_DELETE_MIN_DAYS} días.
         </p>
       </div>
 
       <div className="sim-flow__actions">
         <button type="button" className="sim-mobile-btn sim-mobile-btn--primary" onClick={onRetry}>
-          Volver a alias
+          Volver a MiAlias
         </button>
         <button type="button" className="sim-mobile-btn sim-mobile-btn--ghost" onClick={onFinish}>
           Finalizar

@@ -1,4 +1,8 @@
 import {
+  DOC_AGENT,
+  DOC_ALIAS,
+  DOC_DOCUMENT_ID,
+  buildDocTitular,
   buildIdModAdvcBlockExample,
   buildIdModAdvcCreateExample,
   buildIdModAdvcUpdateExample,
@@ -45,13 +49,13 @@ export type SwaggerEndpoint = {
   responses: SwaggerResponse[];
 };
 
-export const SWAGGER_SECTION_TITLE = 'Alias';
+export const SWAGGER_SECTION_TITLE = 'MiAlias';
 
 const SIMF_REASON_DOCS = {
   ACRD: {
     name: 'ALIAS_ALREADY_REGISTERED',
     summary:
-      'Colisión: el Alias solicitado ya fue tomado por otro cliente en la BDCA. El sistema retorna ACTV indicando que el recurso está vivo y pertenece a alguien más.',
+      'Colisión: el MiAlias solicitado ya fue tomado por otro cliente en la BDCA. El sistema retorna ACTV indicando que el recurso está vivo y pertenece a alguien más.',
   },
   RR10: {
     name: 'ALIAS_SYNTAX_INVALID',
@@ -76,12 +80,12 @@ const SIMF_REASON_DOCS = {
   AG08: {
     name: 'UNAUTHORIZED_IBP_ACTION',
     summary:
-      'Violación de jurisdicción: la IBP intentó emitir un UPDATE sobre una resolución o un Alias no vinculado a su código de institución (Agt).',
+      'Violación de jurisdicción: la IBP intentó emitir un UPDATE sobre una resolución o un MiAlias no vinculado a su código de institución (Agt).',
   },
   BE23: {
     name: 'ALIAS_NOT_FOUND',
     summary:
-      'Inexistencia: el Alias digitado no existe en la BDCA o el string es incorrecto.',
+      'Inexistencia: el MiAlias digitado no existe en la BDCA o el string es incorrecto.',
   },
 } as const;
 
@@ -111,22 +115,25 @@ function simfResponse(
   };
 }
 
-const createTx = docTransaction('0105');
-const updateTx = docTransaction('0105');
-const blockTx = docTransaction('0172');
+const createTx = docTransaction(DOC_AGENT);
+const updateTx = docTransaction(DOC_AGENT);
+const blockTx = docTransaction(DOC_AGENT);
 
 export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
   {
     id: 'resolve-alias-by-agent',
     method: 'GET',
     path: '/simf/bdca/v1/identities/{SchmeNm}/{Id}/alias/{Agt}',
-    title: 'Consultar alias por identidad y agente',
+    title: 'Consultar MiAlias por identidad y agente',
     description:
-      'Consulta el alias vinculado a un titular filtrando por agente bancario. Los rechazos de negocio responden HTTP 200 con Result RJCT dentro del JSON (AlisIdInqRes).',
+      'Consulta el MiAlias vinculado a un titular filtrando por agente bancario. Los rechazos de negocio responden HTTP 200 con Result RJCT dentro del JSON (AlisIdInqRes).',
     pathParams: [
       { name: 'SchmeNm', description: 'Esquema de identificación: SCID | SRIF | SPAS' },
-      { name: 'Id', description: 'Documento del titular (ej. V9168461). Validado según SchmeNm.' },
-      { name: 'Agt', description: 'Código de agente bancario (4 caracteres alfanuméricos).' },
+      {
+        name: 'Id',
+        description: `Documento del titular (ej. ${DOC_DOCUMENT_ID} para cédula 10000001). Validado según SchmeNm.`,
+      },
+      { name: 'Agt', description: `Código de agente bancario (ej. ${DOC_AGENT}, 4 caracteres alfanuméricos).` },
     ],
     responseFields: ALIS_ID_INQ_RES_RESPONSE_FIELDS,
     responseSchemaTitle: 'AlisIdInqRes',
@@ -136,21 +143,21 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
         'ACCP',
         'success',
         'HTTP 200 — Result ACCP (consulta exitosa)',
-        buildInquiryAcceptExample('0105'),
+        buildInquiryAcceptExample(DOC_AGENT),
       ),
       simfResponse(
         'resolve-agent-rr10',
         'RR10',
         'reject',
         rejectReasonLabel('RR10'),
-        buildInquiryRejectExample('RR10', '0105'),
+        buildInquiryRejectExample('RR10', DOC_AGENT),
       ),
       simfResponse(
         'resolve-agent-be23',
         'BE23',
         'reject',
         rejectReasonLabel('BE23'),
-        buildInquiryRejectExample('BE23', '0105'),
+        buildInquiryRejectExample('BE23', DOC_AGENT),
       ),
       simfResponse(
         'resolve-agent-500',
@@ -168,10 +175,16 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
     path: '/simf/bdca/v1/aliases/{Alias}/resolutions/{Agt_Destino}',
     title: 'Resolución anti-phishing',
     description:
-      'Valida si un alias destino puede usarse para un pago hacia un agente bancario específico. Los rechazos de negocio responden HTTP 200 con Result RJCT dentro del JSON (AlisIdInqRes).',
+      'Valida si un MiAlias destino puede usarse para un pago hacia un agente bancario específico. Los rechazos de negocio responden HTTP 200 con Result RJCT dentro del JSON (AlisIdInqRes).',
     pathParams: [
-      { name: 'Alias', description: 'Alias destino (6-15 caracteres, minúsculas, punto permitido).' },
-      { name: 'Agt_Destino', description: 'Código del banco destino (4 caracteres alfanuméricos).' },
+      {
+        name: 'Alias',
+        description: `MiAlias destino (ej. ${DOC_ALIAS}). 6-15 caracteres, minúsculas, punto permitido.`,
+      },
+      {
+        name: 'Agt_Destino',
+        description: `Código del banco destino (ej. ${DOC_AGENT}, 4 caracteres alfanuméricos).`,
+      },
     ],
     responseFields: ALIS_ID_INQ_RES_RESPONSE_FIELDS,
     responseSchemaTitle: 'AlisIdInqRes',
@@ -180,36 +193,36 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
         'resolution-accp',
         'ACCP',
         'success',
-        'HTTP 200 — Result ACCP (alias destino válido)',
-        buildInquiryAcceptExample('0172'),
+        'HTTP 200 — Result ACCP (MiAlias destino válido)',
+        buildInquiryAcceptExample(DOC_AGENT),
       ),
       simfResponse(
         'resolution-rr10',
         'RR10',
         'reject',
         rejectReasonLabel('RR10'),
-        buildInquiryRejectExample('RR10', '0172'),
+        buildInquiryRejectExample('RR10', DOC_AGENT),
       ),
       simfResponse(
         'resolution-rr04',
         'RR04',
         'reject',
         rejectReasonLabel('RR04'),
-        buildInquiryRejectExample('RR04', '0172'),
+        buildInquiryRejectExample('RR04', DOC_AGENT),
       ),
       simfResponse(
         'resolution-be23',
         'BE23',
         'reject',
         rejectReasonLabel('BE23'),
-        buildInquiryRejectExample('BE23', '0172'),
+        buildInquiryRejectExample('BE23', DOC_AGENT),
       ),
       simfResponse(
         'resolution-ac06',
         'AC06',
         'reject',
         rejectReasonLabel('AC06'),
-        buildInquiryRejectExample('AC06', '0172'),
+        buildInquiryRejectExample('AC06', DOC_AGENT),
       ),
       simfResponse(
         'resolution-500',
@@ -225,9 +238,9 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
     id: 'create-alias',
     method: 'POST',
     path: '/simf/bdca/v1/aliases',
-    title: 'Registrar alias',
+    title: 'Registrar MiAlias',
     description:
-      'Registra un nuevo alias mediante IdModAdvc.',
+      'Registra un nuevo MiAlias mediante IdModAdvc.',
     requestFields: ID_MOD_ADVC_CREATE_REQUEST_FIELDS,
     requestSchemaTitle: 'IdModAdvc',
     responseFields: ID_VRFCTN_RPT_RESPONSE_FIELDS,
@@ -238,12 +251,12 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
         'create-accp',
         'ACCP',
         'success',
-        'HTTP 200 — Result ACCP (alias registrado)',
+        'HTTP 200 — Result ACCP (MiAlias registrado)',
         buildMutationAcceptExample(createTx, {
-          Alias: 'nuevo.alias',
-          Agt: '0105',
-          Sts: 'INAC',
-          Pty: { Nm: 'NOMBRE APELLIDO', Id: 'V9168461', SchmeNm: 'SCID' },
+          Alias: DOC_ALIAS,
+          Agt: DOC_AGENT,
+          Sts: 'ACTV',
+          Pty: buildDocTitular(),
         }),
       ),
       simfResponse(
@@ -302,12 +315,18 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
     id: 'update-alias',
     method: 'PUT',
     path: '/simf/bdca/v1/aliases/update/{Alias}/{Agt}',
-    title: 'Actualizar alias',
+    title: 'Actualizar MiAlias',
     description:
-      'Actualiza el estado del alias para un agente bancario.',
+      'Actualiza el estado del MiAlias para un agente bancario.',
     pathParams: [
-      { name: 'Alias', description: 'Debe coincidir con Mod.Alias del body.' },
-      { name: 'Agt', description: 'Debe coincidir con Mod.Agt del body (4 caracteres alfanuméricos).' },
+      {
+        name: 'Alias',
+        description: `Debe coincidir con Mod.Alias del body (ej. ${DOC_ALIAS}).`,
+      },
+      {
+        name: 'Agt',
+        description: `Debe coincidir con Mod.Agt del body (ej. ${DOC_AGENT}, 4 caracteres alfanuméricos).`,
+      },
     ],
     requestFields: ID_MOD_ADVC_MUTATION_REQUEST_FIELDS,
     requestSchemaTitle: 'IdModAdvc',
@@ -319,12 +338,12 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
         'update-accp',
         'ACCP',
         'success',
-        'HTTP 200 — Result ACCP (alias actualizado)',
+        'HTTP 200 — Result ACCP (MiAlias actualizado)',
         buildMutationAcceptExample(updateTx, {
-          Alias: 'alej.carm5234',
-          Agt: '0105',
+          Alias: DOC_ALIAS,
+          Agt: DOC_AGENT,
           Sts: 'INAC',
-          Pty: { Nm: 'TITULAR EJEMPLO', Id: 'V9168461', SchmeNm: 'SCID' },
+          Pty: buildDocTitular(),
         }),
       ),
       simfResponse(
@@ -369,12 +388,18 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
     id: 'block-alias',
     method: 'PUT',
     path: '/simf/bdca/v1/aliases/delete/{Alias}/{Agt}',
-    title: 'Bloquear alias (baja global)',
+    title: 'Bloquear MiAlias (baja global)',
     description:
-      'Registra la baja global del alias (Sts BLKD).',
+      'Registra la baja global del MiAlias (Sts BLKD).',
     pathParams: [
-      { name: 'Alias', description: 'Debe coincidir con Mod.Alias del body.' },
-      { name: 'Agt', description: 'Debe coincidir con Mod.Agt del body.' },
+      {
+        name: 'Alias',
+        description: `Debe coincidir con Mod.Alias del body (ej. ${DOC_ALIAS}).`,
+      },
+      {
+        name: 'Agt',
+        description: `Debe coincidir con Mod.Agt del body (ej. ${DOC_AGENT}).`,
+      },
     ],
     requestFields: ID_MOD_ADVC_MUTATION_REQUEST_FIELDS,
     requestSchemaTitle: 'IdModAdvc',
@@ -386,12 +411,12 @@ export const SWAGGER_ENDPOINTS: SwaggerEndpoint[] = [
         'block-accp',
         'ACCP',
         'success',
-        'HTTP 200 — Result ACCP (alias bloqueado BLKD)',
+        'HTTP 200 — Result ACCP (MiAlias bloqueado BLKD)',
         buildMutationAcceptExample(blockTx, {
-          Alias: 'daniel',
-          Agt: '0172',
+          Alias: DOC_ALIAS,
+          Agt: DOC_AGENT,
           Sts: 'BLKD',
-          Pty: { Nm: 'TITULAR EJEMPLO', Id: 'V12345678', SchmeNm: 'SCID' },
+          Pty: buildDocTitular(),
         }),
       ),
       simfResponse(

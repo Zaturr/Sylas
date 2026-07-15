@@ -45,7 +45,7 @@ export function SimAccountPicker({
       <div className="sim-empty-state">
         <p className="sim-empty-state__title">Sin cuentas disponibles</p>
         <p className="sim-empty-state__text">
-          No hay cuentas del banco {appConfig.simulation.bankCode} para vincular con tu alias.
+          No hay cuentas del banco {appConfig.simulation.bankCode} para vincular con tu MiAlias.
         </p>
       </div>
     );
@@ -84,12 +84,12 @@ export function SimAccountPicker({
             </button>
             {isDolares && (
               <p className="sim-account-option__warning" style={{ fontSize: '0.75rem', color: '#d32f2f', marginTop: '4px', marginBottom: '8px', paddingLeft: '8px' }}>
-                Las cuentas en moneda extranjera no permiten asociación a alias.
+                Las cuentas en moneda extranjera no permiten asociación a MiAlias.
               </p>
             )}
             {!isDolares && linkedAlias && (
               <p className="sim-account-option__warning" style={{ fontSize: '0.75rem', color: '#d32f2f', marginTop: '4px', marginBottom: '8px', paddingLeft: '8px' }}>
-                Cuenta ya asociada al alias {linkedAlias}.
+                Cuenta ya asociada al MiAlias {linkedAlias}.
               </p>
             )}
           </div>

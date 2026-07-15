@@ -61,7 +61,7 @@ export function HomeTabView({
   const legalEntityProgress = session.isLegalEntity
     ? countLegalEntityAliasProgress(session)
     : null;
-  const aliasTileLabel = session.isLegalEntity ? 'Cuentas y alias' : 'Alias';
+  const aliasTileLabel = session.isLegalEntity ? 'Cuentas y MiAlias' : 'MiAlias';
 
   const menuItems: HomeMenuItem[] = [
     { id: 'info', label: 'Información', icon: 'ℹ', enabled: false },
@@ -116,7 +116,7 @@ export function HomeTabView({
           </div>
           <p className="sim-home-balance__hint">
             {session.isLegalEntity && legalEntityProgress
-              ? `${legalEntityProgress.configured}/${legalEntityProgress.eligible} cuentas con alias · ${accountHint}`
+              ? `${legalEntityProgress.configured}/${legalEntityProgress.eligible} cuentas con MiAlias · ${accountHint}`
               : accountHint}
           </p>
         </div>

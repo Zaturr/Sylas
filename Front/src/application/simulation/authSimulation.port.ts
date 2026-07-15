@@ -24,7 +24,7 @@ export type CreateAccountResult =
   | { ok: true; session: SimulationSession }
   | { ok: false; message: string };
 
-export type CheckAliasResult =
+export type CheckAliasSuccessPayload =
   | {
       ok: true;
       status: 'found';
@@ -32,7 +32,6 @@ export type CheckAliasResult =
       message: string;
       agentStatus: SimfAliasStatus;
       bankCode: string;
-      session: SimulationSession;
     }
   | {
       ok: true;
@@ -41,8 +40,10 @@ export type CheckAliasResult =
       message: string;
       agentStatus: SimfAliasStatus;
       bankCode: string;
-      session: SimulationSession;
-    }
+    };
+
+export type CheckAliasResult =
+  | (CheckAliasSuccessPayload & { session: SimulationSession })
   | { ok: false; message: string };
 
 export type UpdateAliasStatusInput = {

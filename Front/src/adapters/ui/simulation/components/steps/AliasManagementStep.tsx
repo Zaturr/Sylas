@@ -110,7 +110,7 @@ export function AliasManagementStep({
     <div className="sim-flow">
       {isSubmitting && !aliasCheck && (
         <div className="sim-card">
-          <p className="sim-card__subtitle">Consultando alias...</p>
+          <p className="sim-card__subtitle">Consultando MiAlias...</p>
         </div>
       )}
 
@@ -118,7 +118,7 @@ export function AliasManagementStep({
         <div className="sim-card">
           <div className="sim-card__header">
             <div>
-              <p className="sim-card__title">Tu alias</p>
+              <p className="sim-card__title">Tu MiAlias</p>
               <p className="sim-card__alias">{aliasCheck.alias}</p>
             </div>
             <SimStatusBadge status={currentStatus} />
@@ -142,7 +142,7 @@ export function AliasManagementStep({
           )}
           {isBlocked && (
             <p className="sim-card__subtitle">
-              Este alias fue bloqueado (BLKD). Permanece visible hasta que registres uno nuevo.
+              Este MiAlias fue bloqueado (BLKD). Permanece visible hasta que registres uno nuevo.
             </p>
           )}
         </div>
@@ -150,7 +150,7 @@ export function AliasManagementStep({
 
       {!isSubmitting && showCreateAliasCard && (
         <div className="sim-card">
-          <p className="sim-card__title">Sin alias registrado</p>
+          <p className="sim-card__title">Sin MiAlias registrado</p>
           <p className="sim-card__subtitle">{aliasCheck?.message}</p>
           <div className="sim-card__row">
             <span>Cédula</span>
@@ -210,7 +210,7 @@ export function AliasManagementStep({
             disabled={!primaryAccount}
             onClick={onCreateAlias}
           >
-            {isBlocked ? 'Registrar nuevo alias' : 'Crear alias'}
+            {isBlocked ? 'Registrar nuevo MiAlias' : 'Crear MiAlias'}
           </button>
         )}
 
@@ -220,7 +220,7 @@ export function AliasManagementStep({
             className="sim-mobile-btn sim-mobile-btn--ghost sim-mobile-btn--danger-text"
             onClick={handleBlockAliasClick}
           >
-            Bloquear alias (BLKD)
+            Bloquear MiAlias (BLKD)
           </button>
         )}
       </div>
@@ -228,7 +228,7 @@ export function AliasManagementStep({
       <SimConfirmModal
         open={confirmOpen}
         title="Confirmar cambio"
-        message={`¿Deseas cambiar el estado del alias a ${getUserModifiableAliasStatusLabel(selectValue)}?`}
+        message={`¿Deseas cambiar el estado del MiAlias a ${getUserModifiableAliasStatusLabel(selectValue)}?`}
         confirmLabel="Confirmar"
         cancelLabel="Cancelar"
         isSubmitting={isSubmitting}
@@ -238,7 +238,7 @@ export function AliasManagementStep({
 
       <SimConfirmModal
         open={blockWarningOpen}
-        title="No se puede bloquear el alias"
+        title="No se puede bloquear el MiAlias"
         message={blockValidation.message}
         confirmLabel="Entendido"
         showCancel={false}
@@ -248,8 +248,8 @@ export function AliasManagementStep({
 
       <SimConfirmModal
         open={deleteConfirmOpen}
-        title="Bloquear alias"
-        message="¿Confirmas el bloqueo global del alias (BLKD)? No se eliminará del sistema; se registrará la baja vía BDCA."
+        title="Bloquear MiAlias"
+        message="¿Confirmas el bloqueo global del MiAlias (BLKD)? No se eliminará del sistema; se registrará la baja vía BDCA."
         confirmLabel="Bloquear"
         cancelLabel="Cancelar"
         isSubmitting={isSubmitting}

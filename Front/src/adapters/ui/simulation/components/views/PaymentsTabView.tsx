@@ -10,12 +10,12 @@ export function PaymentsTabView({ onStartPayment }: PaymentsTabViewProps) {
       <div className="sim-section">
         <h3 className="sim-section__title">Pagos</h3>
         <p className="sim-section__text">
-          Envía dinero de forma rápida usando el alias del destinatario.
+          Envía dinero de forma rápida usando el MiAlias del destinatario.
         </p>
       </div>
 
       <p className="sim-flow__notice">
-        Si el alias destino está bloqueado (BLKD), no se puede realizar el pago.
+        Si el MiAlias destino está bloqueado (BLKD), no se puede realizar el pago.
       </p>
 
       <button
@@ -24,7 +24,7 @@ export function PaymentsTabView({ onStartPayment }: PaymentsTabViewProps) {
         onClick={onStartPayment}
       >
         <span className="sim-action-btn__icon">+</span>
-        <span>Nuevo pago con alias</span>
+        <span>Nuevo pago con MiAlias</span>
       </button>
 
       <div className="sim-empty-state">

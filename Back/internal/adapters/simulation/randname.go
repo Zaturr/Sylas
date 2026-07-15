@@ -21,10 +21,12 @@ var apellidosBase = []string{
 
 // NameData agrupa los datos generados de una identidad
 type NameData struct {
-	FullName      string
-	FullLastName  string
-	BaseFirstName string
-	BaseLastName  string
+	FirstName      string
+	MiddleName     string
+	LastName       string
+	SecondLastName string
+	BaseFirstName  string
+	BaseLastName   string
 }
 
 // generateRandomName genera una combinación única de dos nombres y dos apellidos
@@ -43,10 +45,12 @@ func generateRandomName(rng *rand.Rand) NameData {
 	}
 
 	return NameData{
-		FullName:      n1 + " " + n2,
-		FullLastName:  a1 + " " + a2,
-		BaseFirstName: lowerString(n1),
-		BaseLastName:  lowerString(a1),
+		FirstName:      n1,
+		MiddleName:     n2,
+		LastName:       a1,
+		SecondLastName: a2,
+		BaseFirstName:  lowerString(n1),
+		BaseLastName:   lowerString(a1),
 	}
 }
 

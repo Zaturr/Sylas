@@ -17,14 +17,16 @@ func GenerateCustomer(config domain.RandomizerConfig, rng *rand.Rand) domain.Gen
 	nameData := generateRandomName(rng)
 
 	cust := domain.GeneratedCustomer{
-		ID:         uuid.New().String(),
-		DocNumber:  fmt.Sprintf("%d", rng.Intn(34000000)+1000000),
-		FirstName:  nameData.FullName,
-		LastName:   nameData.FullLastName,
-		Email:      fmt.Sprintf("%s.%s%d@gmail.com", nameData.BaseFirstName, nameData.BaseLastName, rng.Intn(99999)+1),
-		Phone:      fmt.Sprintf("%s%07d", phonePrefixes[rng.Intn(len(phonePrefixes))], rng.Intn(10000000)),
-		AliasID:    uuid.New().String(),
-		AliasValue: generateAlias(rng, nameData.BaseFirstName, nameData.BaseLastName),
+		ID:             uuid.New().String(),
+		DocNumber:      fmt.Sprintf("%d", rng.Intn(34000000)+1000000),
+		FirstName:      nameData.FirstName,
+		MiddleName:     nameData.MiddleName,
+		LastName:       nameData.LastName,
+		SecondLastName: nameData.SecondLastName,
+		Email:          fmt.Sprintf("%s.%s%d@gmail.com", nameData.BaseFirstName, nameData.BaseLastName, rng.Intn(99999)+1),
+		Phone:          fmt.Sprintf("%s%07d", phonePrefixes[rng.Intn(len(phonePrefixes))], rng.Intn(10000000)),
+		AliasID:        uuid.New().String(),
+		AliasValue:     generateAlias(rng, nameData.BaseFirstName, nameData.BaseLastName),
 	}
 
 	maxPossibleAccounts := len(config.Banks)

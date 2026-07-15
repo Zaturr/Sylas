@@ -79,7 +79,7 @@ const bottomTabs: Array<{
 }> = [
   { id: 'home', label: 'Inicio', icon: '⌂', enabled: true },
   { id: 'payments', label: 'Pagos', icon: '⇄', enabled: true },
-  { id: 'alias', label: 'Alias', icon: '@', enabled: true },
+  { id: 'alias', label: 'MiAlias', icon: '@', enabled: true },
   { id: 'menu', label: 'Menú', icon: '☰', enabled: false },
 ];
 
@@ -106,10 +106,10 @@ function resolveScreenTitle(
     return 'Crear cuenta';
   }
   if (auth.step === 'alias-splash') {
-    return 'Alias';
+    return 'MiAlias';
   }
   if (auth.step === 'accounts-and-aliases') {
-    return 'Cuentas y alias';
+    return 'Cuentas y MiAlias';
   }
   if (
     auth.step === 'alias-management' ||
@@ -119,7 +119,7 @@ function resolveScreenTitle(
     auth.step === 'alias-status-success' ||
     auth.step === 'alias-error'
   ) {
-    return 'Alias';
+    return 'MiAlias';
   }
   if (flowActive) {
     switch (context.step) {

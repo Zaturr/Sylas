@@ -36,7 +36,7 @@ export function CreateAliasStep({
   return (
     <div className="sim-flow">
       <div className="sim-card">
-        <p className="sim-card__title">Registrar alias</p>
+        <p className="sim-card__title">Registrar MiAlias</p>
         <p className="sim-card__subtitle">
           {session.isLegalEntity ? 'Titular jurídico' : 'Cédula'} {documentLabel}
         </p>
@@ -49,7 +49,7 @@ export function CreateAliasStep({
 
         <div className="sim-form" style={{ marginTop: 14 }}>
           <label className="sim-field">
-            <span>Alias</span>
+            <span>MiAlias</span>
             <input
               type="text"
               inputMode="text"
@@ -73,7 +73,7 @@ export function CreateAliasStep({
           disabled={isSubmitting}
           onClick={onSubmit}
         >
-          {isSubmitting ? 'Registrando alias...' : 'Continuar'}
+          {isSubmitting ? 'Registrando MiAlias...' : 'Continuar'}
         </button>
       </div>
     </div>

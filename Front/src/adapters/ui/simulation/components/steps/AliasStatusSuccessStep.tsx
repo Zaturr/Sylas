@@ -25,11 +25,11 @@ export function AliasStatusSuccessStep({
         <p className="sim-flow__subtitle">
           {isBlocked ? (
             <>
-              El alias <strong>{aliasValue}</strong> fue bloqueado y quedó en estado BLKD.
+              El MiAlias <strong>{aliasValue}</strong> fue bloqueado y quedó en estado BLKD.
             </>
           ) : (
             <>
-              El estado del alias <strong>{aliasValue}</strong> fue actualizado.
+              El estado del MiAlias <strong>{aliasValue}</strong> fue actualizado.
             </>
           )}
         </p>

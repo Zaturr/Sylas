@@ -81,7 +81,7 @@ export function CreateUserPage({ onNavigate }: CreateUserPageProps) {
         },
       });
 
-      setSuccess(`Usuario creado correctamente con alias "${aliasValidation.value}".`);
+      setSuccess(`Usuario creado correctamente con MiAlias "${aliasValidation.value}".`);
       setForm(initialForm);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear el usuario');

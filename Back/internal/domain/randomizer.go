@@ -12,15 +12,17 @@ type BankSeed struct {
 }
 
 type GeneratedCustomer struct {
-	ID         string
-	DocNumber  string
-	FirstName  string
-	LastName   string
-	Email      string
-	Phone      string
-	AliasID    string
-	AliasValue string
-	Accounts   []GeneratedAccount
+	ID             string
+	DocNumber      string
+	FirstName      string
+	MiddleName     string
+	LastName       string
+	SecondLastName string
+	Email          string
+	Phone          string
+	AliasID        string
+	AliasValue     string
+	Accounts       []GeneratedAccount
 }
 
 type GeneratedAccount struct {

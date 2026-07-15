@@ -11,6 +11,7 @@ export type {
   CreateAccountInput,
   CreateAccountResult,
   CheckAliasResult,
+  CheckAliasSuccessPayload,
   LoginByDocumentResult,
   RegisterAliasResult,
 } from './authSimulation.port';

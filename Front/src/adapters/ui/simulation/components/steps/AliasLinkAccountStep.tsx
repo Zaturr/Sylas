@@ -28,20 +28,20 @@ export function AliasLinkAccountStep({
       ? 'Cambiar cuenta vinculada'
       : mode === 'before-create-alias'
         ? isLegalEntity
-          ? 'Seleccionar cuenta para el alias'
-          : 'Cuenta para tu alias'
+          ? 'Seleccionar cuenta para el MiAlias'
+          : 'Cuenta para tu MiAlias'
         : 'Vincular cuenta';
 
   const subtitle =
     mode === 'change'
-      ? 'Selecciona la cuenta que quedará asociada a tu alias.'
+      ? 'Selecciona la cuenta que quedará asociada a tu MiAlias.'
       : mode === 'before-create-alias'
         ? isLegalEntity
-          ? 'Elige una cuenta disponible sin alias. Las cuentas ya asociadas aparecen bloqueadas.'
-          : 'Elige la cuenta del banco que quedará asociada al alias que vas a crear.'
+          ? 'Elige una cuenta disponible sin MiAlias. Las cuentas ya asociadas aparecen bloqueadas.'
+          : 'Elige la cuenta del banco que quedará asociada al MiAlias que vas a crear.'
         : mode === 'select-for-alias'
-          ? 'Selecciona la cuenta que usarás al registrar tu alias.'
-          : 'Tu alias necesita una cuenta del banco para completar la afiliación.';
+          ? 'Selecciona la cuenta que usarás al registrar tu MiAlias.'
+          : 'Tu MiAlias necesita una cuenta del banco para completar la afiliación.';
 
   const selectedAccount = session.accounts.find((account) => account.id === selectedAccountId);
   const isSelectedAccountDolares = selectedAccount?.account_type?.toLowerCase() === 'dolares';
@@ -79,7 +79,7 @@ export function AliasLinkAccountStep({
           }
           onClick={onConfirm}
         >
-          {isSubmitting ? 'Vinculando...' : mode === 'before-create-alias' ? 'Continuar al alias' : 'Continuar'}
+          {isSubmitting ? 'Vinculando...' : mode === 'before-create-alias' ? 'Continuar al MiAlias' : 'Continuar'}
         </button>
       </div>
     </div>

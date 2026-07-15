@@ -59,10 +59,10 @@ export function EnterAliasStep({
       <div className="sim-flow__intro">
         <h2 className="sim-flow__title">Nuevo pago</h2>
         <p className="sim-flow__subtitle">
-          Ingresa un alias registrado en el sistema y el monto a enviar.
+          Ingresa un MiAlias registrado en el sistema y el monto a enviar.
         </p>
         <p className="sim-flow__notice">
-          Si el alias destino está bloqueado (BLKD), no se puede realizar el pago.
+          Si el MiAlias destino está bloqueado (BLKD), no se puede realizar el pago.
         </p>
       </div>
 
@@ -85,7 +85,7 @@ export function EnterAliasStep({
         </label>
 
         <label className="sim-field">
-          <span>Alias destino</span>
+          <span>MiAlias destino</span>
           <input
             type="text"
             inputMode="text"
@@ -119,7 +119,7 @@ export function EnterAliasStep({
           disabled={isSubmitting}
           onClick={onSubmit}
         >
-          {isSubmitting ? 'Validando alias...' : 'Continuar'}
+          {isSubmitting ? 'Validando MiAlias...' : 'Continuar'}
         </button>
         <button
           type="button"

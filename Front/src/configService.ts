@@ -14,6 +14,8 @@ export interface SimulationConfig {
 }
 
 export interface AppConfig {
+  /** Puerto del backend. Lo usa Go al arrancar; el front no lo lee para escuchar. */
+  PORT?: string;
   VITE_API_BASE_URL?: string;
   SIMULATION?: SimulationConfig;
 }

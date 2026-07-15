@@ -48,7 +48,7 @@ export function CreateAccountStep({
         <h2 className="sim-flow__title">Crear cuenta</h2>
         <p className="sim-flow__subtitle">
           Registra tus datos y una cuenta en el banco {appConfig.simulation.bankCode}.
-          El alias se configurará en un paso posterior.
+          El MiAlias se configurará en un paso posterior.
         </p>
       </div>
 

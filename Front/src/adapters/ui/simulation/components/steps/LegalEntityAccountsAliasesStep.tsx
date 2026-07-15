@@ -30,12 +30,12 @@ export function LegalEntityAccountsAliasesStep({
   return (
     <div className="sim-flow">
       <div className="sim-card">
-        <p className="sim-card__title">Cuentas y alias</p>
+        <p className="sim-card__title">Cuentas y MiAlias</p>
         <p className="sim-card__subtitle">
-          Titular jurídico · {progress.configured}/{progress.eligible} cuentas con alias
+          Titular jurídico · {progress.configured}/{progress.eligible} cuentas con MiAlias
         </p>
         <p className="sim-field__hint">
-          Cada cuenta elegible puede tener un alias. Las cuentas en divisa no admiten alias.
+          Cada cuenta elegible puede tener un MiAlias. Las cuentas en divisa no admiten MiAlias.
         </p>
       </div>
 
@@ -47,12 +47,12 @@ export function LegalEntityAccountsAliasesStep({
             disabled={isSubmitting}
             onClick={onAddAlias}
           >
-            Agregar alias nuevo
+            Agregar MiAlias nuevo
           </button>
         </div>
       )}
 
-      <div className="sim-account-list" aria-label="Cuentas y alias registrados">
+      <div className="sim-account-list" aria-label="Cuentas y MiAlias registrados">
         {rows.map(({ account, aliasEntry }) => {
           const isDollar = account.account_type?.toLowerCase() === 'dolares';
 
@@ -67,7 +67,7 @@ export function LegalEntityAccountsAliasesStep({
                 <strong>{formatRegistrationAccountType(account.account_type)}</strong>
               </div>
               <div className="sim-card__row">
-                <span>Alias</span>
+                <span>MiAlias</span>
                 {aliasEntry ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                     <strong>{aliasEntry.alias_value}</strong>
@@ -77,13 +77,13 @@ export function LegalEntityAccountsAliasesStep({
 
                   </span>
                 ) : (
-                  <strong>{isDollar ? 'No aplica' : 'Sin alias'}</strong>
+                  <strong>{isDollar ? 'No aplica' : 'Sin MiAlias'}</strong>
                 )}
               </div>
 
               {aliasEntry && (
                 <p className="sim-field__hint" style={{ marginTop: 8 }}>
-                  Esta cuenta ya está asociada al alias {aliasEntry.alias_value}.
+                  Esta cuenta ya está asociada al MiAlias {aliasEntry.alias_value}.
                 </p>
               )}
 
@@ -95,7 +95,7 @@ export function LegalEntityAccountsAliasesStep({
                     disabled={isSubmitting}
                     onClick={() => onManageAlias(aliasEntry)}
                   >
-                    Gestionar alias
+                    Gestionar MiAlias
                   </button>
                 </div>
               )}

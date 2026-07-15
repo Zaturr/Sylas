@@ -2,5 +2,15 @@
 Back/cmd/simulador/test.db
 Back/cmd/simulador/test.db-wal
 Back/cmd/simulador/test.db-shm
+Back/cmd/simulador/data/
 *.db-wal
 *.db-shm
+
+# Front embebido: se regenera al copiar Front/dist → web/
+# Se mantiene index.html placeholder en el repo.
+Back/cmd/simulador/web/**
+!Back/cmd/simulador/web/index.html
+
+# Artefacto del instalador (se regenera con install/build.ps1)
+install/sylas.exe
+install/data/

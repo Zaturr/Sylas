@@ -12,11 +12,11 @@ export function AliasSplashStep({ isLegalEntity = false, onContinue }: AliasSpla
         <div className="sim-splash__icon" aria-hidden="true">
           @
         </div>
-        <h2 className="sim-splash__title">Alias</h2>
+        <h2 className="sim-splash__title">MiAlias</h2>
         <p className="sim-splash__text">
           {isLegalEntity
-            ? 'Administra los alias de tu titular jurídico: una cuenta elegible puede tener un alias propio.'
-            : 'Administra tu alias de pagos, vincula cuentas y modifica el estado de afiliación con el banco.'}
+            ? 'Administra los MiAlias de tu titular jurídico: una cuenta elegible puede tener un MiAlias propio.'
+            : 'Administra tu MiAlias de pagos, vincula cuentas y modifica el estado de afiliación con el banco.'}
         </p>
       </div>
 
