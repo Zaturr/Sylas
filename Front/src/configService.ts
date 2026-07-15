@@ -6,6 +6,11 @@ export interface SimulationConfig {
   accountSuffixLength: number;
   accountType: string;
   maxAccountGenerationAttempts: number;
+  legalEntityAccounts?: {
+    ctsCorrientes: number;
+    ctsAhorro: number;
+    ctsDivisa: number;
+  };
 }
 
 export interface AppConfig {

@@ -12,17 +12,24 @@ export function buildSession(
 ): SimulationSession {
   const alias = response.alias?.trim() || null;
   const linkedAccountId = response.account_id?.trim() || null;
+  const registeredAliases = response.aliases ?? [];
+  const isLegalEntity = response.is_legal_entity ?? false;
+  const hasConfiguredAlias = isLegalEntity
+    ? registeredAliases.some((entry) => hasConfiguredAliasValue(entry.alias_value))
+    : hasConfiguredAliasValue(alias);
 
   return applyBankAccountFilter(
     {
       customer: response.customer,
       accounts: response.accounts ?? [],
       alias,
-      hasConfiguredAlias: hasConfiguredAliasValue(alias),
+      hasConfiguredAlias,
       mappedDocument,
       primaryAccountId: linkedAccountId,
       aliasCoreStatus: response.alias_status?.trim() || 'UNRG',
       bankLinks: response.bank_links ?? [],
+      isLegalEntity,
+      registeredAliases,
     },
     appConfig.simulation.bankCode,
   );

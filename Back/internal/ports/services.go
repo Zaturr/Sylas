@@ -7,9 +7,10 @@ import (
 
 type AliasService interface {
 	RegisterCustomerWithAccount(ctx context.Context, customer *domain.Customer, account *domain.Account) error
-	CreateAlias(ctx context.Context, customerID string, aliasValue string) (*domain.Alias, error)
+	CreateAlias(ctx context.Context, customerID string, aliasValue string, accountID string) (*domain.Alias, error)
 	AddAccountToCustomer(ctx context.Context, documentNumber string, email string, aliasValue string, account *domain.Account) error
 	ResolveAlias(ctx context.Context, documentType, documentNumber string) (*domain.Customer, *domain.Alias, []domain.Account, error)
+	ResolveAliasInquiry(ctx context.Context, documentType, documentNumber string) (*domain.AliasInquiryResult, error)
 	ResolveAliasByValue(ctx context.Context, aliasValue string) (*domain.Customer, *domain.Alias, []domain.Account, error)
 	RemoveAlias(ctx context.Context, aliasID string) error
 	RemoveAliasByValue(ctx context.Context, aliasValue string) error

@@ -7,6 +7,7 @@ import '../simulationSteps.css';
 type CreateAliasStepProps = {
   session: SimulationSession;
   mappedDocument: ParsedDocument;
+  selectedAccountId?: string | null;
   aliasInput: string;
   errorMessage: string;
   isSubmitting: boolean;
@@ -17,6 +18,7 @@ type CreateAliasStepProps = {
 export function CreateAliasStep({
   session,
   mappedDocument,
+  selectedAccountId,
   aliasInput,
   errorMessage,
   isSubmitting,
@@ -27,17 +29,21 @@ export function CreateAliasStep({
     mappedDocument.documentType,
     mappedDocument.documentNumber,
   );
-  const primaryAccount = getPrimaryAccount(session);
+  const linkedAccount =
+    session.accounts.find((account) => account.id === selectedAccountId) ??
+    getPrimaryAccount(session);
 
   return (
     <div className="sim-flow">
       <div className="sim-card">
         <p className="sim-card__title">Registrar alias</p>
-        <p className="sim-card__subtitle">Cédula {documentLabel}</p>
-        {primaryAccount && (
+        <p className="sim-card__subtitle">
+          {session.isLegalEntity ? 'Titular jurídico' : 'Cédula'} {documentLabel}
+        </p>
+        {linkedAccount && (
           <div className="sim-card__row">
             <span>Cuenta vinculada</span>
-            <strong>{getAccountDisplayLabel(primaryAccount)}</strong>
+            <strong>{getAccountDisplayLabel(linkedAccount)}</strong>
           </div>
         )}
 

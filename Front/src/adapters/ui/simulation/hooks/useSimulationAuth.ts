@@ -4,6 +4,7 @@ import { simulationAuthReducer } from '../../../../domain/simulation/auth.reduce
 import {
   createInitialSimulationAuthState,
   type AliasCheckResult,
+  type AliasResolveEntry,
   type SimulationAuthState,
 } from '../../../../domain/simulation/auth.types';
 import {
@@ -12,10 +13,17 @@ import {
   withPrimaryAccount,
   canBlockAliasFromSession,
 } from '../../../../domain/simulation/aliasFlow';
+import {
+  getAliasEntryByAccountId,
+  getDefaultAccountIdForNewAlias,
+  hasAvailableAccountsForNewAlias,
+} from '../../../../domain/simulation/legalEntityAliasMatrix';
+import { buildAliasCheckFromAliasEntry } from '../../../api/simulation/alias/aliasCheck.mapper';
 import { isUserModifiableAliasStatus } from '../../../../domain/simulation/aliasStatus';
 import { formatDocumentInput } from '../../../../domain/simulation';
 import { validateAliasValue } from '../../../../domain/simulation/aliasValidation';
 import { buildSimfTraceSessionKey } from '../../../../domain/peticiones';
+import type { SimfRequestTracePort } from '../../../../application/peticiones';
 import {
   useAuthSimulationService,
   useSimfRequestTracePort,
@@ -43,6 +51,22 @@ function mapServiceCheckToState(
     agentStatus: check.agentStatus,
     bankCode: check.bankCode,
   };
+}
+
+function clearSessionTrace(
+  tracePort: SimfRequestTracePort,
+  session: SimulationAuthState['session'],
+) {
+  if (!session) {
+    return;
+  }
+
+  tracePort.clearSession(
+    buildSimfTraceSessionKey(
+      session.mappedDocument.documentType,
+      session.mappedDocument.documentNumber,
+    ),
+  );
 }
 
 export function useSimulationAuth() {
@@ -89,7 +113,8 @@ export function useSimulationAuth() {
     }
 
     dispatch({ type: 'LOGIN_SUCCESS', session: result.session });
-  }, [authSimulationService, state.documentInput]);
+    clearSessionTrace(simfRequestTracePort, result.session);
+  }, [authSimulationService, simfRequestTracePort, state.documentInput]);
 
   const openCreateAccount = useCallback(() => {
     dispatch({ type: 'OPEN_CREATE_ACCOUNT' });
@@ -116,8 +141,10 @@ export function useSimulationAuth() {
     }
 
     dispatch({ type: 'CREATE_ACCOUNT_SUCCESS', session: result.session });
+    clearSessionTrace(simfRequestTracePort, result.session);
   }, [
     authSimulationService,
+    simfRequestTracePort,
     state.documentInput,
     state.firstNameInput,
     state.middleNameInput,
@@ -155,18 +182,94 @@ export function useSimulationAuth() {
   }, []);
 
   const continueAliasSplash = useCallback(async () => {
-    if (state.session) {
-      simfRequestTracePort.clearSession(
-        buildSimfTraceSessionKey(
-          state.session.mappedDocument.documentType,
-          state.session.mappedDocument.documentNumber,
-        ),
-      );
+    if (!state.session) {
+      return;
+    }
+
+    clearSessionTrace(simfRequestTracePort, state.session);
+
+    const documentInput = formatDocumentInput(
+      state.session.mappedDocument.documentType,
+      state.session.mappedDocument.documentNumber,
+    );
+
+    if (state.session.isLegalEntity) {
+      dispatch({ type: 'OPEN_ACCOUNTS_AND_ALIASES' });
+
+      const result = await authSimulationService.checkAliasByDocument(documentInput);
+      if (!result.ok) {
+        dispatch({ type: 'ALIAS_CHECK_FAILED', message: result.message });
+        return;
+      }
+
+      dispatch({ type: 'REFRESH_SESSION', session: result.session });
+      return;
     }
 
     dispatch({ type: 'OPEN_ALIAS_MANAGEMENT' });
     await runAliasCheck();
-  }, [runAliasCheck, simfRequestTracePort, state.session]);
+  }, [authSimulationService, runAliasCheck, simfRequestTracePort, state.session]);
+
+  const openAddLegalEntityAlias = useCallback(() => {
+    if (!state.session?.isLegalEntity) {
+      return;
+    }
+
+    if (!hasAvailableAccountsForNewAlias(state.session)) {
+      return;
+    }
+
+    dispatch({
+      type: 'OPEN_ALIAS_LINK_ACCOUNT',
+      mode: 'before-create-alias',
+      preferredAccountId: getDefaultAccountIdForNewAlias(state.session),
+    });
+  }, [state.session]);
+
+  const openManageAliasEntry = useCallback(async (entry: AliasResolveEntry) => {
+    if (!state.session) {
+      return;
+    }
+
+    const refreshed = await authSimulationService.refreshSession(state.session);
+    if (!refreshed.ok) {
+      dispatch({ type: 'ALIAS_CHECK_FAILED', message: refreshed.message });
+      return;
+    }
+
+    const accountId = entry.account_id?.trim();
+    const focusedSession = accountId
+      ? {
+          ...withPrimaryAccount(refreshed.session, accountId),
+          alias: entry.alias_value,
+          aliasCoreStatus: entry.alias_status,
+          bankLinks: entry.bank_links ?? [],
+          hasConfiguredAlias: true,
+        }
+      : refreshed.session;
+
+    const check = buildAliasCheckFromAliasEntry(entry, focusedSession.accounts);
+
+    dispatch({
+      type: 'OPEN_MANAGE_ALIAS',
+      session: focusedSession,
+      check,
+    });
+  }, [authSimulationService, state.session]);
+
+  const backToAccountsAndAliases = useCallback(async () => {
+    if (!state.session) {
+      dispatch({ type: 'BACK_TO_ACCOUNTS_AND_ALIASES' });
+      return;
+    }
+
+    const refreshed = await authSimulationService.refreshSession(state.session);
+    if (refreshed.ok) {
+      dispatch({ type: 'REFRESH_SESSION', session: refreshed.session });
+    }
+
+    dispatch({ type: 'BACK_TO_ACCOUNTS_AND_ALIASES' });
+  }, [authSimulationService, state.session]);
 
   const openCreateAlias = useCallback(() => {
     if (state.session && state.session.accounts.length > 0) {
@@ -187,6 +290,7 @@ export function useSimulationAuth() {
 
   const selectLinkAccount = useCallback((accountId: string) => {
     dispatch({ type: 'SET_SELECTED_ACCOUNT', accountId });
+    dispatch({ type: 'SET_ALIAS_INPUT', value: '' });
   }, []);
 
   const confirmLinkAccount = useCallback(async () => {
@@ -194,9 +298,21 @@ export function useSimulationAuth() {
       return;
     }
 
-    const newSession = withPrimaryAccount(state.session, state.selectedAccountId);
+    if (
+      state.session.isLegalEntity &&
+      getAliasEntryByAccountId(state.session, state.selectedAccountId)
+    ) {
+      dispatch({
+        type: 'CREATE_ALIAS_FAILED',
+        message: 'La cuenta seleccionada ya está asociada a un alias.',
+      });
+      return;
+    }
 
-    if (state.session.hasConfiguredAlias && state.aliasCheck?.alias) {
+    const newSession = withPrimaryAccount(state.session, state.selectedAccountId);
+    const isCreateAliasFlow = state.linkAccountMode === 'before-create-alias';
+
+    if (!isCreateAliasFlow && state.session.hasConfiguredAlias && state.aliasCheck?.alias) {
       dispatch({ type: 'SUBMIT_UPDATE_ALIAS_STATUS' });
 
       const result = await authSimulationService.changeLinkedAccount(
@@ -227,6 +343,7 @@ export function useSimulationAuth() {
     authSimulationService,
     runAliasCheck,
     state.aliasCheck?.alias,
+    state.linkAccountMode,
     state.selectedAccountId,
     state.session,
   ]);
@@ -310,6 +427,7 @@ export function useSimulationAuth() {
     const result = await authSimulationService.registerAlias(
       state.session,
       validation.value,
+      state.selectedAccountId ?? undefined,
     );
 
     if (result.ok === false) {
@@ -318,7 +436,7 @@ export function useSimulationAuth() {
     }
 
     dispatch({ type: 'CREATE_ALIAS_SUCCESS', session: result.session });
-  }, [authSimulationService, state.session, state.aliasInput]);
+  }, [authSimulationService, state.session, state.aliasInput, state.selectedAccountId]);
 
   const requestDeleteAlias = useCallback(async () => {
     if (!state.session?.customer.created_at) {
@@ -360,34 +478,55 @@ export function useSimulationAuth() {
   }, [authSimulationService, state.session]);
 
   const finishAliasFlow = useCallback(async () => {
-    if (state.session) {
-      await authSimulationService.verifyAliasViaSimf(
-        state.session,
-        state.aliasCheck?.bankCode ?? undefined,
-      );
+    if (state.session?.isLegalEntity) {
+      await backToAccountsAndAliases();
+      return;
     }
 
+    clearSessionTrace(simfRequestTracePort, state.session);
     dispatch({ type: 'FINISH_ALIAS_FLOW' });
-  }, [authSimulationService, state.aliasCheck?.bankCode, state.session]);
+  }, [backToAccountsAndAliases, simfRequestTracePort, state.session]);
 
   const backToAliasManagement = useCallback(async () => {
+    if (state.session?.isLegalEntity) {
+      await backToAccountsAndAliases();
+      return;
+    }
+
     dispatch({ type: 'OPEN_ALIAS_MANAGEMENT' });
     await runAliasCheck();
-  }, [runAliasCheck]);
+  }, [backToAccountsAndAliases, runAliasCheck, state.session?.isLegalEntity]);
+
+  const backFromCreateAlias = useCallback(() => {
+    if (
+      state.session?.isLegalEntity &&
+      state.linkAccountMode === 'before-create-alias'
+    ) {
+      dispatch({
+        type: 'OPEN_ALIAS_LINK_ACCOUNT',
+        mode: 'before-create-alias',
+        preferredAccountId: state.selectedAccountId,
+      });
+      return;
+    }
+
+    if (state.session?.isLegalEntity) {
+      void backToAccountsAndAliases();
+    }
+  }, [
+    backToAccountsAndAliases,
+    state.linkAccountMode,
+    state.selectedAccountId,
+    state.session?.isLegalEntity,
+  ]);
 
   const backToHome = useCallback(() => {
+    clearSessionTrace(simfRequestTracePort, state.session);
     dispatch({ type: 'BACK_TO_HOME' });
-  }, []);
+  }, [simfRequestTracePort, state.session]);
 
   const logout = useCallback(() => {
-    if (state.session) {
-      simfRequestTracePort.clearSession(
-        buildSimfTraceSessionKey(
-          state.session.mappedDocument.documentType,
-          state.session.mappedDocument.documentNumber,
-        ),
-      );
-    }
+    clearSessionTrace(simfRequestTracePort, state.session);
 
     dispatch({ type: 'LOGOUT' });
   }, [simfRequestTracePort, state.session]);
@@ -406,6 +545,9 @@ export function useSimulationAuth() {
     openAliasSplash,
     continueAliasSplash,
     openCreateAlias,
+    openAddLegalEntityAlias,
+    openManageAliasEntry,
+    backToAccountsAndAliases,
     openSelectAccountForAlias,
     openChangeAccount,
     selectLinkAccount,
@@ -415,6 +557,7 @@ export function useSimulationAuth() {
     submitUpdateAliasStatus,
     submitCreateAlias,
     requestDeleteAlias,
+    backFromCreateAlias,
     finishAliasFlow,
     backToAliasManagement,
     backToHome,

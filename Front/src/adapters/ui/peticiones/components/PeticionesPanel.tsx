@@ -17,7 +17,7 @@ function getEmptyMessage(
   }
 
   if (!isTracePanelActive) {
-    return 'Entra al gestor de alias o inicia un pago para ver las peticiones de alias.';
+    return 'Entra al gestor de alias (Continuar) o inicia un pago para ver las peticiones SIMF.';
   }
 
   return 'Esperando nuevas peticiones...';

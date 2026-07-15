@@ -1,5 +1,7 @@
 import type { AliasService, CreateFullUserService } from '../../application/aliasService';
 import type { PaginatedAliasResponse } from '../../domain/alias';
+import { generateBankAccountNumber } from '../../domain/simulation/accountNumber';
+import { buildRegistrationAccountsForDocument } from '../../domain/simulation/legalEntityAccounts';
 import {
   buildGmailFromCustomer,
   buildVenezuelanPhoneFromDocument,
@@ -118,8 +120,14 @@ export const aliasAdapter: AliasService = {
   },
 
   createFullUser: async (data: CreateFullUserService): Promise<void> => {
+    const documentType = data.customer.document_type.trim().toUpperCase();
+    const primaryAccountNumber = generateBankAccountNumber(
+      appConfig.simulation.bankCode,
+      appConfig.simulation.accountSuffixLength,
+    );
+
     const payload = {
-      document_type: data.customer.document_type,
+      document_type: documentType,
       document_number: data.customer.document_number.trim(),
       first_name: data.customer.first_name.trim(),
       middle_name: data.customer.middle_name?.trim() || '',
@@ -134,7 +142,7 @@ export const aliasAdapter: AliasService = {
       ),
       phone: buildCustomerPhone(data.customer.document_number),
       alias_value: data.alias.alias_value.trim(),
-      accounts: [],
+      accounts: buildRegistrationAccountsForDocument(documentType, primaryAccountNumber),
     };
 
     const response = await fetch(`${appConfig.apiBaseUrl}/users`, {

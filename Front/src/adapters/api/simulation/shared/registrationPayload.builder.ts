@@ -1,5 +1,6 @@
 import { generateBankAccountNumber } from '../../../../domain/simulation/accountNumber';
 import { getPrimaryAccount } from '../../../../domain/simulation/aliasFlow';
+import { buildRegistrationAccountsForDocument } from '../../../../domain/simulation/legalEntityAccounts';
 import type { SimulationSession } from '../../../../domain/simulation/auth.types';
 import { buildGmailFromCustomer, buildVenezuelanPhoneFromDocument } from '../../../../domain/validations';
 import { appConfig } from '../../app.config';
@@ -25,23 +26,7 @@ export function buildRegistrationPayload(
     second_last_name: secondLastName.trim(),
     email: buildGmailFromCustomer(firstName, middleName, lastName, secondLastName, documentNumber),
     phone: buildVenezuelanPhoneFromDocument(documentNumber),
-    accounts: [
-      {
-        bank_id: appConfig.simulation.bankCode,
-        account_number: accountNumber,
-        account_type: 'corriente',
-      },
-      {
-        bank_id: appConfig.simulation.bankCode,
-        account_number: generateBankAccountNumber(appConfig.simulation.bankCode, appConfig.simulation.accountSuffixLength),
-        account_type: 'ahorro',
-      },
-      {
-        bank_id: appConfig.simulation.bankCode,
-        account_number: generateBankAccountNumber(appConfig.simulation.bankCode, appConfig.simulation.accountSuffixLength),
-        account_type: 'dolares',
-      },
-    ],
+    accounts: buildRegistrationAccountsForDocument(normalizedType, accountNumber),
   };
 
   const trimmedAlias = aliasValue?.trim();

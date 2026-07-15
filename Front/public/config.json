@@ -7,6 +7,11 @@
     "channelPspIbp": "0172",
     "accountSuffixLength": 16,
     "accountType": "Cta. Corriente",
-    "maxAccountGenerationAttempts": 3
+    "maxAccountGenerationAttempts": 3,
+    "legalEntityAccounts": {
+      "ctsCorrientes": 5,
+      "ctsAhorro": 2,
+      "ctsDivisa": 1
+    }
   }
 }

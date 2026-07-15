@@ -1,5 +1,6 @@
 import type { SimulationSession } from './auth.types';
 import { getPrimaryAccount } from './aliasFlow';
+import { countLegalEntityAliasProgress } from './legalEntityAliasMatrix';
 import {
   SIMF_ALIAS_STATUS,
   coreAccountStatusToSimf,
@@ -34,6 +35,16 @@ export function resolveSessionAliasLinkStatus(
 }
 
 export function getHomeAliasBadge(session: SimulationSession): HomeAliasBadge | null {
+  if (session.isLegalEntity) {
+    const progress = countLegalEntityAliasProgress(session);
+    if (progress.configured < progress.eligible) {
+      return {
+        text: `Alias pendientes: ${progress.configured}/${progress.eligible} cuentas configuradas.`,
+        variant: 'info',
+      };
+    }
+  }
+
   if (!session.hasConfiguredAlias) {
     return {
       text: 'Alias pendiente de configuración.',

@@ -8,17 +8,17 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// AliasResolveCoreData agrupa lo que devuelve la BD del core: titular, alias, cuentas y vínculos por banco.
+// AliasResolveCoreData agrupa lo que devuelve la BD del core para alias resolve SIMF.
 type AliasResolveCoreData struct {
-	Customer  *domain.Customer
-	Alias     *domain.Alias
-	Accounts  []domain.Account
-	BankLinks []domain.AliasBankLink
+	Customer           *domain.Customer
+	Aliases            []domain.Alias
+	Accounts           []domain.Account
+	BankLinksByAliasID map[string][]domain.AliasBankLink
 }
 
-// HasRegisteredAlias indica si el titular tiene un alias en el sistema.
+// HasRegisteredAlias indica si el titular tiene al menos un alias registrado.
 func (data AliasResolveCoreData) HasRegisteredAlias() bool {
-	return data.Alias != nil
+	return len(data.Aliases) > 0
 }
 
 // QueryToCustomerDocument convierte SchmeNm + Id del path en document_type y
@@ -197,23 +197,27 @@ func BuildAgentStatusList(
 	return agentStatusList
 }
 
-// BuildAliasEntryList arma AliasList cuando el titular tiene alias registrado.
+// BuildAliasEntryList arma AliasList (uno por alias del titular; multi-alias J/G/C).
 func BuildAliasEntryList(
 	query simfdomain.AliasResolveQuery,
-	alias *domain.Alias,
+	aliases []domain.Alias,
 	accounts []domain.Account,
-	bankLinks []domain.AliasBankLink,
+	bankLinksByAliasID map[string][]domain.AliasBankLink,
 ) []simfdomain.AliasResolveEntry {
-	if alias == nil {
+	if len(aliases) == 0 {
 		return nil
 	}
 
-	return []simfdomain.AliasResolveEntry{
-		{
+	entries := make([]simfdomain.AliasResolveEntry, 0, len(aliases))
+	for _, alias := range aliases {
+		aliasCopy := alias
+		links := bankLinksByAliasID[alias.ID]
+		entries = append(entries, simfdomain.AliasResolveEntry{
 			Alias:   alias.AliasValue,
-			AgtList: BuildAgentStatusList(query, alias, accounts, bankLinks),
-		},
+			AgtList: BuildAgentStatusList(query, &aliasCopy, accounts, links),
+		})
 	}
+	return entries
 }
 
 // arma el cuerpo del mensaje (JSON: InqRpt) a partir del core y el query.
@@ -230,7 +234,7 @@ func BuildAliasResolveReport(
 	if coreData.Customer != nil && resultCode == simfdomain.ResultAccept {
 		titular := TitularFromCoreCustomer(coreData.Customer, query.SchemeName)
 		report.Titular = &titular
-		report.AliasList = BuildAliasEntryList(query, coreData.Alias, coreData.Accounts, coreData.BankLinks)
+		report.AliasList = BuildAliasEntryList(query, coreData.Aliases, coreData.Accounts, coreData.BankLinksByAliasID)
 	} else {
 		titular := TitularFromAliasResolveQuery(query)
 		report.Titular = &titular

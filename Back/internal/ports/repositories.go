@@ -27,6 +27,8 @@ type AliasRepository interface {
 	GetAliasBankLinksByAliasValue(ctx context.Context, aliasValue string) ([]domain.AliasBankLink, error)
 	GetAliasByValue(ctx context.Context, value string) (*domain.Alias, error)
 	GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)
+	ListAliasesByCustomerID(ctx context.Context, customerID string) ([]domain.Alias, error)
+	GetAliasByAccountID(ctx context.Context, accountID string) (*domain.Alias, error)
 	GetActiveAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)
 	GetAliasByID(ctx context.Context, id string) (*domain.Alias, error)
 	DeleteAlias(ctx context.Context, id string) error

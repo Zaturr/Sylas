@@ -1,6 +1,10 @@
 import { appConfig } from '../../../../../adapters/api/app.config';
+import {
+  getLegalEntityAccountCounts,
+  isLegalEntityDocumentType,
+} from '../../../../../domain/simulation';
+import { parseDocumentInput } from '../../../../../domain/simulation/documentParser';
 import '../simulationSteps.css';
-
 type CreateAccountStepProps = {
   documentInput: string;
   firstNameInput: string;
@@ -34,8 +38,12 @@ export function CreateAccountStep({
   onSubmit,
   onBack,
 }: CreateAccountStepProps) {
-  return (
-    <div className="sim-flow">
+  const parsedDocument = parseDocumentInput(documentInput.trim());
+  const isLegalEntity =
+    parsedDocument !== null && isLegalEntityDocumentType(parsedDocument.documentType);
+  const legalEntityCounts = isLegalEntity ? getLegalEntityAccountCounts() : null;
+
+  return (    <div className="sim-flow">
       <div className="sim-flow__intro">
         <h2 className="sim-flow__title">Crear cuenta</h2>
         <p className="sim-flow__subtitle">
@@ -46,7 +54,7 @@ export function CreateAccountStep({
 
       <div className="sim-form">
         <label className="sim-field">
-          <span>Cédula</span>
+          <span>Documento</span>
           <input
             type="text"
             inputMode="text"
@@ -111,10 +119,27 @@ export function CreateAccountStep({
           <span>Banco</span>
           <strong>{appConfig.simulation.bankCode}</strong>
         </div>
-        <div className="sim-summary-card__row">
-          <span>Tipo de cuenta</span>
-          <strong>{appConfig.simulation.accountType}</strong>
-        </div>
+        {isLegalEntity && legalEntityCounts ? (
+          <>
+            <div className="sim-summary-card__row">
+              <span>Cuentas corrientes</span>
+              <strong>{legalEntityCounts.ctsCorrientes}</strong>
+            </div>
+            <div className="sim-summary-card__row">
+              <span>Cuentas ahorro</span>
+              <strong>{legalEntityCounts.ctsAhorro}</strong>
+            </div>
+            <div className="sim-summary-card__row">
+              <span>Cuentas divisa</span>
+              <strong>{legalEntityCounts.ctsDivisa}</strong>
+            </div>
+          </>
+        ) : (
+          <div className="sim-summary-card__row">
+            <span>Tipo de cuenta</span>
+            <strong>{appConfig.simulation.accountType}</strong>
+          </div>
+        )}
       </div>
 
       {errorMessage && <p className="sim-flow__error">{errorMessage}</p>}

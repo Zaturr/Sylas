@@ -11,4 +11,8 @@ var (
 	ErrSimfAliasNotFound        = errors.New("simf_alias_not_found")
 	ErrSimfAgentNotLinked       = errors.New("simf_agent_not_linked")
 	ErrSimfAliasBlockRequiresInactiveAccounts = errors.New("simf_alias_block_requires_inactive_accounts")
+	ErrSimfAccountAlreadyHasAlias             = errors.New("simf_account_already_has_alias")
+	ErrSimfAccountNotEligible                 = errors.New("simf_account_not_eligible")
+	ErrSimfAccountNotFound                    = errors.New("simf_account_not_found")
+	ErrSimfAccountRequired                    = errors.New("simf_account_required")
 )

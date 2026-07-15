@@ -94,6 +94,7 @@ export interface AuthSimulationService {
   registerAlias(
     session: SimulationSession,
     aliasValue: string,
+    accountId?: string,
     signal?: AbortSignal,
   ): Promise<RegisterAliasResult>;
 
@@ -119,4 +120,9 @@ export interface AuthSimulationService {
     bankCode?: string,
     signal?: AbortSignal,
   ): Promise<void>;
+
+  refreshSession(
+    session: SimulationSession,
+    signal?: AbortSignal,
+  ): Promise<{ ok: true; session: SimulationSession } | { ok: false; message: string }>;
 }

@@ -44,7 +44,7 @@ func (s *AppService) RegisterSimfUser(
 	}
 
 	if existingCustomer != nil {
-		if aliasValue != "" {
+		if aliasValue != "" && !domain.IsLegalEntityDocumentType(existingCustomer.DocumentType) {
 			existingActiveAlias, err := s.repo.GetActiveAliasByCustomerID(ctx, existingCustomer.ID)
 			if err != nil {
 				return err
@@ -67,17 +67,14 @@ func (s *AppService) ensureSimfAccounts(ctx context.Context, customerID string, 
 
 	linkedAccounts := make(map[string]struct{}, len(existingAccounts))
 	for _, account := range existingAccounts {
-		// En lugar de usar BankID, usamos BankID + AccountType para saber si esa cuenta específica ya existe
-		key := account.BankID + "-" + strings.ToLower(account.AccountType)
-		linkedAccounts[key] = struct{}{}
+		linkedAccounts[account.AccountNumber] = struct{}{}
 	}
 
 	for i := range accounts {
 		account := accounts[i]
 		account.CustomerID = customerID
 
-		key := account.BankID + "-" + strings.ToLower(account.AccountType)
-		if _, exists := linkedAccounts[key]; exists {
+		if _, exists := linkedAccounts[account.AccountNumber]; exists {
 			continue
 		}
 
@@ -91,7 +88,7 @@ func (s *AppService) ensureSimfAccounts(ctx context.Context, customerID string, 
 			}
 			return err
 		}
-		linkedAccounts[key] = struct{}{}
+		linkedAccounts[account.AccountNumber] = struct{}{}
 	}
 
 	return nil

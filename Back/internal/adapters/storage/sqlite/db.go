@@ -198,6 +198,10 @@ func migrateSchema(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
+	if err := migrateAliasOnePerAccount(ctx, db); err != nil {
+		return err
+	}
+
 	// Ya no necesitamos el index único, así que lo eliminamos si existe para evitar problemas de compatibilidad
 	_, _ = db.ExecContext(ctx, `DROP INDEX IF EXISTS idx_alias_one_active_per_customer`)
 
@@ -461,6 +465,14 @@ func migrateAliasBankLinks(ctx context.Context, db *sql.DB) error {
 		JOIN accounts acc ON acc.id = a.account_id
 		WHERE trim(a.account_id) != ''
 	`)
+	return err
+}
+
+func migrateAliasOnePerAccount(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, `
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_alias_one_per_account
+		ON alias(account_id)
+		WHERE trim(account_id) != ''`)
 	return err
 }
 

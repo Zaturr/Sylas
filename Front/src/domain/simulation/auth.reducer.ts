@@ -3,6 +3,7 @@ import { isUserModifiableAliasStatus } from './aliasStatus';
 import type { UserModifiableAliasStatus } from './aliasStatus';
 import { createInitialSimulationAuthState } from './auth.types';
 import { getDefaultLinkedAccountId } from './aliasFlow';
+import { getDefaultAccountIdForNewAlias } from './legalEntityAliasMatrix';
 
 export type SimulationAuthAction =
   | { type: 'SET_DOCUMENT'; value: string }
@@ -20,8 +21,12 @@ export type SimulationAuthAction =
   | { type: 'CREATE_ACCOUNT_SUCCESS'; session: SimulationSession }
   | { type: 'CREATE_ACCOUNT_FAILED'; message: string }
   | { type: 'OPEN_ALIAS_SPLASH' }
+  | { type: 'OPEN_ACCOUNTS_AND_ALIASES' }
+  | { type: 'REFRESH_SESSION'; session: SimulationSession }
+  | { type: 'OPEN_CREATE_ALIAS_FOR_ACCOUNT'; session: SimulationSession; accountId: string }
+  | { type: 'OPEN_MANAGE_ALIAS'; session: SimulationSession; check: NonNullable<SimulationAuthState['aliasCheck']> }
   | { type: 'OPEN_ALIAS_MANAGEMENT' }
-  | { type: 'OPEN_ALIAS_LINK_ACCOUNT'; mode: AliasLinkAccountMode }
+  | { type: 'OPEN_ALIAS_LINK_ACCOUNT'; mode: AliasLinkAccountMode; preferredAccountId?: string | null }
   | { type: 'SET_SELECTED_ACCOUNT'; accountId: string }
   | { type: 'SELECT_LINK_ACCOUNT'; session: SimulationSession; accountId: string }
   | { type: 'ALIAS_CHECK_SUCCESS'; check: NonNullable<SimulationAuthState['aliasCheck']>; session: SimulationSession }
@@ -38,6 +43,7 @@ export type SimulationAuthAction =
   | { type: 'OPEN_ALIAS_ERROR'; message: string }
   | { type: 'FINISH_ALIAS_FLOW' }
   | { type: 'BACK_TO_HOME' }
+  | { type: 'BACK_TO_ACCOUNTS_AND_ALIASES' }
   | { type: 'LOGOUT' };
 
 export function simulationAuthReducer(
@@ -156,6 +162,44 @@ export function simulationAuthReducer(
         step: 'alias-splash',
         errorMessage: '',
       };
+    case 'OPEN_ACCOUNTS_AND_ALIASES':
+      return {
+        ...state,
+        step: 'accounts-and-aliases',
+        errorMessage: '',
+        aliasCheck: null,
+        isSubmitting: false,
+      };
+    case 'REFRESH_SESSION':
+      return {
+        ...state,
+        session: action.session,
+      };
+    case 'OPEN_CREATE_ALIAS_FOR_ACCOUNT':
+      return {
+        ...state,
+        step: 'create-alias',
+        session: action.session,
+        selectedAccountId: action.accountId,
+        aliasInput: '',
+        errorMessage: '',
+      };
+    case 'OPEN_MANAGE_ALIAS':
+      return {
+        ...state,
+        step: 'alias-management',
+        session: action.session,
+        aliasCheck: action.check,
+        selectedAccountId: action.session.primaryAccountId,
+        aliasStatusInput:
+          action.check.status === 'found' &&
+          action.check.agentStatus &&
+          isUserModifiableAliasStatus(action.check.agentStatus)
+            ? action.check.agentStatus
+            : '',
+        errorMessage: '',
+        isSubmitting: false,
+      };
     case 'OPEN_ALIAS_MANAGEMENT':
       return {
         ...state,
@@ -164,16 +208,25 @@ export function simulationAuthReducer(
         aliasCheck: null,
         isSubmitting: true,
       };
-    case 'OPEN_ALIAS_LINK_ACCOUNT':
+    case 'OPEN_ALIAS_LINK_ACCOUNT': {
+      const preferredAccountId = action.preferredAccountId?.trim() || null;
+      const defaultForNewAlias =
+        state.session?.isLegalEntity && action.mode === 'before-create-alias'
+          ? getDefaultAccountIdForNewAlias(state.session)
+          : null;
+
       return {
         ...state,
         step: 'alias-link-account',
         linkAccountMode: action.mode,
         errorMessage: '',
         selectedAccountId:
+          preferredAccountId ??
           state.selectedAccountId ??
+          defaultForNewAlias ??
           (state.session ? getDefaultLinkedAccountId(state.session) : null),
       };
+    }
     case 'SET_SELECTED_ACCOUNT':
       return {
         ...state,
@@ -264,7 +317,7 @@ export function simulationAuthReducer(
     case 'CREATE_ALIAS_SUCCESS':
       return {
         ...state,
-        step: 'alias-create-success',
+        step: state.session?.isLegalEntity ? 'accounts-and-aliases' : 'alias-create-success',
         session: action.session,
         isSubmitting: false,
         errorMessage: '',
@@ -299,6 +352,18 @@ export function simulationAuthReducer(
         linkAccountMode: 'initial',
         aliasErrorMessage: '',
         lastCreatedAlias: null,
+      };
+    case 'BACK_TO_ACCOUNTS_AND_ALIASES':
+      return {
+        ...state,
+        step: 'accounts-and-aliases',
+        errorMessage: '',
+        aliasCheck: null,
+        aliasInput: '',
+        aliasStatusInput: '',
+        selectedAccountId: null,
+        linkAccountMode: 'initial',
+        isSubmitting: false,
       };
     case 'LOGOUT':
       return createInitialSimulationAuthState();

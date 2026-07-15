@@ -9,6 +9,7 @@ export {
   PAYMENT_SIMULATION_INITIAL_STEP,
   createInitialPaymentSimulationState,
   isPaymentFlowActive,
+  isSimulatorHomeScreen,
 } from './types';
 
 export type { PaymentSimulationState as PaymentSimulationContext } from './types';
@@ -39,6 +40,23 @@ export {
 } from './aliasValidation';
 
 export {
+  isLegalEntityDocumentType,
+  buildRegistrationAccountsForDocument,
+  getLegalEntityAccountCounts,
+  type LegalEntityAccountCounts,
+} from './legalEntityAccounts';
+
+export {
+  buildAccountAliasMatrix,
+  countLegalEntityAliasProgress,
+  formatRegistrationAccountType,
+  getDefaultAccountIdForNewAlias,
+  hasAvailableAccountsForNewAlias,
+  getAliasEntryByAccountId,
+  type AccountAliasRow,
+} from './legalEntityAliasMatrix';
+
+export {
   paymentSimulationReducer,
   type PaymentSimulationAction,
 } from './paymentFlow.reducer';
@@ -54,6 +72,7 @@ export {
   createInitialSimulationAuthState,
   isPendingAlias,
   isAliasManagerAuthStep,
+  isSimfTraceVisibleStep,
 } from './auth.types';
 
 export {

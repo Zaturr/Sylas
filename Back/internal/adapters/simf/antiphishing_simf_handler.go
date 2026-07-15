@@ -32,20 +32,25 @@ func (h *SIMFHandler) AntiphishingSimf(c *gin.Context) {
 		return
 	}
 
-	var bankLinks []domain.AliasBankLink
+	var aliases []domain.Alias
+	var bankLinksByAliasID map[string][]domain.AliasBankLink
 	if alias != nil {
-		bankLinks, err = h.core.GetAliasBankLinksByAliasID(c.Request.Context(), alias.ID)
-		if err != nil {
+		aliases = []domain.Alias{*alias}
+		links, linkErr := h.core.GetAliasBankLinksByAliasID(c.Request.Context(), alias.ID)
+		if linkErr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error interno del servidor"})
 			return
+		}
+		bankLinksByAliasID = map[string][]domain.AliasBankLink{
+			alias.ID: links,
 		}
 	}
 
 	coreData := mapper.AliasResolveCoreData{
-		Customer:  customer,
-		Alias:     alias,
-		Accounts:  accounts,
-		BankLinks: bankLinks,
+		Customer:           customer,
+		Aliases:            aliases,
+		Accounts:           accounts,
+		BankLinksByAliasID: bankLinksByAliasID,
 	}
 	report := mapper.BuildAntiphishingReport(query, coreData)
 	c.JSON(http.StatusOK, response.BuildAntiphishingMessage(query, report))

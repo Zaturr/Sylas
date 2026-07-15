@@ -1,7 +1,7 @@
 import type { Account } from '../../../../domain/account';
 import type { CheckAliasResult } from '../../../../application/simulation/authSimulation.port';
 import { filterAccountsByBankCode } from '../../../../domain/simulation/aliasFlow';
-import { hasConfiguredAliasValue } from '../../../../domain/simulation/auth.types';
+import { hasConfiguredAliasValue, type AliasResolveEntry } from '../../../../domain/simulation/auth.types';
 import { SIMF_REASON_NOT_FOUND } from '../../../../domain/simulation/simf.constants';
 import {
   SIMF_ALIAS_STATUS,
@@ -36,6 +36,29 @@ function resolveAgentStatus(
   }
 
   return SIMF_ALIAS_STATUS.UNREGISTERED;
+}
+
+export function buildAliasCheckFromAliasEntry(
+  entry: AliasResolveEntry,
+  accounts: Account[],
+): Extract<CheckAliasResult, { ok: true }> {
+  const bankCode = appConfig.simulation.bankCode;
+  const bankAccounts = filterAccountsByBankCode(accounts, bankCode);
+  const agentStatus = isAliasGloballyBlocked(entry.alias_status)
+    ? SIMF_ALIAS_STATUS.BLOCKED
+    : resolveAgentStatus(bankAccounts, bankCode, entry.account_id, entry.bank_links);
+
+  return {
+    ok: true,
+    status: 'found',
+    alias: entry.alias_value,
+    message:
+      agentStatus === SIMF_ALIAS_STATUS.BLOCKED
+        ? `Alias bloqueado: ${entry.alias_value}`
+        : `Alias registrado: ${entry.alias_value}`,
+    agentStatus,
+    bankCode,
+  };
 }
 
 export function buildAliasCheckFromResolve(

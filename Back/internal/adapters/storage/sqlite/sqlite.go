@@ -519,6 +519,58 @@ func (r *RealRepository) GetAliasByCustomerID(ctx context.Context, customerID st
 	return &alias, nil
 }
 
+// ListAliasesByCustomerID devuelve todos los alias del titular (J/G/C multi-alias).
+func (r *RealRepository) ListAliasesByCustomerID(ctx context.Context, customerID string) ([]domain.Alias, error) {
+	query := `SELECT id, customer_id, account_id, alias_value, COALESCE(status, 'ENABLED'), created_at
+	FROM alias
+	WHERE customer_id = ?
+	ORDER BY created_at ASC`
+
+	rows, err := r.db.QueryContext(ctx, query, customerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	aliases := make([]domain.Alias, 0)
+	for rows.Next() {
+		var alias domain.Alias
+		var createdAtStr string
+		if err := rows.Scan(&alias.ID, &alias.CustomerID, &alias.AccountID, &alias.AliasValue, &alias.Status, &createdAtStr); err != nil {
+			return nil, err
+		}
+		alias.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		aliases = append(aliases, alias)
+	}
+	return aliases, nil
+}
+
+// GetAliasByAccountID devuelve el alias vinculado a una cuenta (1 alias por cuenta).
+func (r *RealRepository) GetAliasByAccountID(ctx context.Context, accountID string) (*domain.Alias, error) {
+	accountID = strings.TrimSpace(accountID)
+	if accountID == "" {
+		return nil, nil
+	}
+
+	query := `SELECT id, customer_id, account_id, alias_value, COALESCE(status, 'ENABLED'), created_at
+	FROM alias
+	WHERE account_id = ?
+	LIMIT 1`
+	row := r.db.QueryRowContext(ctx, query, accountID)
+
+	var alias domain.Alias
+	var createdAtStr string
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AccountID, &alias.AliasValue, &alias.Status, &createdAtStr)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	alias.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+	return &alias, nil
+}
+
 // GetAliasByID busca un alias por su identificador interno.
 func (r *RealRepository) GetAliasByID(ctx context.Context, id string) (*domain.Alias, error) {
 	query := `SELECT id, customer_id, account_id, alias_value, created_at FROM alias WHERE id = ?`
@@ -648,28 +700,55 @@ func aliasSearchFilter(search string) (string, []interface{}) {
 	pattern := "%" + term + "%"
 	filter := `
 		AND (
-			COALESCE(al.alias_value, '') LIKE ? OR
+			c.first_name LIKE ? OR
+			c.last_name LIKE ? OR
+			c.document_number LIKE ? OR
+			(c.document_type || '-' || c.document_number) LIKE ? OR
+			COALESCE(al.alias_value, '') LIKE ?
+		)`
+
+	return filter, []interface{}{pattern, pattern, pattern, pattern, pattern}
+}
+
+func customerSearchFilter(search string) (string, []interface{}) {
+	term := strings.TrimSpace(search)
+	if term == "" {
+		return "", nil
+	}
+
+	pattern := "%" + term + "%"
+	filter := `
+		AND (
 			c.first_name LIKE ? OR
 			c.last_name LIKE ? OR
 			c.document_number LIKE ? OR
 			(c.document_type || '-' || c.document_number) LIKE ?
 		)`
 
-	return filter, []interface{}{pattern, pattern, pattern, pattern, pattern}
+	return filter, []interface{}{pattern, pattern, pattern, pattern}
 }
 
-// ListAllAliasesWithDetailsPaginated retorna titulares con detalle (incluye sin alias registrado).
+// ListAllAliasesWithDetailsPaginated retorna una fila por alias (multi-alias J/G/C) o por titular sin alias.
 func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error) {
-	searchFilter, searchArgs := aliasSearchFilter(search)
+	aliasSearchFilterSQL, aliasSearchArgs := aliasSearchFilter(search)
+	customerSearchFilterSQL, customerSearchArgs := customerSearchFilter(search)
 
 	countQuery := `
-	SELECT COUNT(*)
-	FROM customers c
-	LEFT JOIN alias al ON ` + currentAliasJoinCondition + `
-	WHERE 1=1` + searchFilter
+	SELECT COUNT(*) FROM (
+		SELECT al.id
+		FROM customers c
+		INNER JOIN alias al ON al.customer_id = c.id
+		WHERE 1=1` + aliasSearchFilterSQL + `
+		UNION ALL
+		SELECT c.id
+		FROM customers c
+		WHERE NOT EXISTS (SELECT 1 FROM alias al2 WHERE al2.customer_id = c.id)
+		AND 1=1` + customerSearchFilterSQL + `
+	)`
 
+	countArgs := append(append([]interface{}{}, aliasSearchArgs...), customerSearchArgs...)
 	var totalRecords int
-	if err := r.db.QueryRowContext(ctx, countQuery, searchArgs...).Scan(&totalRecords); err != nil {
+	if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalRecords); err != nil {
 		return nil, err
 	}
 
@@ -696,28 +775,35 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 		c.email, 
 		c.phone, 
 		IFNULL(
-			GROUP_CONCAT(ac.bank_id || '|' || ac.account_number || '|' || ac.status || '|' || CASE WHEN EXISTS (
-				SELECT 1 FROM alias_bank_links abl
-				WHERE abl.alias_id = al.id AND abl.account_id = ac.id
-			) THEN '1' ELSE '0' END),
+			GROUP_CONCAT(ac.bank_id || '|' || ac.account_number || '|' || ac.status || '|' || CASE
+				WHEN al.id IS NOT NULL AND ac.id = al.account_id THEN '1'
+				ELSE '0'
+			END),
 			''
 		) AS accounts_data
 	FROM (
-		SELECT c.id
-		FROM customers c
-		LEFT JOIN alias al ON ` + currentAliasJoinCondition + `
-		WHERE 1=1` + searchFilter + `
-		ORDER BY c.first_name, c.last_name, COALESCE(al.alias_value, '')
+		SELECT customer_id, alias_id FROM (
+			SELECT c.id AS customer_id, al.id AS alias_id, c.first_name, c.last_name, al.alias_value
+			FROM customers c
+			INNER JOIN alias al ON al.customer_id = c.id
+			WHERE 1=1` + aliasSearchFilterSQL + `
+			UNION ALL
+			SELECT c.id, NULL, c.first_name, c.last_name, ''
+			FROM customers c
+			WHERE NOT EXISTS (SELECT 1 FROM alias al2 WHERE al2.customer_id = c.id)
+			AND 1=1` + customerSearchFilterSQL + `
+		)
+		ORDER BY first_name, last_name, COALESCE(alias_value, '')
 		LIMIT ? OFFSET ?
 	) page
-	JOIN customers c ON c.id = page.id
-	LEFT JOIN alias al ON ` + currentAliasJoinCondition + `
+	JOIN customers c ON c.id = page.customer_id
+	LEFT JOIN alias al ON al.id = page.alias_id
 	LEFT JOIN accounts ac ON c.id = ac.customer_id
 	GROUP BY c.id, al.id, al.alias_value, al.status
 	ORDER BY c.first_name, c.last_name, COALESCE(al.alias_value, '')
 	`
 
-	queryArgs := append(append([]interface{}{}, searchArgs...), limit, offset)
+	queryArgs := append(append(append([]interface{}{}, aliasSearchArgs...), customerSearchArgs...), limit, offset)
 	rows, err := r.db.QueryContext(ctx, query, queryArgs...)
 	if err != nil {
 		return nil, err
@@ -815,14 +901,17 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 	}
 
 	// 2. Manejo Inteligente de las Cuentas
+	isLegalEntity := domain.IsLegalEntityDocumentType(customer.DocumentType)
 	for i := range accounts {
-		// Actualizamos el CustomerID de la cuenta por si cambió en el paso anterior
 		accounts[i].CustomerID = customer.ID
 
-		// Verificamos si esta cuenta ya existe para este cliente, este banco y este TIPO de cuenta
 		var existingAccountID string
-		checkAccQuery := `SELECT id FROM accounts WHERE customer_id = ? AND bank_id = ? AND account_type = ?`
-		err = tx.QueryRowContext(ctx, checkAccQuery, accounts[i].CustomerID, accounts[i].BankID, accounts[i].AccountType).Scan(&existingAccountID)
+		if isLegalEntity {
+			err = tx.QueryRowContext(ctx, `SELECT id FROM accounts WHERE account_number = ?`, accounts[i].AccountNumber).Scan(&existingAccountID)
+		} else {
+			err = tx.QueryRowContext(ctx, `SELECT id FROM accounts WHERE customer_id = ? AND bank_id = ? AND account_type = ?`,
+				accounts[i].CustomerID, accounts[i].BankID, accounts[i].AccountType).Scan(&existingAccountID)
+		}
 
 		if err == sql.ErrNoRows {
 			// La cuenta NO existe. La insertamos.
@@ -861,22 +950,21 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 			alias.CustomerID = customer.ID
 			alias.AliasValue = aliasValue
 
-			// Encontrar una cuenta por defecto para el alias (que no sea en dólares)
-			defaultAccountID := ""
-			for _, acc := range accounts {
-				if strings.ToLower(acc.AccountType) != "dolares" {
-					defaultAccountID = acc.ID
-					break
+			defaultAccountID := resolveAliasAccountID(alias.AccountID, accounts)
+			alias.AccountID = defaultAccountID
+
+			if defaultAccountID != "" {
+				var existingAliasID string
+				accCheckErr := tx.QueryRowContext(ctx, `SELECT id FROM alias WHERE account_id = ? AND trim(account_id) != ''`, defaultAccountID).Scan(&existingAliasID)
+				if accCheckErr == nil {
+					tx.Rollback()
+					return fmt.Errorf("la cuenta ya tiene un alias asociado")
+				}
+				if accCheckErr != sql.ErrNoRows {
+					tx.Rollback()
+					return fmt.Errorf("error verificando alias de la cuenta: %w", accCheckErr)
 				}
 			}
-			
-			// Si por alguna razón solo tiene cuentas en dólares (lo cual no debería pasar según negocio),
-			// o no se encontró otra, tomamos la primera disponible
-			if defaultAccountID == "" && len(accounts) > 0 {
-				defaultAccountID = accounts[0].ID
-			}
-
-			alias.AccountID = defaultAccountID
 
 			aliasStatus := strings.TrimSpace(alias.Status)
 			if aliasStatus == "" {
@@ -889,6 +977,9 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 				errStr := err.Error()
 				if strings.Contains(errStr, "alias.alias_value") {
 					return fmt.Errorf("el alias '%s' ya está en uso por otro usuario", alias.AliasValue)
+				}
+				if strings.Contains(errStr, "idx_alias_one_per_account") {
+					return fmt.Errorf("la cuenta ya tiene un alias asociado")
 				}
 				if strings.Contains(errStr, "alias.customer_id") ||
 					strings.Contains(errStr, "idx_alias_one_active_per_customer") {
@@ -907,4 +998,27 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 	}
 
 	return tx.Commit()
+}
+
+// resolveAliasAccountID enlaza el alias a una cuenta real del titular.
+// Si el ID entrante no coincide (p. ej. UUID placeholder del mapper SIMF), usa la primera elegible.
+func resolveAliasAccountID(aliasAccountID string, accounts []domain.Account) string {
+	aliasAccountID = strings.TrimSpace(aliasAccountID)
+	for _, account := range accounts {
+		if account.ID == aliasAccountID {
+			return aliasAccountID
+		}
+	}
+
+	for _, account := range accounts {
+		if !domain.IsDollarAccount(account.AccountType) {
+			return account.ID
+		}
+	}
+
+	if len(accounts) > 0 {
+		return accounts[0].ID
+	}
+
+	return ""
 }

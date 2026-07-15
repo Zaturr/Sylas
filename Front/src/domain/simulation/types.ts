@@ -43,3 +43,15 @@ export const createInitialPaymentSimulationState = (): PaymentSimulationState =>
 
 export const isPaymentFlowActive = (step: PaymentSimulationStep): boolean =>
   step !== 'idle';
+
+export function isSimulatorHomeScreen(
+  authStep: string,
+  activeTab: MobileAppTab,
+  paymentStep: PaymentSimulationStep,
+): boolean {
+  return (
+    authStep === 'authenticated' &&
+    activeTab === 'home' &&
+    paymentStep === 'idle'
+  );
+}

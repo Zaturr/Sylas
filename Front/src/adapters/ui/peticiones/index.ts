@@ -1,2 +1,2 @@
 export { PeticionesPanel } from './components/PeticionesPanel';
-export { PeticionesProvider } from './providers/PeticionesProvider';
+export { PeticionesProvider, usePeticionesTracePort } from './providers/PeticionesProvider';

@@ -5,6 +5,7 @@ import type {
 } from '../../../../application/simulation/authSimulation.port';
 import { generateBankAccountNumber } from '../../../../domain/simulation/accountNumber';
 import { validateCreateAccountDraft } from '../../../../domain/simulation/createAccountValidation';
+import type { SimulationSession } from '../../../../domain/simulation/auth.types';
 import {
   parseDocumentInput,
   validateDocumentInput,
@@ -141,4 +142,29 @@ export async function createAccount(
   }
 
   return { ok: false, message: lastError };
+}
+
+export async function refreshSession(
+  session: SimulationSession,
+  signal?: AbortSignal,
+): Promise<{ ok: true; session: SimulationSession } | { ok: false; message: string }> {
+  const resolved = await resolveByDocument(
+    session.mappedDocument.documentType,
+    session.mappedDocument.documentNumber,
+    signal,
+  );
+
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      message: resolved.message,
+    };
+  }
+
+  const sessionResult = await buildSimulationSession(resolved.data, session.mappedDocument, signal);
+  if (!sessionResult.ok) {
+    return sessionResult;
+  }
+
+  return sessionResult;
 }

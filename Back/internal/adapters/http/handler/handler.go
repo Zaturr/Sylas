@@ -24,6 +24,7 @@ func NewHTTPHandler(service ports.AliasService) *HTTPHandler {
 type CreateAliasRequest struct {
 	CustomerID string `json:"customer_id"`
 	AliasValue string `json:"alias_value"`
+	AccountID  string `json:"account_id"`
 }
 
 // CreateAlias maneja la petición POST para registrar un nuevo alias único.
@@ -34,7 +35,7 @@ func (h *HTTPHandler) CreatedAlias(c *gin.Context) {
 		return
 	}
 
-	alias, err := h.service.CreateAlias(c.Request.Context(), req.CustomerID, req.AliasValue)
+	alias, err := h.service.CreateAlias(c.Request.Context(), req.CustomerID, req.AliasValue, req.AccountID)
 	if err != nil {
 		status, message := mapSimfRegisterError(err)
 		respondError(c, status, message)
@@ -80,7 +81,7 @@ func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 		return
 	}
 
-	customer, alias, accounts, err := h.service.ResolveAlias(
+	inquiry, err := h.service.ResolveAliasInquiry(
 		c.Request.Context(),
 		documentType,
 		documentNumber,
@@ -89,33 +90,63 @@ func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 		respondError(c, 500, err.Error())
 		return
 	}
-	if customer == nil {
+	if inquiry == nil || inquiry.Customer == nil {
 		respondError(c, 404, "Titular no se encuentra en el sistema")
 		return
 	}
 
 	response := gin.H{
-		"customer": customer,
-		"accounts": accounts,
+		"customer":          inquiry.Customer,
+		"accounts":          inquiry.Accounts,
+		"document_profile":  profileLabel(inquiry.IsLegalEntity),
+		"is_legal_entity":   inquiry.IsLegalEntity,
 	}
-	if alias != nil {
-		response["alias"] = alias.AliasValue
-		response["alias_status"] = alias.Status
-		response["account_id"] = alias.AccountID
 
-		bankLinks, err := h.service.GetAliasBankLinkDetails(c.Request.Context(), alias.ID, accounts)
-		if err != nil {
-			respondError(c, 500, err.Error())
-			return
-		}
-		response["bank_links"] = bankLinks
-	} else {
+	if len(inquiry.Aliases) == 0 {
 		response["alias"] = nil
 		response["alias_status"] = domain.AliasStatusUnregistered
 		response["account_id"] = nil
+		response["aliases"] = []interface{}{}
+		c.JSON(200, response)
+		return
 	}
 
+	primaryAlias := inquiry.Aliases[len(inquiry.Aliases)-1]
+	response["alias"] = primaryAlias.AliasValue
+	response["alias_status"] = primaryAlias.Status
+	response["account_id"] = primaryAlias.AccountID
+
+	aliasEntries := make([]gin.H, 0, len(inquiry.Aliases))
+	for _, alias := range inquiry.Aliases {
+		bankLinks, linkErr := h.service.GetAliasBankLinkDetails(c.Request.Context(), alias.ID, inquiry.Accounts)
+		if linkErr != nil {
+			respondError(c, 500, linkErr.Error())
+			return
+		}
+		aliasEntries = append(aliasEntries, gin.H{
+			"alias_value":  alias.AliasValue,
+			"alias_status": alias.Status,
+			"account_id":   alias.AccountID,
+			"bank_links":   bankLinks,
+		})
+	}
+	response["aliases"] = aliasEntries
+
+	bankLinks, err := h.service.GetAliasBankLinkDetails(c.Request.Context(), primaryAlias.ID, inquiry.Accounts)
+	if err != nil {
+		respondError(c, 500, err.Error())
+		return
+	}
+	response["bank_links"] = bankLinks
+
 	c.JSON(200, response)
+}
+
+func profileLabel(isLegalEntity bool) string {
+	if isLegalEntity {
+		return "LEGAL_ENTITY"
+	}
+	return "NATURAL"
 }
 
 // ListAllAlias retorna alias paginados con sus detalles (?page=1&limit=20)

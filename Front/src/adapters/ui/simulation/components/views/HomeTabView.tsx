@@ -2,10 +2,10 @@ import { useState } from 'react';
 import {
   formatDocumentInput,
   getAccountLastDigits,
-  
   getPrimaryAccount,
   type SimulationSession,
 } from '../../../../../domain/simulation';
+import { countLegalEntityAliasProgress } from '../../../../../domain/simulation/legalEntityAliasMatrix';
 import '../simulationSteps.css';
 import './HomeTabView.css';
 
@@ -58,6 +58,10 @@ export function HomeTabView({
   );
 
   const aliasPending = !session.hasConfiguredAlias;
+  const legalEntityProgress = session.isLegalEntity
+    ? countLegalEntityAliasProgress(session)
+    : null;
+  const aliasTileLabel = session.isLegalEntity ? 'Cuentas y alias' : 'Alias';
 
   const menuItems: HomeMenuItem[] = [
     { id: 'info', label: 'Información', icon: 'ℹ', enabled: false },
@@ -66,10 +70,13 @@ export function HomeTabView({
     { id: 'transfer', label: 'Transferir', icon: '⇄', enabled: false },
     {
       id: 'alias',
-      label: 'Alias',
+      label: aliasTileLabel,
       icon: '👤',
       enabled: true,
-      highlighted: aliasPending,
+      highlighted:
+        aliasPending ||
+        (legalEntityProgress !== null &&
+          legalEntityProgress.configured < legalEntityProgress.eligible),
       onClick: onManageAlias,
     },
     { id: 'web', label: 'Web', icon: '🌐', enabled: false },
@@ -107,7 +114,11 @@ export function HomeTabView({
               {balanceVisible ? '👁' : '👁‍🗨'}
             </button>
           </div>
-          <p className="sim-home-balance__hint">{accountHint}</p>
+          <p className="sim-home-balance__hint">
+            {session.isLegalEntity && legalEntityProgress
+              ? `${legalEntityProgress.configured}/${legalEntityProgress.eligible} cuentas con alias · ${accountHint}`
+              : accountHint}
+          </p>
         </div>
         <button
           type="button"

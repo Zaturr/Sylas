@@ -7,11 +7,21 @@ export type AliasBankLinkDetail = {
   status: string;
 };
 
+export type AliasResolveEntry = {
+  alias_value: string;
+  alias_status: string;
+  account_id: string;
+  bank_links?: AliasBankLinkDetail[];
+};
+
 export type ResolveAliasResponse = {
   alias?: string | null;
   alias_status?: string | null;
   account_id?: string | null;
   bank_links?: AliasBankLinkDetail[];
+  aliases?: AliasResolveEntry[];
+  is_legal_entity?: boolean;
+  document_profile?: 'LEGAL_ENTITY' | 'NATURAL';
   customer: Customer;
   accounts: Account[];
 };

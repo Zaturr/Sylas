@@ -1,10 +1,11 @@
 import '../simulationSteps.css';
 
 type AliasSplashStepProps = {
+  isLegalEntity?: boolean;
   onContinue: () => void;
 };
 
-export function AliasSplashStep({ onContinue }: AliasSplashStepProps) {
+export function AliasSplashStep({ isLegalEntity = false, onContinue }: AliasSplashStepProps) {
   return (
     <div className="sim-flow sim-flow--splash">
       <div className="sim-splash">
@@ -13,8 +14,9 @@ export function AliasSplashStep({ onContinue }: AliasSplashStepProps) {
         </div>
         <h2 className="sim-splash__title">Alias</h2>
         <p className="sim-splash__text">
-          Administra tu alias de pagos, vincula cuentas y modifica el estado de
-          afiliación con el banco.
+          {isLegalEntity
+            ? 'Administra los alias de tu titular jurídico: una cuenta elegible puede tener un alias propio.'
+            : 'Administra tu alias de pagos, vincula cuentas y modifica el estado de afiliación con el banco.'}
         </p>
       </div>
 

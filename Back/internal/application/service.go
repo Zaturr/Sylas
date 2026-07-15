@@ -6,6 +6,9 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type AppService struct {
@@ -35,7 +38,7 @@ func (s *AppService) RegisterCustomerWithAccount(ctx context.Context, customer *
 	return s.repo.SaveAccount(ctx, account)
 }
 
-func (s *AppService) CreateAlias(ctx context.Context, customerID string, aliasValue string) (*domain.Alias, error) {
+func (s *AppService) CreateAlias(ctx context.Context, customerID string, aliasValue string, accountID string) (*domain.Alias, error) {
 	existingAlias, _ := s.repo.GetAliasByValue(ctx, aliasValue)
 	if existingAlias != nil {
 		if domain.IsAliasGloballyBlocked(existingAlias.Status) {
@@ -44,18 +47,75 @@ func (s *AppService) CreateAlias(ctx context.Context, customerID string, aliasVa
 		return nil, errors.New("El alias ya existe")
 	}
 
-	activeAlias, err := s.repo.GetActiveAliasByCustomerID(ctx, customerID)
+	customer, err := s.repo.GetCustomerByID(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
-	if activeAlias != nil {
-		return nil, ErrSimfAliasLimitExceeded
+	if customer == nil {
+		return nil, errors.New("cliente no encontrado")
+	}
+
+	isLegalEntity := domain.IsLegalEntityDocumentType(customer.DocumentType)
+	accountID = strings.TrimSpace(accountID)
+
+	if !isLegalEntity {
+		activeAlias, err := s.repo.GetActiveAliasByCustomerID(ctx, customerID)
+		if err != nil {
+			return nil, err
+		}
+		if activeAlias != nil {
+			return nil, ErrSimfAliasLimitExceeded
+		}
+	}
+
+	accounts, err := s.repo.GetAccountsByCustomerID(ctx, customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if accountID == "" {
+		if isLegalEntity {
+			return nil, ErrSimfAccountRequired
+		}
+		for _, account := range accounts {
+			if !domain.IsDollarAccount(account.AccountType) {
+				accountID = account.ID
+				break
+			}
+		}
+		if accountID == "" {
+			return nil, ErrSimfAccountNotEligible
+		}
+	}
+
+	var selectedAccount *domain.Account
+	for i := range accounts {
+		if accounts[i].ID == accountID {
+			selectedAccount = &accounts[i]
+			break
+		}
+	}
+	if selectedAccount == nil {
+		return nil, ErrSimfAccountNotFound
+	}
+	if domain.IsDollarAccount(selectedAccount.AccountType) {
+		return nil, ErrSimfAccountNotEligible
+	}
+
+	existingOnAccount, err := s.repo.GetAliasByAccountID(ctx, accountID)
+	if err != nil {
+		return nil, err
+	}
+	if existingOnAccount != nil {
+		return nil, ErrSimfAccountAlreadyHasAlias
 	}
 
 	newAlias := &domain.Alias{
-		ID:         "ALIAS-" + customerID,
+		ID:         uuid.New().String(),
 		CustomerID: customerID,
+		AccountID:  accountID,
 		AliasValue: aliasValue,
+		CreatedAt:  time.Now(),
 	}
 	err = s.repo.SaveAlias(ctx, newAlias)
 	if err != nil {

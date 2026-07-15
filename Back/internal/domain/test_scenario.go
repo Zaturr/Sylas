@@ -6,17 +6,26 @@ type TestScenarioAccount struct {
 	Type   string `json:"type,omitempty"`
 }
 
+type TestScenarioAlias struct {
+	AliasValue   string `json:"alias_value"`
+	AliasStatus  string `json:"alias_status,omitempty"`
+	AccountIndex int    `json:"account_index"`
+}
+
 type TestScenario struct {
-	ID             string                `json:"id"`
-	Label          string                `json:"label"`
-	DocumentNumber string                `json:"document_number"`
-	AliasValue     string                `json:"alias_value"`
-	FirstName      string                `json:"first_name"`
-	MiddleName     string                `json:"middle_name"`
-	LastName       string                `json:"last_name"`
-	SecondLastName string                `json:"second_last_name"`
-	AliasStatus    string                `json:"alias_status,omitempty"`
-	Accounts       []TestScenarioAccount `json:"accounts"`
+	ID                  string                `json:"id"`
+	Label               string                `json:"label"`
+	DocumentType        string                `json:"document_type,omitempty"`
+	DocumentNumber      string                `json:"document_number"`
+	AliasValue          string                `json:"alias_value,omitempty"`
+	FirstName           string                `json:"first_name"`
+	MiddleName          string                `json:"middle_name"`
+	LastName            string                `json:"last_name"`
+	SecondLastName      string                `json:"second_last_name"`
+	AliasStatus         string                `json:"alias_status,omitempty"`
+	LinkedAccountIndex  *int                  `json:"linked_account_index,omitempty"`
+	Aliases             []TestScenarioAlias   `json:"aliases,omitempty"`
+	Accounts            []TestScenarioAccount `json:"accounts"`
 }
 
 type TestScenarioSeedRequest struct {

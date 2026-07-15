@@ -56,6 +56,7 @@ func ToCoreCreateUserEntities(cmd simfdomain.CreateUserSimfCommand) (*domain.Cus
 		ID:         uuid.New().String(),
 		CustomerID: customerID,
 		AliasValue: cmd.Alias,
+		AccountID:  account.ID,
 		CreatedAt:  now,
 	}
 
@@ -129,9 +130,13 @@ func MapCreateUserBusinessReason(err error) string {
 	switch {
 	case strings.Contains(errText, "alias") && strings.Contains(errText, "en uso"):
 		return simfdomain.ReasonAliasTaken
+	case strings.Contains(errText, "cuenta") && strings.Contains(errText, "alias asociado"):
+		return simfdomain.ReasonAliasLimit
 	case strings.Contains(errText, "ya tiene un alias"):
 		return simfdomain.ReasonAliasLimit
 	case strings.Contains(errText, "banco") && strings.Contains(errText, "no existe"):
+		return simfdomain.ReasonFormat
+	case strings.Contains(errText, "foreign key constraint failed"):
 		return simfdomain.ReasonFormat
 	default:
 		return simfdomain.ReasonFormat

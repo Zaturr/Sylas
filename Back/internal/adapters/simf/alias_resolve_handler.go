@@ -6,6 +6,7 @@ import (
 	"Alias_bdca/Back/internal/adapters/simf/mapper"
 	"Alias_bdca/Back/internal/adapters/simf/response"
 	"Alias_bdca/Back/internal/adapters/simf/validate"
+	"Alias_bdca/Back/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,32 +48,32 @@ func (h *SIMFHandler) handleAliasResolve(c *gin.Context, requireAgent bool) {
 		return
 	}
 
-	customer, alias, accounts, err := h.core.ResolveAlias(
-		c.Request.Context(),
-		documentType,
-		documentNumber,
-	)
+	inquiry, err := h.core.ResolveAliasInquiry(c.Request.Context(), documentType, documentNumber)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error interno del servidor"})
 		return
 	}
 
-	if customer == nil || alias == nil {
+	if inquiry == nil || inquiry.Customer == nil || len(inquiry.Aliases) == 0 {
 		c.JSON(http.StatusOK, response.BuildNotFoundMessage(query))
 		return
 	}
 
-	bankLinks, err := h.core.GetAliasBankLinksByAliasID(c.Request.Context(), alias.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error interno del servidor"})
-		return
+	bankLinksByAliasID := make(map[string][]domain.AliasBankLink, len(inquiry.Aliases))
+	for _, alias := range inquiry.Aliases {
+		links, linkErr := h.core.GetAliasBankLinksByAliasID(c.Request.Context(), alias.ID)
+		if linkErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error interno del servidor"})
+			return
+		}
+		bankLinksByAliasID[alias.ID] = links
 	}
 
 	coreData := mapper.AliasResolveCoreData{
-		Customer:  customer,
-		Alias:     alias,
-		Accounts:  accounts,
-		BankLinks: bankLinks,
+		Customer:           inquiry.Customer,
+		Aliases:            inquiry.Aliases,
+		Accounts:           inquiry.Accounts,
+		BankLinksByAliasID: bankLinksByAliasID,
 	}
 	c.JSON(http.StatusOK, response.BuildAcceptMessage(query, coreData))
 }

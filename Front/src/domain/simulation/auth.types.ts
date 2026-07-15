@@ -9,11 +9,19 @@ export type AliasBankLinkDetail = {
   status: string;
 };
 
+export type AliasResolveEntry = {
+  alias_value: string;
+  alias_status: string;
+  account_id: string;
+  bank_links?: AliasBankLinkDetail[];
+};
+
 export type SimulationAuthStep =
   | 'login'
   | 'create-account'
   | 'authenticated'
   | 'alias-splash'
+  | 'accounts-and-aliases'
   | 'alias-management'
   | 'alias-link-account'
   | 'create-alias'
@@ -32,6 +40,8 @@ export type SimulationSession = {
   primaryAccountId: string | null;
   aliasCoreStatus: string | null;
   bankLinks: AliasBankLinkDetail[];
+  isLegalEntity: boolean;
+  registeredAliases: AliasResolveEntry[];
 };
 
 export type AliasCheckStatus = 'found' | 'not-found' | 'error';
@@ -106,6 +116,20 @@ export const hasConfiguredAliasValue = (alias: string | null): boolean => {
 export function isAliasManagerAuthStep(step: SimulationAuthStep): boolean {
   return (
     step === 'alias-splash' ||
+    step === 'accounts-and-aliases' ||
+    step === 'alias-management' ||
+    step === 'alias-link-account' ||
+    step === 'create-alias' ||
+    step === 'alias-create-success' ||
+    step === 'alias-status-success' ||
+    step === 'alias-error'
+  );
+}
+
+/** Pasos donde el panel de peticiones SIMF debe mostrar trazas (excluye splash y home). */
+export function isSimfTraceVisibleStep(step: SimulationAuthStep): boolean {
+  return (
+    step === 'accounts-and-aliases' ||
     step === 'alias-management' ||
     step === 'alias-link-account' ||
     step === 'create-alias' ||

@@ -61,8 +61,10 @@ func agentCodeFromResolve(query simfdomain.AliasResolveQuery, coreData mapper.Al
 	if query.AgentCode != "" {
 		return query.AgentCode
 	}
-	if len(coreData.BankLinks) > 0 {
-		return coreData.BankLinks[0].BankID
+	if len(coreData.BankLinksByAliasID) > 0 && len(coreData.Aliases) > 0 {
+		if links, ok := coreData.BankLinksByAliasID[coreData.Aliases[0].ID]; ok && len(links) > 0 {
+			return links[0].BankID
+		}
 	}
 	if len(coreData.Accounts) > 0 {
 		return coreData.Accounts[0].BankID

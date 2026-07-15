@@ -65,6 +65,7 @@ export async function updateAliasLinkedAccount(
 export async function createAliasForCustomer(
   customerId: string,
   aliasValue: string,
+  accountId: string,
   signal?: AbortSignal,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const response = await fetch(`${appConfig.apiBaseUrl}/alias`, {
@@ -73,6 +74,7 @@ export async function createAliasForCustomer(
     body: JSON.stringify({
       customer_id: customerId,
       alias_value: aliasValue,
+      account_id: accountId,
     }),
     signal,
   });

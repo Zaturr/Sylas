@@ -15,6 +15,7 @@ import { CreateAccountStep } from './steps/CreateAccountStep';
 import { CreateAliasStep } from './steps/CreateAliasStep';
 import { EnterAliasStep } from './steps/EnterAliasStep';
 import { ErrorStep } from './steps/ErrorStep';
+import { LegalEntityAccountsAliasesStep } from './steps/LegalEntityAccountsAliasesStep';
 import { LoginStep } from './steps/LoginStep';
 import { ProcessingStep } from './steps/ProcessingStep';
 import { SuccessStep } from './steps/SuccessStep';
@@ -39,6 +40,9 @@ type PaymentSimulatorScreenProps = {
   onSubmitCreateAccount: () => void;
   onManageAlias: () => void;
   onContinueAliasSplash: () => void;
+  onAddLegalEntityAlias: () => void;
+  onManageAliasEntry: (entry: import('../../../../domain/simulation/auth.types').AliasResolveEntry) => void;
+  onBackToAccountsAndAliases: () => void;
   onOpenCreateAlias: () => void;
   onSelectAccountForAlias: () => void;
   onChangeAccount: () => void;
@@ -48,6 +52,7 @@ type PaymentSimulatorScreenProps = {
   onAliasStatusChange: (value: 'ACTV' | 'INAC') => void;
   onSubmitAliasStatusUpdate: () => void;
   onSubmitCreateAlias: () => void;
+  onBackFromCreateAlias: () => void;
   onDeleteAlias: () => void;
   onFinishAliasFlow: () => void;
   onBackToAliasManagement: () => void;
@@ -80,6 +85,7 @@ const bottomTabs: Array<{
 
 const ALIAS_FLOW_STEPS = new Set([
   'alias-splash',
+  'accounts-and-aliases',
   'alias-management',
   'alias-link-account',
   'create-alias',
@@ -101,6 +107,9 @@ function resolveScreenTitle(
   }
   if (auth.step === 'alias-splash') {
     return 'Alias';
+  }
+  if (auth.step === 'accounts-and-aliases') {
+    return 'Cuentas y alias';
   }
   if (
     auth.step === 'alias-management' ||
@@ -146,6 +155,9 @@ export function PaymentSimulatorScreen({
   onSubmitCreateAccount,
   onManageAlias,
   onContinueAliasSplash,
+  onAddLegalEntityAlias,
+  onManageAliasEntry,
+  onBackToAccountsAndAliases,
   onOpenCreateAlias,
   onSelectAccountForAlias,
   onChangeAccount,
@@ -155,6 +167,7 @@ export function PaymentSimulatorScreen({
   onAliasStatusChange,
   onSubmitAliasStatusUpdate,
   onSubmitCreateAlias,
+  onBackFromCreateAlias,
   onDeleteAlias,
   onFinishAliasFlow,
   onBackToAliasManagement,
@@ -187,6 +200,7 @@ export function PaymentSimulatorScreen({
   const showBackButton =
     auth.step === 'create-account' ||
     auth.step === 'alias-splash' ||
+    auth.step === 'accounts-and-aliases' ||
     auth.step === 'alias-management' ||
     auth.step === 'create-alias' ||
     auth.step === 'alias-link-account' ||
@@ -202,7 +216,15 @@ export function PaymentSimulatorScreen({
       onBackToHome();
       return;
     }
+    if (auth.step === 'accounts-and-aliases') {
+      onBackToHome();
+      return;
+    }
     if (auth.step === 'alias-link-account') {
+      if (auth.session?.isLegalEntity && auth.linkAccountMode === 'before-create-alias') {
+        onBackToAccountsAndAliases();
+        return;
+      }
       if (
         auth.linkAccountMode === 'change' ||
         auth.linkAccountMode === 'before-create-alias' ||
@@ -216,6 +238,14 @@ export function PaymentSimulatorScreen({
     }
     if (auth.step === 'alias-error') {
       onBackToAliasManagement();
+      return;
+    }
+    if (auth.step === 'create-alias' && auth.session?.isLegalEntity) {
+      onBackFromCreateAlias();
+      return;
+    }
+    if (auth.step === 'alias-management' && auth.session?.isLegalEntity) {
+      onBackToAccountsAndAliases();
       return;
     }
     if (isAliasFlow) {
@@ -248,16 +278,28 @@ export function PaymentSimulatorScreen({
     }
 
     if (auth.step === 'alias-splash') {
-      return <AliasSplashStep onContinue={onContinueAliasSplash} />;
+      return <AliasSplashStep isLegalEntity={auth.session?.isLegalEntity ?? false} onContinue={onContinueAliasSplash} />;
+    }
+
+    if (auth.step === 'accounts-and-aliases' && auth.session) {
+      return (
+        <LegalEntityAccountsAliasesStep
+          session={auth.session}
+          isSubmitting={auth.isSubmitting}
+          onAddAlias={onAddLegalEntityAlias}
+          onManageAlias={onManageAliasEntry}
+        />
+      );
     }
 
     if (auth.step === 'alias-link-account' && auth.session) {
       return (
         <AliasLinkAccountStep
-          accounts={auth.session.accounts}
+          session={auth.session}
           selectedAccountId={auth.selectedAccountId}
           mode={auth.linkAccountMode}
           isSubmitting={auth.isSubmitting}
+          errorMessage={auth.errorMessage}
           onSelectAccount={onSelectLinkAccount}
           onConfirm={onConfirmLinkAccount}
         />
@@ -319,6 +361,7 @@ export function PaymentSimulatorScreen({
         <CreateAliasStep
           session={auth.session}
           mappedDocument={auth.session.mappedDocument}
+          selectedAccountId={auth.selectedAccountId}
           aliasInput={auth.aliasInput}
           errorMessage={auth.errorMessage}
           isSubmitting={auth.isSubmitting}

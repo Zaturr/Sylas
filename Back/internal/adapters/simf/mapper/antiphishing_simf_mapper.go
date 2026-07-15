@@ -1,6 +1,9 @@
 package mapper
 
 import (
+	"strings"
+
+	"Alias_bdca/Back/internal/domain"
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
@@ -18,14 +21,16 @@ func BuildAntiphishingReport(
 	query simfdomain.AntiphishingSimfQuery,
 	coreData AliasResolveCoreData,
 ) simfdomain.AliasResolveReport {
-	if coreData.Alias == nil {
+	resolvedAlias := findAliasByValue(coreData.Aliases, query.Alias)
+	if resolvedAlias == nil {
 		return simfdomain.AliasResolveReport{
 			Result: simfdomain.ResultReject,
 			Rsn:    simfdomain.ReasonNotFound,
 		}
 	}
 
-	agentStatus := AgentStatusForBank(coreData.Alias, coreData.BankLinks, coreData.Accounts, query.DestinationAgent)
+	bankLinks := coreData.BankLinksByAliasID[resolvedAlias.ID]
+	agentStatus := AgentStatusForBank(resolvedAlias, bankLinks, coreData.Accounts, query.DestinationAgent)
 	aliasList := []simfdomain.AliasResolveEntry{
 		{
 			Alias: query.Alias,
@@ -52,4 +57,14 @@ func BuildAntiphishingReport(
 	}
 
 	return report
+}
+
+func findAliasByValue(aliases []domain.Alias, aliasValue string) *domain.Alias {
+	target := strings.TrimSpace(aliasValue)
+	for i := range aliases {
+		if strings.EqualFold(aliases[i].AliasValue, target) {
+			return &aliases[i]
+		}
+	}
+	return nil
 }
