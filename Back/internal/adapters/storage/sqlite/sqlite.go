@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type RealRepository struct {
@@ -213,26 +215,35 @@ func (r *RealRepository) UpdateAccountStatus(ctx context.Context, accountID, sta
 
 // SaveAlias almacena de forma física el registro del alias en el sistema.
 func (r *RealRepository) SaveAlias(ctx context.Context, alias *domain.Alias) error {
-	query := `INSERT INTO alias (id, customer_id, alias_value, created_at) 
-	VALUES (?,?,?,?)`
+	query := `INSERT INTO alias (id, customer_id, account_id, alias_value, created_at) 
+	VALUES (?,?,?,?,?)`
 
 	_, err := r.db.ExecContext(ctx, query,
 		alias.ID,
 		alias.CustomerID,
+		alias.AccountID,
 		alias.AliasValue,
 		alias.CreatedAt,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(alias.AccountID) != "" {
+		return r.syncAliasBankLinkForAccount(ctx, alias.ID, alias.AccountID, alias.CreatedAt)
+	}
+
+	return nil
 }
 
 // GetAliasByValue busca la coincidencia exacta de un alias por su valor de texto.
 func (r *RealRepository) GetAliasByValue(ctx context.Context, value string) (*domain.Alias, error) {
-	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at FROM alias WHERE alias_value = ?`
+	query := `SELECT id, customer_id, account_id, alias_value, COALESCE(status, 'ENABLED'), created_at FROM alias WHERE alias_value = ?`
 	row := r.db.QueryRowContext(ctx, query, value)
 
 	var alias domain.Alias
 	var createdAtStr string
-	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &alias.Status, &createdAtStr)
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AccountID, &alias.AliasValue, &alias.Status, &createdAtStr)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -249,6 +260,210 @@ func (r *RealRepository) UpdateAliasStatus(ctx context.Context, aliasID, status 
 	return err
 }
 
+// UpdateAliasAccount actualiza la cuenta a la que está vinculado un alias
+func (r *RealRepository) UpdateAliasAccount(ctx context.Context, aliasValue, accountID string) error {
+	alias, err := r.GetAliasByValue(ctx, aliasValue)
+	if err != nil {
+		return err
+	}
+	if alias == nil {
+		return fmt.Errorf("alias no encontrado")
+	}
+
+	var accountCustomerID string
+	err = r.db.QueryRowContext(ctx, `SELECT customer_id FROM accounts WHERE id = ?`, accountID).Scan(&accountCustomerID)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("cuenta no encontrada")
+	}
+	if err != nil {
+		return err
+	}
+	if accountCustomerID != alias.CustomerID {
+		return fmt.Errorf("la cuenta no pertenece al titular del alias")
+	}
+
+	var bankID string
+	err = r.db.QueryRowContext(ctx, `SELECT bank_id FROM accounts WHERE id = ?`, accountID).Scan(&bankID)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.ExecContext(ctx, `UPDATE alias SET account_id = ? WHERE alias_value = ?`, accountID, aliasValue)
+	if err != nil {
+		return err
+	}
+
+	return r.UpsertAliasBankLink(ctx, &domain.AliasBankLink{
+		ID:        uuid.New().String(),
+		AliasID:   alias.ID,
+		BankID:    bankID,
+		AccountID: accountID,
+		CreatedAt: time.Now(),
+	})
+}
+
+func (r *RealRepository) syncAliasBankLinkForAccount(
+	ctx context.Context,
+	aliasID, accountID string,
+	createdAt time.Time,
+) error {
+	var bankID string
+	err := r.db.QueryRowContext(ctx, `SELECT bank_id FROM accounts WHERE id = ?`, accountID).Scan(&bankID)
+	if err != nil {
+		return err
+	}
+
+	return r.UpsertAliasBankLink(ctx, &domain.AliasBankLink{
+		ID:        uuid.New().String(),
+		AliasID:   aliasID,
+		BankID:    bankID,
+		AccountID: accountID,
+		CreatedAt: createdAt,
+	})
+}
+
+func (r *RealRepository) syncAliasBankLinkForAccountTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	aliasID, accountID string,
+	createdAt time.Time,
+) error {
+	var bankID string
+	err := tx.QueryRowContext(ctx, `SELECT bank_id FROM accounts WHERE id = ?`, accountID).Scan(&bankID)
+	if err != nil {
+		return err
+	}
+
+	return r.upsertAliasBankLinkTx(ctx, tx, &domain.AliasBankLink{
+		ID:        uuid.New().String(),
+		AliasID:   aliasID,
+		BankID:    bankID,
+		AccountID: accountID,
+		CreatedAt: createdAt,
+	})
+}
+
+func (r *RealRepository) upsertAliasBankLinkTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	link *domain.AliasBankLink,
+) error {
+	query := `
+	INSERT INTO alias_bank_links (id, alias_id, bank_id, account_id, created_at)
+	VALUES (?, ?, ?, ?, ?)
+	ON CONFLICT(alias_id, bank_id) DO UPDATE SET
+		account_id = excluded.account_id`
+
+	_, err := tx.ExecContext(ctx, query,
+		link.ID,
+		link.AliasID,
+		link.BankID,
+		link.AccountID,
+		link.CreatedAt,
+	)
+	return err
+}
+
+// UpsertAliasBankLink crea o actualiza el vínculo alias-cuenta para un banco.
+func (r *RealRepository) UpsertAliasBankLink(ctx context.Context, link *domain.AliasBankLink) error {
+	query := `
+	INSERT INTO alias_bank_links (id, alias_id, bank_id, account_id, created_at)
+	VALUES (?, ?, ?, ?, ?)
+	ON CONFLICT(alias_id, bank_id) DO UPDATE SET
+		account_id = excluded.account_id`
+
+	_, err := r.db.ExecContext(ctx, query,
+		link.ID,
+		link.AliasID,
+		link.BankID,
+		link.AccountID,
+		link.CreatedAt,
+	)
+	return err
+}
+
+// SyncAliasBankLinksFromAccounts registra un vínculo por banco usando la primera
+// cuenta no-dólares de cada banco. Usado en escenarios demo multi-banco.
+func (r *RealRepository) SyncAliasBankLinksFromAccounts(
+	ctx context.Context,
+	aliasID string,
+	accounts []domain.Account,
+) error {
+	linkedByBank := make(map[string]string)
+
+	for _, account := range accounts {
+		if domain.IsDollarAccount(account.AccountType) {
+			continue
+		}
+		if _, exists := linkedByBank[account.BankID]; exists {
+			continue
+		}
+		linkedByBank[account.BankID] = account.ID
+	}
+
+	now := time.Now()
+	for bankID, accountID := range linkedByBank {
+		if err := r.UpsertAliasBankLink(ctx, &domain.AliasBankLink{
+			ID:        uuid.New().String(),
+			AliasID:   aliasID,
+			BankID:    bankID,
+			AccountID: accountID,
+			CreatedAt: now,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GetAliasBankLinksByAliasID devuelve todos los vínculos alias-banco-cuenta.
+func (r *RealRepository) GetAliasBankLinksByAliasID(ctx context.Context, aliasID string) ([]domain.AliasBankLink, error) {
+	query := `SELECT id, alias_id, bank_id, account_id, created_at
+	FROM alias_bank_links
+	WHERE alias_id = ?
+	ORDER BY bank_id`
+
+	rows, err := r.db.QueryContext(ctx, query, aliasID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanAliasBankLinks(rows)
+}
+
+// GetAliasBankLinksByAliasValue devuelve vínculos buscando por valor del alias.
+func (r *RealRepository) GetAliasBankLinksByAliasValue(ctx context.Context, aliasValue string) ([]domain.AliasBankLink, error) {
+	query := `SELECT abl.id, abl.alias_id, abl.bank_id, abl.account_id, abl.created_at
+	FROM alias_bank_links abl
+	JOIN alias al ON al.id = abl.alias_id
+	WHERE al.alias_value = ?
+	ORDER BY abl.bank_id`
+
+	rows, err := r.db.QueryContext(ctx, query, aliasValue)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanAliasBankLinks(rows)
+}
+
+func scanAliasBankLinks(rows *sql.Rows) ([]domain.AliasBankLink, error) {
+	links := make([]domain.AliasBankLink, 0)
+	for rows.Next() {
+		var link domain.AliasBankLink
+		var createdAtStr string
+		if err := rows.Scan(&link.ID, &link.AliasID, &link.BankID, &link.AccountID, &createdAtStr); err != nil {
+			return nil, err
+		}
+		link.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		links = append(links, link)
+	}
+	return links, nil
+}
+
 // activeAliasSQLFilter excluye alias con baja global (BLKD) para tope AG01 / alta de uno nuevo.
 const activeAliasSQLFilter = `UPPER(COALESCE(status, 'ENABLED')) NOT IN ('BLKD', 'DISABLED', 'BLOCKED')`
 
@@ -262,7 +477,7 @@ const currentAliasJoinCondition = `al.id = (
 
 // GetActiveAliasByCustomerID devuelve el alias operativo del titular (sin BLKD/DISABLED).
 func (r *RealRepository) GetActiveAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error) {
-	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at
+	query := `SELECT id, customer_id, account_id, alias_value, COALESCE(status, 'ENABLED'), created_at
 	FROM alias
 	WHERE customer_id = ? AND ` + activeAliasSQLFilter + `
 	ORDER BY created_at DESC
@@ -271,7 +486,7 @@ func (r *RealRepository) GetActiveAliasByCustomerID(ctx context.Context, custome
 
 	var alias domain.Alias
 	var createdAtStr string
-	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &alias.Status, &createdAtStr)
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AccountID, &alias.AliasValue, &alias.Status, &createdAtStr)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -284,7 +499,7 @@ func (r *RealRepository) GetActiveAliasByCustomerID(ctx context.Context, custome
 
 // GetAliasByCustomerID devuelve el alias más reciente del titular (incluye BLKD).
 func (r *RealRepository) GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error) {
-	query := `SELECT id, customer_id, alias_value, COALESCE(status, 'ENABLED'), created_at
+	query := `SELECT id, customer_id, account_id, alias_value, COALESCE(status, 'ENABLED'), created_at
 	FROM alias
 	WHERE customer_id = ?
 	ORDER BY created_at DESC
@@ -293,7 +508,7 @@ func (r *RealRepository) GetAliasByCustomerID(ctx context.Context, customerID st
 
 	var alias domain.Alias
 	var createdAtStr string
-	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &alias.Status, &createdAtStr)
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AccountID, &alias.AliasValue, &alias.Status, &createdAtStr)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -306,12 +521,12 @@ func (r *RealRepository) GetAliasByCustomerID(ctx context.Context, customerID st
 
 // GetAliasByID busca un alias por su identificador interno.
 func (r *RealRepository) GetAliasByID(ctx context.Context, id string) (*domain.Alias, error) {
-	query := `SELECT id, customer_id, alias_value, created_at FROM alias WHERE id = ?`
+	query := `SELECT id, customer_id, account_id, alias_value, created_at FROM alias WHERE id = ?`
 	row := r.db.QueryRowContext(ctx, query, id)
 
 	var alias domain.Alias
 	var createdAtStr string
-	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AliasValue, &createdAtStr)
+	err := row.Scan(&alias.ID, &alias.CustomerID, &alias.AccountID, &alias.AliasValue, &createdAtStr)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -362,7 +577,7 @@ func (r *RealRepository) DeleteAlias(ctx context.Context, id string) error {
 // ListAllAliases retorna el arreglo completo de alias registrados para el panel de control.
 func (r *RealRepository) ListAllAliases(ctx context.Context) ([]domain.Alias, error) {
 
-	query := `SELECT id, customer_id, alias_value, created_at FROM alias`
+	query := `SELECT id, customer_id, account_id, alias_value, created_at FROM alias`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -373,7 +588,7 @@ func (r *RealRepository) ListAllAliases(ctx context.Context) ([]domain.Alias, er
 	for rows.Next() {
 		var als domain.Alias
 		var createdAtStr string
-		err := rows.Scan(&als.ID, &als.CustomerID, &als.AliasValue, &createdAtStr)
+		err := rows.Scan(&als.ID, &als.CustomerID, &als.AccountID, &als.AliasValue, &createdAtStr)
 		if err != nil {
 			return nil, err
 		}
@@ -410,13 +625,15 @@ func parseAccountDetails(accountsStr string) []domain.AccountDetail {
 	accounts := make([]domain.AccountDetail, 0)
 	for _, pair := range strings.Split(accountsStr, ",") {
 		parts := strings.Split(pair, "|")
-		if len(parts) != 3 {
+		if len(parts) < 3 {
 			continue
 		}
+		isLinked := len(parts) >= 4 && parts[3] == "1"
 		accounts = append(accounts, domain.AccountDetail{
 			Bank:          parts[0],
 			AccountNumber: parts[1],
 			Status:        parts[2],
+			IsLinked:      isLinked,
 		})
 	}
 	return accounts
@@ -479,7 +696,10 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 		c.email, 
 		c.phone, 
 		IFNULL(
-			GROUP_CONCAT(ac.bank_id || '|' || ac.account_number || '|' || ac.status),
+			GROUP_CONCAT(ac.bank_id || '|' || ac.account_number || '|' || ac.status || '|' || CASE WHEN EXISTS (
+				SELECT 1 FROM alias_bank_links abl
+				WHERE abl.alias_id = al.id AND abl.account_id = ac.id
+			) THEN '1' ELSE '0' END),
 			''
 		) AS accounts_data
 	FROM (
@@ -595,26 +815,26 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 	}
 
 	// 2. Manejo Inteligente de las Cuentas
-	for _, acc := range accounts {
+	for i := range accounts {
 		// Actualizamos el CustomerID de la cuenta por si cambió en el paso anterior
-		acc.CustomerID = customer.ID
+		accounts[i].CustomerID = customer.ID
 
-		// Verificamos si esta cuenta ya existe para este cliente y este banco
+		// Verificamos si esta cuenta ya existe para este cliente, este banco y este TIPO de cuenta
 		var existingAccountID string
-		checkAccQuery := `SELECT id FROM accounts WHERE customer_id = ? AND bank_id = ?`
-		err = tx.QueryRowContext(ctx, checkAccQuery, acc.CustomerID, acc.BankID).Scan(&existingAccountID)
+		checkAccQuery := `SELECT id FROM accounts WHERE customer_id = ? AND bank_id = ? AND account_type = ?`
+		err = tx.QueryRowContext(ctx, checkAccQuery, accounts[i].CustomerID, accounts[i].BankID, accounts[i].AccountType).Scan(&existingAccountID)
 
 		if err == sql.ErrNoRows {
 			// La cuenta NO existe. La insertamos.
 			queryAcc := `INSERT INTO accounts (id, bank_id, customer_id, account_number, account_type, status, created_at) VALUES (?,?,?,?,?,?,?)`
-			_, err = tx.ExecContext(ctx, queryAcc, acc.ID, acc.BankID, acc.CustomerID, acc.AccountNumber, acc.AccountType, acc.Status, acc.CreatedAt)
+			_, err = tx.ExecContext(ctx, queryAcc, accounts[i].ID, accounts[i].BankID, accounts[i].CustomerID, accounts[i].AccountNumber, accounts[i].AccountType, accounts[i].Status, accounts[i].CreatedAt)
 			if err != nil {
 				tx.Rollback()
 				if strings.Contains(err.Error(), "accounts.account_number") {
-					return fmt.Errorf("el número de cuenta %s ya se encuentra registrado en el sistema", acc.AccountNumber)
+					return fmt.Errorf("el número de cuenta %s ya se encuentra registrado en el sistema", accounts[i].AccountNumber)
 				}
 				if strings.Contains(err.Error(), "FOREIGN KEY constraint failed") {
-					return fmt.Errorf("el banco con ID '%s' no existe en el sistema", acc.BankID)
+					return fmt.Errorf("el banco con ID '%s' no existe en el sistema", accounts[i].BankID)
 				}
 				return fmt.Errorf("error insertando nueva cuenta: %w", err)
 			}
@@ -624,13 +844,14 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 		} else {
 			// La cuenta ya existe. Actualizamos su estado para forzar la regla de negocio.
 			queryUpdateAcc := `UPDATE accounts SET status = ? WHERE id = ?`
-			_, err = tx.ExecContext(ctx, queryUpdateAcc, acc.Status, existingAccountID)
+			_, err = tx.ExecContext(ctx, queryUpdateAcc, accounts[i].Status, existingAccountID)
 			if err != nil {
 				tx.Rollback()
 				return fmt.Errorf("error actualizando estado de cuenta existente: %w", err)
 			}
+			// ¡ACTUALIZAMOS EL ID AL ID EXISTENTE PARA NO ROMPER LA LLAVE FORÁNEA DEL ALIAS!
+			accounts[i].ID = existingAccountID
 		}
-		// Continuamos con la siguiente cuenta
 	}
 
 	// 3. Manejo del Alias (solo si el usuario envió un valor)
@@ -640,12 +861,29 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 			alias.CustomerID = customer.ID
 			alias.AliasValue = aliasValue
 
+			// Encontrar una cuenta por defecto para el alias (que no sea en dólares)
+			defaultAccountID := ""
+			for _, acc := range accounts {
+				if strings.ToLower(acc.AccountType) != "dolares" {
+					defaultAccountID = acc.ID
+					break
+				}
+			}
+			
+			// Si por alguna razón solo tiene cuentas en dólares (lo cual no debería pasar según negocio),
+			// o no se encontró otra, tomamos la primera disponible
+			if defaultAccountID == "" && len(accounts) > 0 {
+				defaultAccountID = accounts[0].ID
+			}
+
+			alias.AccountID = defaultAccountID
+
 			aliasStatus := strings.TrimSpace(alias.Status)
 			if aliasStatus == "" {
 				aliasStatus = domain.AliasStatusEnabled
 			}
-			queryAlias := `INSERT INTO alias (id, customer_id, alias_value, status, created_at) VALUES (?,?,?,?,?)`
-			_, err = tx.ExecContext(ctx, queryAlias, alias.ID, alias.CustomerID, alias.AliasValue, aliasStatus, alias.CreatedAt)
+			queryAlias := `INSERT INTO alias (id, customer_id, account_id, alias_value, status, created_at) VALUES (?,?,?,?,?,?)`
+			_, err = tx.ExecContext(ctx, queryAlias, alias.ID, alias.CustomerID, alias.AccountID, alias.AliasValue, aliasStatus, alias.CreatedAt)
 			if err != nil {
 				tx.Rollback()
 				errStr := err.Error()
@@ -657,6 +895,13 @@ func (r *RealRepository) CreateFullUser(ctx context.Context, customer *domain.Cu
 					return fmt.Errorf("este usuario ya tiene un alias activo registrado")
 				}
 				return fmt.Errorf("error insertando alias: %w", err)
+			}
+
+			if strings.TrimSpace(alias.AccountID) != "" {
+				if err := r.syncAliasBankLinkForAccountTx(ctx, tx, alias.ID, alias.AccountID, alias.CreatedAt); err != nil {
+					tx.Rollback()
+					return fmt.Errorf("error vinculando alias con cuenta del banco: %w", err)
+				}
 			}
 		}
 	}

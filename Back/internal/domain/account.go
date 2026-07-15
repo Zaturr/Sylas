@@ -24,3 +24,8 @@ func IsAccountInactive(status string) bool {
 		return false
 	}
 }
+
+// IsDollarAccount indica si la cuenta es en moneda extranjera (no elegible para alias).
+func IsDollarAccount(accountType string) bool {
+	return strings.ToLower(strings.TrimSpace(accountType)) == "dolares"
+}

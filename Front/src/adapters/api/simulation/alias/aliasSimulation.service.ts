@@ -1,4 +1,5 @@
 import type {
+  ChangeLinkedAccountResult,
   CheckAliasResult,
   DeleteAliasResult,
   RegisterAliasResult,
@@ -7,25 +8,36 @@ import type {
 } from '../../../../application/simulation/authSimulation.port';
 import type { SimulationSession } from '../../../../domain/simulation/auth.types';
 import { isPendingAlias } from '../../../../domain/simulation/auth.types';
+import type { ParsedDocument } from '../../../../domain/simulation/documentParser';
 import { parseDocumentInput } from '../../../../domain/simulation/documentParser';
 import { validateAliasValue } from '../../../../domain/simulation/aliasValidation';
-import { SIMF_REASON_NOT_FOUND } from '../../../../domain/simulation/simf.constants';
-import { SIMF_ALIAS_STATUS, isAliasGloballyBlocked } from '../../../../domain/simulation/aliasStatus';
+import { isAliasGloballyBlocked } from '../../../../domain/simulation/aliasStatus';
 import { buildSimfTraceSessionKey } from '../../../../domain/peticiones';
 import { appConfig } from '../../app.config';
+import { getPrimaryAccount } from '../../../../domain/simulation/aliasFlow';
 import {
   resolveByDocument,
   deleteAliasByValue,
+  updateAliasLinkedAccount,
 } from './aliasHttp.client';
-import {
-  buildAliasCheckFromResolve,
-  mapAliasCheckFromResolve,
-} from './aliasCheck.mapper';
+import { buildAliasCheckFromResolve } from './aliasCheck.mapper';
 import { buildFilteredSession } from '../auth/sessionAccount.service';
 import type { createBlockAliasViaSimf } from '../simf/simfAliasBlock.client';
 import type { createRegisterAliasViaSimf } from '../simf/simfAliasCreate.client';
 import type { createResolveAliasViaSimf } from '../simf/simfAliasResolve.client';
 import type { createUpdateAliasViaSimf } from '../simf/simfAliasUpdate.client';
+import type { ResolveAliasResponse } from './alias.types';
+
+function attachSessionToCheck(
+  check: Omit<Extract<CheckAliasResult, { ok: true }>, 'session'>,
+  resolved: ResolveAliasResponse,
+  document: ParsedDocument,
+): Extract<CheckAliasResult, { ok: true }> {
+  return {
+    ...check,
+    session: buildFilteredSession(resolved, document),
+  };
+}
 
 export type SimfAliasClients = {
   resolveAliasViaSimf: ReturnType<typeof createResolveAliasViaSimf>;
@@ -44,6 +56,11 @@ export type AliasSimulationService = {
     input: UpdateAliasStatusInput,
     signal?: AbortSignal,
   ): Promise<UpdateAliasStatusResult>;
+  changeLinkedAccount(
+    session: SimulationSession,
+    accountId: string,
+    signal?: AbortSignal,
+  ): Promise<ChangeLinkedAccountResult>;
   registerAlias(
     session: SimulationSession,
     aliasValue: string,
@@ -102,12 +119,8 @@ export function createAliasSimulationService(
       if (!resolved.ok) {
         if (resolved.status === 404) {
           return {
-            ok: true,
-            status: 'not-found',
-            reason: SIMF_REASON_NOT_FOUND,
-            message: 'No se encontró un alias configurado para esta cédula.',
-            agentStatus: SIMF_ALIAS_STATUS.UNREGISTERED,
-            bankCode: appConfig.simulation.bankCode,
+            ok: false,
+            message: 'No se encontró un titular para esta cédula.',
           };
         }
 
@@ -117,7 +130,52 @@ export function createAliasSimulationService(
         };
       }
 
-      return mapAliasCheckFromResolve(resolved.data);
+      const check = attachSessionToCheck(
+        buildAliasCheckFromResolve(resolved.data),
+        resolved.data,
+        document,
+      );
+
+      return check;
+    },
+
+    async changeLinkedAccount(session, accountId, signal) {
+      const aliasValue = session.alias?.trim();
+      if (!aliasValue || isPendingAlias(aliasValue)) {
+        return { ok: false, message: 'No hay un alias configurado para vincular la cuenta.' };
+      }
+
+      const selectedAccount = session.accounts.find((account) => account.id === accountId);
+      if (!selectedAccount) {
+        return { ok: false, message: 'La cuenta seleccionada no existe en la sesión.' };
+      }
+      if (selectedAccount.account_type?.toLowerCase() === 'dolares') {
+        return { ok: false, message: 'No se puede vincular un alias a una cuenta en dólares.' };
+      }
+
+      const linked = await updateAliasLinkedAccount(aliasValue, accountId, signal);
+      if (!linked.ok) {
+        return { ok: false, message: linked.message };
+      }
+
+      const document = session.mappedDocument;
+      const resolved = await resolveByDocument(
+        document.documentType,
+        document.documentNumber,
+        signal,
+      );
+
+      if (!resolved.ok) {
+        return {
+          ok: false,
+          message: 'La cuenta se vinculó, pero no se pudo refrescar la sesión.',
+        };
+      }
+
+      return {
+        ok: true,
+        session: buildFilteredSession(resolved.data, document),
+      };
     },
 
     async updateAliasStatus(session, input, signal) {
@@ -148,11 +206,15 @@ export function createAliasSimulationService(
         };
       }
 
-      const check = buildAliasCheckFromResolve(resolved.data);
+      const check = attachSessionToCheck(
+        buildAliasCheckFromResolve(resolved.data),
+        resolved.data,
+        document,
+      );
 
       return {
         ok: true,
-        session: buildFilteredSession(resolved.data, document),
+        session: check.session,
         check,
       };
     },
@@ -195,6 +257,19 @@ export function createAliasSimulationService(
       );
       if (!created.ok) {
         return { ok: false, message: created.message };
+      }
+
+      const primaryAccount = getPrimaryAccount(session);
+      if (!primaryAccount) {
+        return { ok: false, message: 'Debes seleccionar una cuenta para vincular al alias.' };
+      }
+
+      const linked = await updateAliasLinkedAccount(trimmedAlias, primaryAccount.id, signal);
+      if (!linked.ok) {
+        return {
+          ok: false,
+          message: linked.message,
+        };
       }
 
       const resolved = await resolveByDocument(
@@ -249,11 +324,15 @@ export function createAliasSimulationService(
         };
       }
 
-      const check = buildAliasCheckFromResolve(resolved.data);
+      const check = attachSessionToCheck(
+        buildAliasCheckFromResolve(resolved.data),
+        resolved.data,
+        document,
+      );
 
       return {
         ok: true,
-        session: buildFilteredSession(resolved.data, document),
+        session: check.session,
         check,
       };
     },

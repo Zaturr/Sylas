@@ -10,6 +10,7 @@ import {
   isAliasDeletionBlocked,
   needsAccountLinking,
   withPrimaryAccount,
+  canBlockAliasFromSession,
 } from '../../../../domain/simulation/aliasFlow';
 import { isUserModifiableAliasStatus } from '../../../../domain/simulation/aliasStatus';
 import { formatDocumentInput } from '../../../../domain/simulation';
@@ -142,7 +143,7 @@ export function useSimulationAuth() {
     }
 
     const check = mapServiceCheckToState(result);
-    dispatch({ type: 'ALIAS_CHECK_SUCCESS', check });
+    dispatch({ type: 'ALIAS_CHECK_SUCCESS', check, session: result.session });
 
     if (check.status === 'found' && needsAccountLinking(state.session, check)) {
       dispatch({ type: 'OPEN_ALIAS_LINK_ACCOUNT', mode: 'initial' });
@@ -188,17 +189,47 @@ export function useSimulationAuth() {
     dispatch({ type: 'SET_SELECTED_ACCOUNT', accountId });
   }, []);
 
-  const confirmLinkAccount = useCallback(() => {
+  const confirmLinkAccount = useCallback(async () => {
     if (!state.session || !state.selectedAccountId) {
+      return;
+    }
+
+    const newSession = withPrimaryAccount(state.session, state.selectedAccountId);
+
+    if (state.session.hasConfiguredAlias && state.aliasCheck?.alias) {
+      dispatch({ type: 'SUBMIT_UPDATE_ALIAS_STATUS' });
+
+      const result = await authSimulationService.changeLinkedAccount(
+        newSession,
+        state.selectedAccountId,
+      );
+
+      if (result.ok === false) {
+        dispatch({ type: 'UPDATE_ALIAS_STATUS_FAILED', message: result.message });
+        return;
+      }
+
+      dispatch({
+        type: 'SELECT_LINK_ACCOUNT',
+        session: result.session,
+        accountId: state.selectedAccountId,
+      });
+      await runAliasCheck();
       return;
     }
 
     dispatch({
       type: 'SELECT_LINK_ACCOUNT',
-      session: withPrimaryAccount(state.session, state.selectedAccountId),
+      session: newSession,
       accountId: state.selectedAccountId,
     });
-  }, [state.session, state.selectedAccountId]);
+  }, [
+    authSimulationService,
+    runAliasCheck,
+    state.aliasCheck?.alias,
+    state.selectedAccountId,
+    state.session,
+  ]);
 
   const setAliasInput = useCallback((value: string) => {
     dispatch({ type: 'SET_ALIAS_INPUT', value });
@@ -299,6 +330,15 @@ export function useSimulationAuth() {
         type: 'OPEN_ALIAS_ERROR',
         message:
           'No puedes bloquear este alias porque fue creado hace menos de 30 días.',
+      });
+      return;
+    }
+
+    const blockValidation = canBlockAliasFromSession(state.session, state.aliasCheck);
+    if (!blockValidation.allowed) {
+      dispatch({
+        type: 'OPEN_ALIAS_ERROR',
+        message: blockValidation.message,
       });
       return;
     }

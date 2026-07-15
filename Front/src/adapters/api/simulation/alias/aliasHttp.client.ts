@@ -40,6 +40,28 @@ export async function deleteAliasByValue(
   return response.ok;
 }
 
+export async function updateAliasLinkedAccount(
+  aliasValue: string,
+  accountId: string,
+  signal?: AbortSignal,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(`${appConfig.apiBaseUrl}/alias/${encodeURIComponent(aliasValue)}/account`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account_id: accountId }),
+    signal,
+  });
+
+  if (response.ok) {
+    return { ok: true };
+  }
+
+  return {
+    ok: false,
+    message: await readApiError(response, 'No se pudo actualizar la cuenta vinculada'),
+  };
+}
+
 export async function createAliasForCustomer(
   customerId: string,
   aliasValue: string,

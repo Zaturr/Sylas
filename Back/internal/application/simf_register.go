@@ -65,16 +65,19 @@ func (s *AppService) ensureSimfAccounts(ctx context.Context, customerID string, 
 		return err
 	}
 
-	linkedBanks := make(map[string]struct{}, len(existingAccounts))
+	linkedAccounts := make(map[string]struct{}, len(existingAccounts))
 	for _, account := range existingAccounts {
-		linkedBanks[account.BankID] = struct{}{}
+		// En lugar de usar BankID, usamos BankID + AccountType para saber si esa cuenta específica ya existe
+		key := account.BankID + "-" + strings.ToLower(account.AccountType)
+		linkedAccounts[key] = struct{}{}
 	}
 
 	for i := range accounts {
 		account := accounts[i]
 		account.CustomerID = customerID
 
-		if _, exists := linkedBanks[account.BankID]; exists {
+		key := account.BankID + "-" + strings.ToLower(account.AccountType)
+		if _, exists := linkedAccounts[key]; exists {
 			continue
 		}
 
@@ -88,7 +91,7 @@ func (s *AppService) ensureSimfAccounts(ctx context.Context, customerID string, 
 			}
 			return err
 		}
-		linkedBanks[account.BankID] = struct{}{}
+		linkedAccounts[key] = struct{}{}
 	}
 
 	return nil

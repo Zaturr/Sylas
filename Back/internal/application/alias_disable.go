@@ -18,6 +18,19 @@ func (s *AppService) DisableAlias(ctx context.Context, aliasValue string) (*doma
 		return nil, ErrSimfAliasBlocked
 	}
 
+	bankLinks, err := s.repo.GetAliasBankLinksByAliasID(ctx, alias.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	accounts, err := s.repo.GetAccountsByCustomerID(ctx, alias.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+	if !domain.AllAliasLinkedAccountsInactive(bankLinks, accounts) {
+		return nil, ErrSimfAliasBlockRequiresInactiveAccounts
+	}
+
 	if err := s.repo.UpdateAliasStatus(ctx, alias.ID, domain.AliasStatusBlocked); err != nil {
 		return nil, err
 	}

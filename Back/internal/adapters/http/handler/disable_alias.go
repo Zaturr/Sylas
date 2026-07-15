@@ -25,6 +25,8 @@ func (h *HTTPHandler) DisableAlias(c *gin.Context) {
 			respondError(c, http.StatusNotFound, "alias no encontrado")
 		case errors.Is(err, application.ErrSimfAliasBlocked):
 			respondError(c, http.StatusConflict, "alias ya se encuentra deshabilitado")
+		case errors.Is(err, application.ErrSimfAliasBlockRequiresInactiveAccounts):
+			respondError(c, http.StatusUnprocessableEntity, "no se puede bloquear el alias (BLKD) hasta que el vínculo con cada banco asociado esté inactivo (INAC)")
 		default:
 			respondError(c, http.StatusInternalServerError, "No se pudo deshabilitar el alias")
 		}

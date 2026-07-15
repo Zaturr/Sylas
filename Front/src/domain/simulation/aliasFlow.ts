@@ -1,6 +1,7 @@
 import type { Account } from '../account';
 import type { AliasCheckResult, SimulationSession } from './auth.types';
-import { SIMF_ALIAS_STATUS } from './aliasStatus';
+import type { AliasBankLinkDetail } from './auth.types';
+import { SIMF_ALIAS_STATUS, type SimfAliasStatus } from './aliasStatus';
 
 export const ALIAS_DELETE_MIN_DAYS = 30;
 
@@ -13,11 +14,21 @@ export function applyBankAccountFilter(
   bankCode: string,
 ): SimulationSession {
   const accounts = filterAccountsByBankCode(session.accounts, bankCode);
-  const primaryAccountId =
-    session.primaryAccountId &&
-    accounts.some((account) => account.id === session.primaryAccountId)
-      ? session.primaryAccountId
-      : (accounts[0]?.id ?? null);
+  
+  // Try to find a valid primary account ID that is not 'dolares'
+  let primaryAccountId = session.primaryAccountId;
+  
+  if (primaryAccountId) {
+    const selected = accounts.find((account) => account.id === primaryAccountId);
+    if (!selected || selected.account_type?.toLowerCase() === 'dolares') {
+      primaryAccountId = null;
+    }
+  }
+
+  if (!primaryAccountId) {
+    const validAccount = accounts.find(account => account.account_type?.toLowerCase() !== 'dolares');
+    primaryAccountId = validAccount?.id ?? (accounts[0]?.id ?? null);
+  }
 
   return {
     ...session,
@@ -36,14 +47,15 @@ export function getPrimaryAccount(session: SimulationSession, bankCode?: string)
     : session.accounts;
 
   if (session.primaryAccountId) {
-    return (
-      accounts.find((account) => account.id === session.primaryAccountId) ??
-      accounts[0] ??
-      null
-    );
+    const selected = accounts.find((account) => account.id === session.primaryAccountId);
+    if (selected && selected.account_type?.toLowerCase() !== 'dolares') {
+      return selected;
+    }
   }
 
-  return accounts[0] ?? null;
+  // Find the first account that is not 'dolares'
+  const validAccount = accounts.find(account => account.account_type?.toLowerCase() !== 'dolares');
+  return validAccount ?? accounts[0] ?? null;
 }
 
 export function withPrimaryAccount(
@@ -51,7 +63,7 @@ export function withPrimaryAccount(
   accountId: string,
 ): SimulationSession {
   const selected = session.accounts.find((account) => account.id === accountId);
-  if (!selected) {
+  if (!selected || selected.account_type?.toLowerCase() === 'dolares') {
     return session;
   }
 
@@ -112,4 +124,52 @@ export function isAliasDeletionBlocked(createdAt: string | undefined | null): bo
 export function getAccountDisplayLabel(account: Account): string {
   const lastDigits = account.account_number.slice(-4);
   return `${account.bank_id} ·••• ${lastDigits}`;
+}
+
+function isAccountActiveStatus(status: string | undefined): boolean {
+  const normalized = status?.trim().toUpperCase() ?? '';
+  return normalized === 'ACTIVE' || normalized === SIMF_ALIAS_STATUS.ACTIVE;
+}
+
+/** BLKD solo permitido cuando cada vínculo alias-banco está INAC. */
+export function canBlockAliasGlobally(
+  bankLinks: AliasBankLinkDetail[],
+  agentStatus: SimfAliasStatus | null,
+): { allowed: boolean; message: string } {
+  if (agentStatus === SIMF_ALIAS_STATUS.ACTIVE) {
+    return {
+      allowed: false,
+      message:
+        'Debes inactivar el vínculo del alias con el banco antes de bloquearlo (BLKD).',
+    };
+  }
+
+  if (bankLinks.length === 0) {
+    return {
+      allowed: false,
+      message: 'No hay vínculos bancarios asociados al alias.',
+    };
+  }
+
+  const hasActiveLink = bankLinks.some((link) => isAccountActiveStatus(link.status));
+
+  if (hasActiveLink) {
+    return {
+      allowed: false,
+      message:
+        'No puedes bloquear el alias (BLKD) hasta que el vínculo con cada banco asociado esté inactivo (INAC).',
+    };
+  }
+
+  return { allowed: true, message: '' };
+}
+
+export function canBlockAliasFromSession(
+  session: SimulationSession,
+  aliasCheck: AliasCheckResult | null,
+): { allowed: boolean; message: string } {
+  return canBlockAliasGlobally(
+    session.bankLinks,
+    aliasCheck?.agentStatus ?? null,
+  );
 }

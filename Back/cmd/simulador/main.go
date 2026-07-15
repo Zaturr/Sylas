@@ -59,6 +59,7 @@ func main() {
 		api.DELETE("/alias/id/:id", httpHandler.DeleteAliasByID)
 		api.DELETE("/alias/:value", httpHandler.DeleteAliasByValue)
 		api.PUT("/alias/:value/disable", httpHandler.DisableAlias)
+		api.PUT("/alias/:value/account", httpHandler.UpdateAliasAccount)
 		api.DELETE("/users/:customer_id", httpHandler.DeleteUserByCustomerID)
 
 		// Randomizer

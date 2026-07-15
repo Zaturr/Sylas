@@ -3,6 +3,7 @@ export type TestScenarioAccountStatus = 'ACTV' | 'INAC';
 export type TestScenarioAccountConfig = {
   bank_id: string;
   status: TestScenarioAccountStatus;
+  type?: 'corriente' | 'ahorro' | 'dolares';
 };
 
 export type TestScenarioConfig = {
@@ -43,7 +44,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       first_name: 'Carlos',
       last_name: 'Mendoza',
       second_last_name: 'Perez',
-      accounts: [{ bank_id: userBankId, status: 'ACTV' }],
+      accounts: [
+        { bank_id: userBankId, status: 'ACTV', type: 'corriente' },
+        { bank_id: userBankId, status: 'ACTV', type: 'ahorro' },
+        { bank_id: userBankId, status: 'ACTV', type: 'dolares' },
+      ],
     },
     {
       id: 'UNRG-SOLO-02',
@@ -52,7 +57,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       first_name: 'Laura',
       last_name: 'Fernandez',
       second_last_name: 'Gomez',
-      accounts: [{ bank_id: userBankId, status: 'ACTV' }],
+      accounts: [
+        { bank_id: userBankId, status: 'ACTV', type: 'corriente' },
+        { bank_id: userBankId, status: 'ACTV', type: 'ahorro' },
+        { bank_id: userBankId, status: 'ACTV', type: 'dolares' },
+      ],
     },
     {
       id: 'UNRG-SOLO-03',
@@ -61,7 +70,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       first_name: 'Miguel',
       last_name: 'Torres',
       second_last_name: 'Ruiz',
-      accounts: [{ bank_id: userBankId, status: 'ACTV' }],
+      accounts: [
+        { bank_id: userBankId, status: 'ACTV', type: 'corriente' },
+        { bank_id: userBankId, status: 'ACTV', type: 'ahorro' },
+        { bank_id: userBankId, status: 'ACTV', type: 'dolares' },
+      ],
     },
     {
       id: 'UNRG-SOLO-04',
@@ -70,7 +83,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       first_name: 'Andrea',
       last_name: 'Ruiz',
       second_last_name: 'Silva',
-      accounts: [{ bank_id: userBankId, status: 'ACTV' }],
+      accounts: [
+        { bank_id: userBankId, status: 'ACTV', type: 'corriente' },
+        { bank_id: userBankId, status: 'ACTV', type: 'ahorro' },
+        { bank_id: userBankId, status: 'ACTV', type: 'dolares' },
+      ],
     },
     {
       id: 'UNRG-SOLO-05',
@@ -79,7 +96,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       first_name: 'Roberto',
       last_name: 'Silva',
       second_last_name: 'Mendoza',
-      accounts: [{ bank_id: userBankId, status: 'ACTV' }],
+      accounts: [
+        { bank_id: userBankId, status: 'ACTV', type: 'corriente' },
+        { bank_id: userBankId, status: 'ACTV', type: 'ahorro' },
+        { bank_id: userBankId, status: 'ACTV', type: 'dolares' },
+      ],
     },
     // 5 con multiples bancos
     {
@@ -159,7 +180,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       last_name: 'Ramirez',
       second_last_name: 'Gomez',
       alias_status: 'BLKD',
-      accounts: [{ bank_id: userBankId, status: 'INAC' }],
+      accounts: [
+        { bank_id: userBankId, status: 'INAC', type: 'corriente' },
+        { bank_id: userBankId, status: 'INAC', type: 'ahorro' },
+        { bank_id: userBankId, status: 'INAC', type: 'dolares' },
+      ],
     },
     {
       id: 'BLKD-MULTI-01',
@@ -185,7 +210,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       first_name: 'Elena',
       last_name: 'Vargas',
       second_last_name: 'Silva',
-      accounts: [{ bank_id: userBankId, status: 'INAC' }],
+      accounts: [
+        { bank_id: userBankId, status: 'INAC', type: 'corriente' },
+        { bank_id: userBankId, status: 'INAC', type: 'ahorro' },
+        { bank_id: userBankId, status: 'INAC', type: 'dolares' },
+      ],
     },
     {
       id: 'INAC-ALL-01',
@@ -240,7 +269,11 @@ function buildTestScenarios(userBankId: string): TestScenarioConfig[] {
       first_name: 'Gabriela',
       last_name: 'Pinto',
       second_last_name: 'Torres',
-      accounts: [{ bank_id: userBankId, status: 'ACTV' }],
+      accounts: [
+        { bank_id: userBankId, status: 'ACTV', type: 'corriente' },
+        { bank_id: userBankId, status: 'ACTV', type: 'ahorro' },
+        { bank_id: userBankId, status: 'ACTV', type: 'dolares' },
+      ],
     },
     {
       id: 'ACTV-ALL-01',

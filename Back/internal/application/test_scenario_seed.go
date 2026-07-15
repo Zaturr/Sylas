@@ -48,12 +48,17 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 
 		accounts := make([]domain.Account, 0, len(scenario.Accounts))
 		for _, accountCfg := range scenario.Accounts {
+			accType := strings.TrimSpace(accountCfg.Type)
+			if accType == "" {
+				accType = "corriente" // Por defecto si no viene del frontend
+			}
+			
 			accounts = append(accounts, domain.Account{
 				ID:            uuid.New().String(),
 				BankID:        accountCfg.BankID,
 				CustomerID:    customerID,
 				AccountNumber: buildScenarioAccountNumber(accountCfg.BankID, scenario.DocumentNumber),
-				AccountType:   req.AccountType,
+				AccountType:   accType,
 				Status:        testScenarioStatusToCore(accountCfg.Status),
 				CreatedAt:     now,
 			})
@@ -78,6 +83,20 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 		if err := s.repo.CreateFullUser(ctx, customer, accounts, alias); err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
 			continue
+		}
+
+		if alias != nil {
+			createdAlias, err := s.repo.GetAliasByCustomerID(ctx, customerID)
+			if err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
+				continue
+			}
+			if createdAlias != nil {
+				if err := s.repo.SyncAliasBankLinksFromAccounts(ctx, createdAlias.ID, accounts); err != nil {
+					result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
+					continue
+				}
+			}
 		}
 
 		result.Created++
@@ -107,11 +126,21 @@ func validateTestScenario(scenario domain.TestScenario) error {
 	}
 
 	if aliasStatus == domain.AliasStatusBlocked || aliasStatus == domain.AliasStatusDisabled {
+		linkedByBank := make(map[string]struct{})
 		for _, account := range scenario.Accounts {
-			status := strings.ToUpper(strings.TrimSpace(account.Status))
-			if status != "INAC" && status != "INACTIVE" {
-				return fmt.Errorf("BLKD global requiere que todas las cuentas esten INAC")
+			if domain.IsDollarAccount(account.Type) {
+				continue
 			}
+			if _, exists := linkedByBank[account.BankID]; exists {
+				continue
+			}
+			linkedByBank[account.BankID] = struct{}{}
+			if !domain.IsAccountInactive(account.Status) {
+				return fmt.Errorf("BLKD global requiere que el vínculo con cada banco asociado esté INAC")
+			}
+		}
+		if len(linkedByBank) == 0 {
+			return fmt.Errorf("BLKD global requiere al menos un vínculo bancario")
 		}
 	}
 

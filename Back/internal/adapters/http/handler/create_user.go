@@ -39,8 +39,23 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 
 	//////////////////VALIDAR LOS DATOS DEL REQUEST//////////////////
 	accountNumbers := make([]string, len(req.Accounts))
+	accountTypes := make([]string, len(req.Accounts))
 	for i, accReq := range req.Accounts {
 		accountNumbers[i] = accReq.AccountNumber
+		
+		// Aseguramos que tengan un tipo de cuenta válido si viene vacío
+		accType := strings.TrimSpace(accReq.AccountType)
+		if accType == "" {
+			if i == 0 {
+				accType = "corriente"
+			} else if i == 1 {
+				accType = "ahorro"
+			} else {
+				accType = "dolares"
+			}
+		}
+		accountTypes[i] = accType
+		req.Accounts[i].AccountType = accType // Guardarlo en el req para que el resto del código lo use
 	}
 	if msg := validations.ValidateCreateUser(validations.CreateUserInput{
 		DocumentType:   req.DocumentType,
@@ -48,7 +63,9 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 		FirstName:      req.FirstName,
 		LastName:       req.LastName,
 		SecondLastName: req.SecondLastName,
+		AliasValue:     req.AliasValue,
 		AccountNumbers: accountNumbers,
+		AccountType:    accountTypes,
 	}); msg != "" {
 		respondError(c, 400, msg)
 		return
@@ -70,6 +87,22 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 	}
 
 	aliasValue := strings.TrimSpace(req.AliasValue)
+	if aliasValue != "" {
+		docType := strings.ToUpper(strings.TrimSpace(req.DocumentType))
+		// Si NO es jurídico, gubernamental o comuna...
+		if docType != "J" && docType != "G" && docType != "C" {
+			// Buscamos si el cliente ya existe en BD
+			existingCustomer, err := h.service.GetCustomerByDocument(c.Request.Context(), docType, req.DocumentNumber)
+			if err == nil && existingCustomer != nil {
+				// Buscamos si ese cliente ya tiene un alias activo
+				activeAlias, errAlias := h.service.GetActiveAliasByCustomerID(c.Request.Context(), existingCustomer.ID)
+				if errAlias == nil && activeAlias != nil {
+					respondError(c, 400, "Este tipo de documento solo admite un alias activo por banco")
+					return
+				}
+			}
+		}
+	}
 
 	customerID := uuid.New().String()
 	now := time.Now()
@@ -110,9 +143,19 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 		}
 	}
 
-	err := h.service.RegisterSimfUser(c.Request.Context(), customer, accounts, alias)
-	if err != nil {
-		status, message := mapSimfRegisterError(err)
+	var errCreation error
+	docTypeForBypass := strings.ToUpper(strings.TrimSpace(req.DocumentType))
+	if docTypeForBypass == "J" || docTypeForBypass == "G" || docTypeForBypass == "C" {
+		// Para respetar la restricción de NO tocar el código legacy/SIMF,
+		// y permitir que J, G y C tengan múltiples alias, utilizamos la capa
+		// de BD directamente, saltándonos RegisterSimfUser que los bloquearía.
+		errCreation = h.service.CreateFullUser(c.Request.Context(), customer, accounts, alias)
+	} else {
+		errCreation = h.service.RegisterSimfUser(c.Request.Context(), customer, accounts, alias)
+	}
+
+	if errCreation != nil {
+		status, message := mapSimfRegisterError(errCreation)
 		respondError(c, status, message)
 		return
 	}

@@ -23,6 +23,8 @@ func MapBlockSimfBusinessReason(err error) string {
 		return simfdomain.ReasonUnauthorizedIBP
 	case errors.Is(err, application.ErrSimfAliasBlocked):
 		return simfdomain.ReasonAliasBlocked
+	case errors.Is(err, application.ErrSimfAliasBlockRequiresInactiveAccounts):
+		return simfdomain.ReasonFormat
 	}
 
 	errText := strings.ToLower(err.Error())

@@ -44,6 +44,33 @@ func (h *HTTPHandler) CreatedAlias(c *gin.Context) {
 	c.JSON(201, alias)
 }
 
+type UpdateAliasAccountRequest struct {
+	AccountID string `json:"account_id"`
+}
+
+// UpdateAliasAccount maneja PUT /alias/:value/account
+func (h *HTTPHandler) UpdateAliasAccount(c *gin.Context) {
+	aliasValue := strings.TrimSpace(c.Param("value"))
+	if aliasValue == "" {
+		respondError(c, 400, "el valor del alias es requerido")
+		return
+	}
+
+	var req UpdateAliasAccountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondError(c, 400, "JSON invalido")
+		return
+	}
+
+	err := h.service.UpdateAliasAccount(c.Request.Context(), aliasValue, req.AccountID)
+	if err != nil {
+		respondError(c, 500, "Error actualizando cuenta del alias")
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Cuenta vinculada actualizada con éxito"})
+}
+
 // ResolveAlias maneja GET /alias/resolve por documento (?document_type=V&document_number=12345678).
 func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 	documentType := strings.TrimSpace(c.Query("document_type"))
@@ -74,9 +101,18 @@ func (h *HTTPHandler) ResolveAlias(c *gin.Context) {
 	if alias != nil {
 		response["alias"] = alias.AliasValue
 		response["alias_status"] = alias.Status
+		response["account_id"] = alias.AccountID
+
+		bankLinks, err := h.service.GetAliasBankLinkDetails(c.Request.Context(), alias.ID, accounts)
+		if err != nil {
+			respondError(c, 500, err.Error())
+			return
+		}
+		response["bank_links"] = bankLinks
 	} else {
 		response["alias"] = nil
 		response["alias_status"] = domain.AliasStatusUnregistered
+		response["account_id"] = nil
 	}
 
 	c.JSON(200, response)

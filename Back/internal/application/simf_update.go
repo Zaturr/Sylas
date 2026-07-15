@@ -27,13 +27,29 @@ func (s *AppService) UpdateSimfAliasAgentStatus(
 		return nil, err
 	}
 
+	bankLinks, err := s.repo.GetAliasBankLinksByAliasID(ctx, alias.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	var accountID string
-	for _, account := range accounts {
-		if account.BankID == bankID {
-			accountID = account.ID
+	for _, link := range bankLinks {
+		if link.BankID == bankID {
+			accountID = link.AccountID
 			break
 		}
 	}
+
+	// Fallback legacy por si no hay vínculo en alias_bank_links
+	if accountID == "" && alias.AccountID != "" {
+		for _, account := range accounts {
+			if account.ID == alias.AccountID && account.BankID == bankID {
+				accountID = account.ID
+				break
+			}
+		}
+	}
+
 	if accountID == "" {
 		return nil, ErrSimfAgentNotLinked
 	}

@@ -24,7 +24,7 @@ export type SimulationAuthAction =
   | { type: 'OPEN_ALIAS_LINK_ACCOUNT'; mode: AliasLinkAccountMode }
   | { type: 'SET_SELECTED_ACCOUNT'; accountId: string }
   | { type: 'SELECT_LINK_ACCOUNT'; session: SimulationSession; accountId: string }
-  | { type: 'ALIAS_CHECK_SUCCESS'; check: NonNullable<SimulationAuthState['aliasCheck']> }
+  | { type: 'ALIAS_CHECK_SUCCESS'; check: NonNullable<SimulationAuthState['aliasCheck']>; session: SimulationSession }
   | { type: 'ALIAS_CHECK_FAILED'; message: string }
   | { type: 'OPEN_CREATE_ALIAS' }
   | { type: 'SET_ALIAS_INPUT'; value: string }
@@ -189,11 +189,13 @@ export function simulationAuthReducer(
         session: action.session,
         selectedAccountId: action.accountId,
         errorMessage: '',
+        isSubmitting: false,
       };
     case 'ALIAS_CHECK_SUCCESS':
       return {
         ...state,
         isSubmitting: false,
+        session: action.session,
         aliasCheck: action.check,
         aliasStatusInput:
           action.check.status === 'found' &&

@@ -11,6 +11,7 @@ export function buildSession(
   mappedDocument: ParsedDocument,
 ): SimulationSession {
   const alias = response.alias?.trim() || null;
+  const linkedAccountId = response.account_id?.trim() || null;
 
   return applyBankAccountFilter(
     {
@@ -19,8 +20,9 @@ export function buildSession(
       alias,
       hasConfiguredAlias: hasConfiguredAliasValue(alias),
       mappedDocument,
-      primaryAccountId: null,
+      primaryAccountId: linkedAccountId,
       aliasCoreStatus: response.alias_status?.trim() || 'UNRG',
+      bankLinks: response.bank_links ?? [],
     },
     appConfig.simulation.bankCode,
   );

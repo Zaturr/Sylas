@@ -12,12 +12,30 @@ import {
 import { appConfig } from '../../app.config';
 import type { ResolveAliasResponse } from './alias.types';
 
-function resolveAgentStatus(accounts: Account[], bankCode: string): SimfAliasStatus {
-  const account = accounts.find((item) => item.bank_id === bankCode);
-  if (!account) {
-    return SIMF_ALIAS_STATUS.UNREGISTERED;
+function resolveAgentStatus(
+  accounts: Account[],
+  bankCode: string,
+  linkedAccountId?: string | null,
+  bankLinks?: ResolveAliasResponse['bank_links'],
+): SimfAliasStatus {
+  const linkedBank = bankLinks?.find((item) => item.bank_id === bankCode);
+  if (linkedBank) {
+    const linkedAccount = accounts.find((item) => item.id === linkedBank.account_id);
+    if (linkedAccount) {
+      return coreAccountStatusToSimf(linkedAccount.status);
+    }
+    return coreAccountStatusToSimf(linkedBank.status);
   }
-  return coreAccountStatusToSimf(account.status);
+
+  const linkedId = linkedAccountId?.trim();
+  if (linkedId) {
+    const linkedAccount = accounts.find((item) => item.id === linkedId && item.bank_id === bankCode);
+    if (linkedAccount) {
+      return coreAccountStatusToSimf(linkedAccount.status);
+    }
+  }
+
+  return SIMF_ALIAS_STATUS.UNREGISTERED;
 }
 
 export function buildAliasCheckFromResolve(
@@ -28,7 +46,7 @@ export function buildAliasCheckFromResolve(
   const bankAccounts = filterAccountsByBankCode(resolved.accounts ?? [], bankCode);
   const agentStatus = isAliasGloballyBlocked(resolved.alias_status)
     ? SIMF_ALIAS_STATUS.BLOCKED
-    : resolveAgentStatus(bankAccounts, bankCode);
+    : resolveAgentStatus(bankAccounts, bankCode, resolved.account_id, resolved.bank_links);
 
   if (!hasConfiguredAliasValue(alias)) {
     return {

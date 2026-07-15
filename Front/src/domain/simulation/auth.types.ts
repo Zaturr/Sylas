@@ -3,6 +3,12 @@ import type { Customer } from '../user';
 import type { ParsedDocument } from './documentParser';
 import type { SimfAliasStatus, UserModifiableAliasStatus } from './aliasStatus';
 
+export type AliasBankLinkDetail = {
+  bank_id: string;
+  account_id: string;
+  status: string;
+};
+
 export type SimulationAuthStep =
   | 'login'
   | 'create-account'
@@ -25,6 +31,7 @@ export type SimulationSession = {
   mappedDocument: ParsedDocument;
   primaryAccountId: string | null;
   aliasCoreStatus: string | null;
+  bankLinks: AliasBankLinkDetail[];
 };
 
 export type AliasCheckStatus = 'found' | 'not-found' | 'error';

@@ -5,6 +5,7 @@ import type { AliasCheckResult } from '../../../../../domain/simulation/auth.typ
 import {
   getAccountDisplayLabel,
   getPrimaryAccount,
+  canBlockAliasFromSession,
 } from '../../../../../domain/simulation/aliasFlow';
 import type { SimulationSession } from '../../../../../domain/simulation/auth.types';
 import {
@@ -53,6 +54,7 @@ export function AliasManagementStep({
 }: AliasManagementStepProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [blockWarningOpen, setBlockWarningOpen] = useState(false);
 
   const documentLabel = formatDocumentInput(
     mappedDocument.documentType,
@@ -79,6 +81,7 @@ export function AliasManagementStep({
 
   const canUpdateStatus = hasAlias && !isBlocked && selectValue !== currentModifiable;
   const primaryAccount = getPrimaryAccount(session);
+  const blockValidation = canBlockAliasFromSession(session, aliasCheck);
 
   const statusOptions = USER_MODIFIABLE_ALIAS_STATUSES.map((status) => ({
     value: status,
@@ -93,6 +96,14 @@ export function AliasManagementStep({
   const handleConfirmDelete = () => {
     setDeleteConfirmOpen(false);
     onDeleteAlias();
+  };
+
+  const handleBlockAliasClick = () => {
+    if (!blockValidation.allowed) {
+      setBlockWarningOpen(true);
+      return;
+    }
+    setDeleteConfirmOpen(true);
   };
 
   return (
@@ -170,6 +181,11 @@ export function AliasManagementStep({
             disabled={isSubmitting}
             onChange={onAliasStatusChange}
           />
+          {!blockValidation.allowed && (
+            <p className="sim-card__subtitle sim-card__subtitle--warning">
+              {blockValidation.message}
+            </p>
+          )}
         </div>
       )}
 
@@ -202,7 +218,7 @@ export function AliasManagementStep({
           <button
             type="button"
             className="sim-mobile-btn sim-mobile-btn--ghost sim-mobile-btn--danger-text"
-            onClick={() => setDeleteConfirmOpen(true)}
+            onClick={handleBlockAliasClick}
           >
             Bloquear alias (BLKD)
           </button>
@@ -218,6 +234,16 @@ export function AliasManagementStep({
         isSubmitting={isSubmitting}
         onConfirm={handleConfirmStatus}
         onCancel={() => setConfirmOpen(false)}
+      />
+
+      <SimConfirmModal
+        open={blockWarningOpen}
+        title="No se puede bloquear el alias"
+        message={blockValidation.message}
+        confirmLabel="Entendido"
+        showCancel={false}
+        onConfirm={() => setBlockWarningOpen(false)}
+        onCancel={() => setBlockWarningOpen(false)}
       />
 
       <SimConfirmModal

@@ -62,10 +62,17 @@ func (h *SIMFHandler) handleAliasResolve(c *gin.Context, requireAgent bool) {
 		return
 	}
 
+	bankLinks, err := h.core.GetAliasBankLinksByAliasID(c.Request.Context(), alias.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error interno del servidor"})
+		return
+	}
+
 	coreData := mapper.AliasResolveCoreData{
-		Customer: customer,
-		Alias:    alias,
-		Accounts: accounts,
+		Customer:  customer,
+		Alias:     alias,
+		Accounts:  accounts,
+		BankLinks: bankLinks,
 	}
 	c.JSON(http.StatusOK, response.BuildAcceptMessage(query, coreData))
 }

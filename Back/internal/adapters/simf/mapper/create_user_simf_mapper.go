@@ -16,7 +16,7 @@ import (
 
 const (
 	coreAccountStatusActive   = "ACTIVE"
-	coreAccountTypeDefault    = "CHECKING"
+	coreAccountTypeDefault    = "corriente"
 )
 
 func ToCoreCreateUserEntities(cmd simfdomain.CreateUserSimfCommand) (*domain.Customer, []domain.Account, *domain.Alias, error) {

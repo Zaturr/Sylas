@@ -10,6 +10,7 @@ export function createAuthSimulationService(
     createAccount,
     checkAliasByDocument: aliasSimulation.checkAliasByDocument,
     updateAliasStatus: aliasSimulation.updateAliasStatus,
+    changeLinkedAccount: aliasSimulation.changeLinkedAccount,
     registerAlias: aliasSimulation.registerAlias,
     deleteAlias: aliasSimulation.deleteAlias,
     verifyAliasViaSimf: aliasSimulation.verifyAliasViaSimf,

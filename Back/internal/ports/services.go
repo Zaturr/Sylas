@@ -26,4 +26,12 @@ type AliasService interface {
 	RegisterSimfUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error
 	UpdateSimfAliasAgentStatus(ctx context.Context, aliasValue, bankID, simfStatus string) (*domain.Customer, error)
 	GetBanks(ctx context.Context) ([]domain.Bank, error)
+
+	UpdateAliasAccount(ctx context.Context, aliasValue, accountID string) error
+
+	GetAliasBankLinkDetails(ctx context.Context, aliasID string, accounts []domain.Account) ([]domain.AliasBankLinkDetail, error)
+	GetAliasBankLinksByAliasID(ctx context.Context, aliasID string) ([]domain.AliasBankLink, error)
+
+	GetCustomerByDocument(ctx context.Context, docType, docNum string) (*domain.Customer, error)
+	GetActiveAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)
 }

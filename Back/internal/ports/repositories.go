@@ -20,6 +20,11 @@ type AliasRepository interface {
 	CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error
 	SaveAlias(ctx context.Context, alias *domain.Alias) error
 	UpdateAliasStatus(ctx context.Context, aliasID, status string) error
+	UpdateAliasAccount(ctx context.Context, aliasValue, accountID string) error
+	UpsertAliasBankLink(ctx context.Context, link *domain.AliasBankLink) error
+	SyncAliasBankLinksFromAccounts(ctx context.Context, aliasID string, accounts []domain.Account) error
+	GetAliasBankLinksByAliasID(ctx context.Context, aliasID string) ([]domain.AliasBankLink, error)
+	GetAliasBankLinksByAliasValue(ctx context.Context, aliasValue string) ([]domain.AliasBankLink, error)
 	GetAliasByValue(ctx context.Context, value string) (*domain.Alias, error)
 	GetAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)
 	GetActiveAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error)

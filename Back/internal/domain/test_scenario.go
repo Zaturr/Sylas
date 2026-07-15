@@ -3,6 +3,7 @@ package domain
 type TestScenarioAccount struct {
 	BankID string `json:"bank_id"`
 	Status string `json:"status"`
+	Type   string `json:"type,omitempty"`
 }
 
 type TestScenario struct {

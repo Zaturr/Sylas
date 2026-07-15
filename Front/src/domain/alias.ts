@@ -8,6 +8,7 @@ export interface AccountDetail {
     bank: string;
     account_number: string;
     status: string;
+    is_linked?: boolean;
 }
 
 export interface AliasDetail {

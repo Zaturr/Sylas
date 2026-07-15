@@ -13,6 +13,8 @@ type CreateUserInput struct {
 	FirstName      string
 	LastName       string
 	SecondLastName string
+	AliasValue     string
+	AccountType    []string
 	AccountNumbers []string
 }
 
@@ -47,5 +49,19 @@ func ValidateCreateUser(input CreateUserInput) string {
 			return "account_number invalido o no cumple con el formato requerido"
 		}
 	}
+	aliasValue := strings.TrimSpace(input.AliasValue)
+	if aliasValue != "" {
+		hasNonDollarAccount := false
+		for _, accType := range input.AccountType {
+			if strings.ToLower(accType) != "dolares" {
+				hasNonDollarAccount = true
+				break
+			}
+		}
+		if !hasNonDollarAccount {
+			return "No se puede asociar un alias a una cuenta en moneda extranjera (dólares)"
+		}
+	}
+
 	return ""
 }

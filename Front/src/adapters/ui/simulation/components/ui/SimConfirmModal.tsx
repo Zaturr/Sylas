@@ -7,6 +7,7 @@ type SimConfirmModalProps = {
   confirmLabel?: string;
   cancelLabel?: string;
   isSubmitting?: boolean;
+  showCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -18,6 +19,7 @@ export function SimConfirmModal({
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
   isSubmitting = false,
+  showCancel = true,
   onConfirm,
   onCancel,
 }: SimConfirmModalProps) {
@@ -40,14 +42,16 @@ export function SimConfirmModal({
         </h3>
         <p className="sim-modal__message">{message}</p>
         <div className="sim-modal__actions">
-          <button
-            type="button"
-            className="sim-mobile-btn sim-mobile-btn--ghost"
-            disabled={isSubmitting}
-            onClick={onCancel}
-          >
-            {cancelLabel}
-          </button>
+          {showCancel && (
+            <button
+              type="button"
+              className="sim-mobile-btn sim-mobile-btn--ghost"
+              disabled={isSubmitting}
+              onClick={onCancel}
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             type="button"
             className="sim-mobile-btn sim-mobile-btn--primary"

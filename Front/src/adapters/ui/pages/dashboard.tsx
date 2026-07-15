@@ -62,7 +62,16 @@ function renderAliasStatusCell(alias: AliasDetail) {
     return '—';
   }
 
-  return alias.accounts.map((account, index) => {
+  // Agrupamos las cuentas por banco para mostrar solo 1 estado por banco
+  const uniqueBanks = Array.from(new Set(alias.accounts.map(acc => acc.bank)));
+
+  return uniqueBanks.map((bank, index) => {
+    // Usar la cuenta vinculada al alias; si no hay bandera, tomar la primera del banco
+    let account = alias.accounts.find((acc) => acc.bank === bank && acc.is_linked);
+    if (!account) {
+      account = alias.accounts.find((acc) => acc.bank === bank)!;
+    }
+
     const kind = normalizeAccountStatus(account.status);
     const label = getAccountStatusLabel(account.status);
     const badgeClass =
@@ -117,10 +126,17 @@ function renderDetailedTooltip(alias: AliasDetail) {
     <div className="dashboard-tooltip-content">
       <strong className="tooltip-title">Estado por Institución:</strong>
       <ul className="tooltip-bank-list">
-        {alias.accounts.map((acc, idx) => {
+        {Array.from(new Set(alias.accounts.map((acc) => acc.bank))).map((bank) => {
+          const acc =
+            alias.accounts.find((item) => item.bank === bank && item.is_linked) ??
+            alias.accounts.find((item) => item.bank === bank);
+          if (!acc) {
+            return null;
+          }
+
           const kind = normalizeAccountStatus(acc.status);
           return (
-            <li key={idx}>
+            <li key={bank}>
               <span className="bank-code">Banco {acc.bank}:</span>
               {kind === 'actv' ? (
                 <span className="status-text actv">Activo (ACTV) - Alias activo.</span>
@@ -289,7 +305,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                       </td>
                       <td className="col-alias text-blue">{alias.alias?.trim() || '—'}</td>
                       <td className="col-banco">
-                        {alias.accounts.map((account) => account.bank).join(', ') || '—'}
+                        {Array.from(new Set(alias.accounts.map((account) => account.bank))).join(', ') || '—'}
                       </td>
                       <td className="col-status-alias">
                         {renderAliasStatusCell(alias)}

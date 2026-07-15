@@ -6,6 +6,7 @@ import (
 	"Alias_bdca/Back/internal/adapters/simf/mapper"
 	"Alias_bdca/Back/internal/adapters/simf/response"
 	"Alias_bdca/Back/internal/adapters/simf/validate"
+	"Alias_bdca/Back/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,10 +32,20 @@ func (h *SIMFHandler) AntiphishingSimf(c *gin.Context) {
 		return
 	}
 
+	var bankLinks []domain.AliasBankLink
+	if alias != nil {
+		bankLinks, err = h.core.GetAliasBankLinksByAliasID(c.Request.Context(), alias.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error interno del servidor"})
+			return
+		}
+	}
+
 	coreData := mapper.AliasResolveCoreData{
-		Customer: customer,
-		Alias:    alias,
-		Accounts: accounts,
+		Customer:  customer,
+		Alias:     alias,
+		Accounts:  accounts,
+		BankLinks: bankLinks,
 	}
 	report := mapper.BuildAntiphishingReport(query, coreData)
 	c.JSON(http.StatusOK, response.BuildAntiphishingMessage(query, report))

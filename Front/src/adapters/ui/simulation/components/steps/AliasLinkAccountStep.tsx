@@ -36,6 +36,9 @@ export function AliasLinkAccountStep({
           ? 'Selecciona la cuenta que usarás al registrar tu alias.'
           : 'Tu alias necesita una cuenta del banco para completar la afiliación.';
 
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const isSelectedAccountDolares = selectedAccount?.account_type?.toLowerCase() === 'dolares';
+
   return (
     <div className="sim-flow">
       <div className="sim-card">
@@ -53,7 +56,7 @@ export function AliasLinkAccountStep({
         <button
           type="button"
           className="sim-mobile-btn sim-mobile-btn--primary"
-          disabled={!selectedAccountId || isSubmitting}
+          disabled={!selectedAccountId || isSubmitting || isSelectedAccountDolares}
           onClick={onConfirm}
         >
           {isSubmitting ? 'Vinculando...' : mode === 'before-create-alias' ? 'Continuar al alias' : 'Continuar'}

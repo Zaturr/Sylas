@@ -42,6 +42,13 @@ export function createBlockAliasViaSimf(simfHttpClient: SimfHttpClient) {
 
     if (resultCode !== 'ACCP') {
       const reason = data?.IdVrfctnRpt?.Rpt?.Rsn?.trim() || 'RJCT';
+      if (reason === 'RR10') {
+        return {
+          ok: false,
+          message:
+            'No puedes bloquear el alias (BLKD) hasta que el vínculo con cada banco asociado esté inactivo (INAC).',
+        };
+      }
       return {
         ok: false,
         message: `Bloqueo rechazado (${reason}).`,

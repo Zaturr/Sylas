@@ -29,7 +29,17 @@ export function buildRegistrationPayload(
       {
         bank_id: appConfig.simulation.bankCode,
         account_number: accountNumber,
-        account_type: appConfig.simulation.accountType,
+        account_type: 'corriente',
+      },
+      {
+        bank_id: appConfig.simulation.bankCode,
+        account_number: generateBankAccountNumber(appConfig.simulation.bankCode, appConfig.simulation.accountSuffixLength),
+        account_type: 'ahorro',
+      },
+      {
+        bank_id: appConfig.simulation.bankCode,
+        account_number: generateBankAccountNumber(appConfig.simulation.bankCode, appConfig.simulation.accountSuffixLength),
+        account_type: 'dolares',
       },
     ],
   };

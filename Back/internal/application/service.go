@@ -18,6 +18,14 @@ func NewAppService(repo ports.AliasRepository) *AppService {
 	}
 }
 
+func (s *AppService) GetCustomerByDocument(ctx context.Context, docType, docNum string) (*domain.Customer, error) {
+	return s.repo.GetCustomerByDocument(ctx, docType, docNum)
+}
+
+func (s *AppService) GetActiveAliasByCustomerID(ctx context.Context, customerID string) (*domain.Alias, error) {
+	return s.repo.GetActiveAliasByCustomerID(ctx, customerID)
+}
+
 func (s *AppService) RegisterCustomerWithAccount(ctx context.Context, customer *domain.Customer, account *domain.Account) error {
 	err := s.repo.SaveCustomer(ctx, customer)
 	if err != nil {
@@ -148,9 +156,8 @@ func (s *AppService) AddAccountToCustomer(ctx context.Context, documentNumber st
 		if strings.Contains(errStr, "FOREIGN KEY constraint failed") {
 			return errors.New("el banco especificado no existe")
 		}
-		if strings.Contains(errStr, "UNIQUE constraint failed: accounts.customer_id, accounts.bank_id") {
-			return errors.New("el usuario ya tiene una cuenta registrada en este banco")
-		}
+		// Eliminamos la validación "UNIQUE constraint failed: accounts.customer_id, accounts.bank_id" 
+		// ya que fue deprecada para permitir múltiples cuentas por banco (corriente, ahorro, dolares).
 		return err
 	}
 
@@ -195,10 +202,32 @@ func (s *AppService) GetAliasWithDetailsPaginated(ctx context.Context, page, lim
 	return s.repo.ListAllAliasesWithDetailsPaginated(ctx, page, limit, search)
 }
 
+// CreateFullUser expone el método
 func (s *AppService) CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error {
 	return s.repo.CreateFullUser(ctx, customer, accounts, alias)
 }
 
+// UpdateAliasAccount expone el método para que el HTTP Handler actualice la cuenta vinculada
+func (s *AppService) UpdateAliasAccount(ctx context.Context, aliasValue, accountID string) error {
+	return s.repo.UpdateAliasAccount(ctx, aliasValue, accountID)
+}
+
 func (s *AppService) GetBanks(ctx context.Context) ([]domain.Bank, error) {
 	return s.repo.ListBanks(ctx)
+}
+
+func (s *AppService) GetAliasBankLinkDetails(
+	ctx context.Context,
+	aliasID string,
+	accounts []domain.Account,
+) ([]domain.AliasBankLinkDetail, error) {
+	links, err := s.repo.GetAliasBankLinksByAliasID(ctx, aliasID)
+	if err != nil {
+		return nil, err
+	}
+	return domain.BuildAliasBankLinkDetails(links, accounts), nil
+}
+
+func (s *AppService) GetAliasBankLinksByAliasID(ctx context.Context, aliasID string) ([]domain.AliasBankLink, error) {
+	return s.repo.GetAliasBankLinksByAliasID(ctx, aliasID)
 }

@@ -32,6 +32,7 @@ export type CheckAliasResult =
       message: string;
       agentStatus: SimfAliasStatus;
       bankCode: string;
+      session: SimulationSession;
     }
   | {
       ok: true;
@@ -40,6 +41,7 @@ export type CheckAliasResult =
       message: string;
       agentStatus: SimfAliasStatus;
       bankCode: string;
+      session: SimulationSession;
     }
   | { ok: false; message: string };
 
@@ -69,6 +71,10 @@ export type DeleteAliasResult =
     }
   | { ok: false; message: string };
 
+export type ChangeLinkedAccountResult =
+  | { ok: true; session: SimulationSession }
+  | { ok: false; message: string };
+
 export interface AuthSimulationService {
   loginByDocument(
     documentInput: string,
@@ -96,6 +102,12 @@ export interface AuthSimulationService {
     input: UpdateAliasStatusInput,
     signal?: AbortSignal,
   ): Promise<UpdateAliasStatusResult>;
+
+  changeLinkedAccount(
+    session: SimulationSession,
+    accountId: string,
+    signal?: AbortSignal,
+  ): Promise<ChangeLinkedAccountResult>;
 
   deleteAlias(
     session: SimulationSession,

@@ -114,25 +114,40 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	status TEXT DEFAULT 'ACTIVE',
 	created_at DATATIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE,
-	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
-	UNIQUE(customer_id, bank_id)
+	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 	);
 
 	CREATE TABLE IF NOT EXISTS alias(
 	id TEXT PRIMARY KEY,
 	customer_id TEXT NOT NULL,
+	account_id TEXT NOT NULL,
 	alias_value TEXT NOT NULL UNIQUE,
 	status TEXT NOT NULL DEFAULT 'ENABLED',
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+	FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 	);
 	
 
 	CREATE INDEX IF NOT EXISTS idx_alias_value ON alias(alias_value);
 	CREATE INDEX IF NOT EXISTS idx_alias_customer_id ON alias(customer_id);
-	CREATE UNIQUE INDEX IF NOT EXISTS idx_alias_one_active_per_customer
-	ON alias(customer_id)
-	WHERE status NOT IN ('BLKD', 'DISABLED', 'BLOCKED');
+	CREATE INDEX IF NOT EXISTS idx_alias_account_id ON alias(account_id);
+
+	CREATE TABLE IF NOT EXISTS alias_bank_links (
+		id TEXT PRIMARY KEY,
+		alias_id TEXT NOT NULL,
+		bank_id TEXT NOT NULL,
+		account_id TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (alias_id) REFERENCES alias(id) ON DELETE CASCADE,
+		FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE,
+		FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+		UNIQUE(alias_id, bank_id)
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_alias_bank_links_alias_id ON alias_bank_links(alias_id);
+	CREATE INDEX IF NOT EXISTS idx_alias_bank_links_bank_id ON alias_bank_links(bank_id);
+
 	CREATE INDEX IF NOT EXISTS idx_customers_first_name ON customers(first_name);
 	CREATE INDEX IF NOT EXISTS idx_customers_last_name ON customers(last_name);
 	CREATE INDEX IF NOT EXISTS idx_customers_document_number ON customers(document_number);
@@ -157,6 +172,12 @@ func migrateSchema(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
+	// Migración para la nueva columna account_id en alias
+	_, err = db.ExecContext(ctx, `ALTER TABLE alias ADD COLUMN account_id TEXT NOT NULL DEFAULT ''`)
+	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "duplicate column") {
+		return err
+	}
+
 	if err := migrateCustomersCompositeDocumentKey(ctx, db); err != nil {
 		return err
 	}
@@ -169,7 +190,71 @@ func migrateSchema(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	return ensureAliasOneActivePerCustomerIndex(ctx, db)
+	if err := migrateRemoveAccountsUniqueConstraint(ctx, db); err != nil {
+		return err
+	}
+
+	if err := migrateAliasBankLinks(ctx, db); err != nil {
+		return err
+	}
+
+	// Ya no necesitamos el index único, así que lo eliminamos si existe para evitar problemas de compatibilidad
+	_, _ = db.ExecContext(ctx, `DROP INDEX IF EXISTS idx_alias_one_active_per_customer`)
+
+	return nil
+}
+
+func migrateRemoveAccountsUniqueConstraint(ctx context.Context, db *sql.DB) error {
+	needsMigration, err := needsAccountsUniqueRemoval(ctx, db)
+	if err != nil || !needsMigration {
+		return err
+	}
+
+	stmts := []string{
+		"PRAGMA foreign_keys=OFF",
+		"BEGIN TRANSACTION",
+		`CREATE TABLE accounts_migrated (
+			id TEXT PRIMARY KEY,
+			bank_id TEXT NOT NULL,
+			customer_id TEXT NOT NULL,
+			account_number TEXT NOT NULL UNIQUE,
+			account_type TEXT NOT NULL,
+			status TEXT DEFAULT 'ACTIVE',
+			created_at DATATIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE,
+			FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+		)`,
+		`INSERT INTO accounts_migrated
+			SELECT id, bank_id, customer_id, account_number, account_type, status, created_at
+			FROM accounts`,
+		"DROP TABLE accounts",
+		"ALTER TABLE accounts_migrated RENAME TO accounts",
+		"COMMIT",
+		"PRAGMA foreign_keys=ON",
+	}
+
+	for _, stmt := range stmts {
+		if _, err := db.ExecContext(ctx, stmt); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func needsAccountsUniqueRemoval(ctx context.Context, db *sql.DB) (bool, error) {
+	var tableSQL string
+	err := db.QueryRowContext(ctx, `SELECT sql FROM sqlite_master WHERE type='table' AND name='accounts'`).Scan(&tableSQL)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	normalized := strings.ToUpper(tableSQL)
+	// Si contiene la restricción UNIQUE(customer_id, bank_id), necesita migración
+	return strings.Contains(normalized, "UNIQUE(CUSTOMER_ID, BANK_ID)"), nil
 }
 
 func migrateRemoveCustomersPhoneUnique(ctx context.Context, db *sql.DB) error {
@@ -286,7 +371,7 @@ func needsCustomersDocumentMigration(ctx context.Context, db *sql.DB) (bool, err
 	return strings.Contains(normalized, "DOCUMENT_NUMBER TEXT NOT NULL UNIQUE"), nil
 }
 
-func migrateAliasAllowMultiplePerCustomer(ctx context.Context, db *sql.DB) error {
+	func migrateAliasAllowMultiplePerCustomer(ctx context.Context, db *sql.DB) error {
 	needsMigration, err := needsAliasCustomerUniqueRemoval(ctx, db)
 	if err != nil || !needsMigration {
 		return err
@@ -298,18 +383,21 @@ func migrateAliasAllowMultiplePerCustomer(ctx context.Context, db *sql.DB) error
 		`CREATE TABLE alias_migrated (
 			id TEXT PRIMARY KEY,
 			customer_id TEXT NOT NULL,
+			account_id TEXT NOT NULL,
 			alias_value TEXT NOT NULL UNIQUE,
 			status TEXT NOT NULL DEFAULT 'ENABLED',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+			FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+			FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 		)`,
 		`INSERT INTO alias_migrated
-			SELECT id, customer_id, alias_value, status, created_at
+			SELECT id, customer_id, '', alias_value, status, created_at
 			FROM alias`,
 		"DROP TABLE alias",
 		"ALTER TABLE alias_migrated RENAME TO alias",
 		"CREATE INDEX IF NOT EXISTS idx_alias_value ON alias(alias_value)",
 		"CREATE INDEX IF NOT EXISTS idx_alias_customer_id ON alias(customer_id)",
+		"CREATE INDEX IF NOT EXISTS idx_alias_account_id ON alias(account_id)",
 		"COMMIT",
 		"PRAGMA foreign_keys=ON",
 	}
@@ -337,11 +425,42 @@ func needsAliasCustomerUniqueRemoval(ctx context.Context, db *sql.DB) (bool, err
 	return strings.Contains(normalized, "CUSTOMER_ID TEXT NOT NULL UNIQUE"), nil
 }
 
-func ensureAliasOneActivePerCustomerIndex(ctx context.Context, db *sql.DB) error {
+func migrateAliasBankLinks(ctx context.Context, db *sql.DB) error {
+	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS alias_bank_links (
+			id TEXT PRIMARY KEY,
+			alias_id TEXT NOT NULL,
+			bank_id TEXT NOT NULL,
+			account_id TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (alias_id) REFERENCES alias(id) ON DELETE CASCADE,
+			FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE,
+			FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+			UNIQUE(alias_id, bank_id)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_alias_bank_links_alias_id ON alias_bank_links(alias_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_alias_bank_links_bank_id ON alias_bank_links(bank_id)`,
+	}
+
+	for _, stmt := range stmts {
+		if _, err := db.ExecContext(ctx, stmt); err != nil {
+			return err
+		}
+	}
+
+	// Migrar vínculos existentes desde alias.account_id
 	_, err := db.ExecContext(ctx, `
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_alias_one_active_per_customer
-		ON alias(customer_id)
-		WHERE status NOT IN ('BLKD', 'DISABLED', 'BLOCKED')
+		INSERT OR IGNORE INTO alias_bank_links (id, alias_id, bank_id, account_id, created_at)
+		SELECT
+			lower(hex(randomblob(16))),
+			a.id,
+			acc.bank_id,
+			a.account_id,
+			COALESCE(a.created_at, CURRENT_TIMESTAMP)
+		FROM alias a
+		JOIN accounts acc ON acc.id = a.account_id
+		WHERE trim(a.account_id) != ''
 	`)
 	return err
 }
+
