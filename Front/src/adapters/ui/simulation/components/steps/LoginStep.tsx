@@ -1,3 +1,5 @@
+import { useEffect, useId, useState } from 'react';
+import { listLoginDocuments } from '../../../../api/simulation/alias/aliasHttp.client';
 import '../simulationSteps.css';
 
 type LoginStepProps = {
@@ -19,6 +21,24 @@ export function LoginStep({
   onSubmit,
   onCreateAccount,
 }: LoginStepProps) {
+  const documentListId = useId();
+  const [documentOptions, setDocumentOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    listLoginDocuments(controller.signal)
+      .then(setDocumentOptions)
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        setDocumentOptions([]);
+      });
+
+    return () => controller.abort();
+  }, []);
+
   return (
     <div className="sim-flow">
       <div className="sim-card">
@@ -32,11 +52,17 @@ export function LoginStep({
               type="text"
               inputMode="text"
               autoComplete="off"
+              list={documentListId}
               disabled={isSubmitting}
               placeholder="ej. V12345678 o J123456789"
               value={documentInput}
               onChange={(event) => onDocumentChange(event.target.value)}
             />
+            <datalist id={documentListId}>
+              {documentOptions.map((document) => (
+                <option key={document} value={document} />
+              ))}
+            </datalist>
           </label>
         </div>
       </div>

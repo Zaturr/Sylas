@@ -1,6 +1,47 @@
+import type { PaginatedAliasResponse } from '../../../../domain/alias';
+import { formatDocumentInput } from '../../../../domain/validations';
 import { appConfig } from '../../app.config';
 import { readApiError } from '../shared/readApiError';
 import type { ResolveAliasResponse, ResolveByDocumentResult } from './alias.types';
+
+const LOGIN_DOCUMENTS_PAGE_LIMIT = 100;
+
+/** Lista cédulas únicas desde alias/list para autocompletar el login del simulador. */
+export async function listLoginDocuments(signal?: AbortSignal): Promise<string[]> {
+  const documents = new Set<string>();
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(LOGIN_DOCUMENTS_PAGE_LIMIT),
+    });
+
+    const response = await fetch(`${appConfig.apiBaseUrl}/alias/list?${params.toString()}`, {
+      signal,
+    });
+
+    if (!response.ok) {
+      break;
+    }
+
+    const data = (await response.json()) as PaginatedAliasResponse;
+    for (const item of data.data) {
+      const documentType = item.document_type?.trim() ?? '';
+      const documentNumber = item.document_number?.trim() ?? '';
+      if (!documentType || !documentNumber) {
+        continue;
+      }
+      documents.add(formatDocumentInput(documentType, documentNumber));
+    }
+
+    totalPages = Math.max(1, data.pagination?.total_pages ?? page);
+    page += 1;
+  } while (page <= totalPages);
+
+  return Array.from(documents).sort((a, b) => a.localeCompare(b));
+}
 
 export async function resolveByDocument(
   documentType: string,
