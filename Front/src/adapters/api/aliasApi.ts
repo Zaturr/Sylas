@@ -25,6 +25,7 @@ export const aliasAdapter: AliasService = {
     page: number,
     limit: number,
     search = '',
+    scheme = '',
     signal?: AbortSignal,
   ): Promise<PaginatedAliasResponse> => {
     const params = new URLSearchParams({
@@ -34,6 +35,10 @@ export const aliasAdapter: AliasService = {
     const trimmedSearch = search.trim();
     if (trimmedSearch) {
       params.set('search', trimmedSearch);
+    }
+    const trimmedScheme = scheme.trim().toUpperCase();
+    if (trimmedScheme === 'SCID' || trimmedScheme === 'SRIF' || trimmedScheme === 'SPAS') {
+      params.set('scheme', trimmedScheme);
     }
 
     const response = await fetch(`${appConfig.apiBaseUrl}/alias/list?${params.toString()}`, {

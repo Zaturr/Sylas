@@ -158,7 +158,16 @@ func (h *HTTPHandler) ListAllAlias(c *gin.Context) {
 	}
 
 	search := strings.TrimSpace(c.Query("search"))
-	result, err := h.service.GetAliasWithDetailsPaginated(c.Request.Context(), page, limit, search)
+	scheme := strings.ToUpper(strings.TrimSpace(c.Query("scheme")))
+	switch scheme {
+	case "", "SCID", "SRIF", "SPAS":
+		// ok
+	default:
+		respondError(c, 400, "scheme debe ser SCID, SRIF, SPAS o vacío")
+		return
+	}
+
+	result, err := h.service.GetAliasWithDetailsPaginated(c.Request.Context(), page, limit, search, scheme)
 	if err != nil {
 		respondError(c, 500, "Error interno del servidor")
 		return

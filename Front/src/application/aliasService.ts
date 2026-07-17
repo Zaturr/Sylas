@@ -28,6 +28,7 @@ export interface AliasService {
     page: number,
     limit: number,
     search?: string,
+    scheme?: string,
     signal?: AbortSignal,
   ): Promise<PaginatedAliasResponse>;
 

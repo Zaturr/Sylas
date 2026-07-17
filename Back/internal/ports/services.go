@@ -17,7 +17,7 @@ type AliasService interface {
 	RemoveAliasByCustomerID(ctx context.Context, customerID string) error
 	RemoveAllAliases(ctx context.Context) (int64, error)
 	GetAllAlias(ctx context.Context) ([]domain.Alias, error)
-	GetAliasWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error)
+	GetAliasWithDetailsPaginated(ctx context.Context, page, limit int, search string, scheme string) (*domain.PaginatedAliasResponse, error)
 	CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error
 
 	DisableAlias(ctx context.Context, aliasValue string) (*domain.Customer, error)

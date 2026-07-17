@@ -35,6 +35,6 @@ type AliasRepository interface {
 	DeleteCustomerByID(ctx context.Context, customerID string) error
 	DeleteAllCustomers(ctx context.Context) (int64, error)
 	ListAllAliases(ctx context.Context) ([]domain.Alias, error)
-	ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error)
+	ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string, scheme string) (*domain.PaginatedAliasResponse, error)
 	ListBanks(ctx context.Context) ([]domain.Bank, error)
 }

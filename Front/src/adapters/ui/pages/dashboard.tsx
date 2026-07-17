@@ -161,6 +161,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     aliases,
     pagination,
     searchTerm,
+    schemeFilter,
     loading,
     error,
     deletingCustomerId,
@@ -170,6 +171,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     prevPage,
     setLimit,
     setSearch,
+    setSchemeFilter,
     removeAlias,
     removeAllAliases,
   } = useAlias();
@@ -223,31 +225,61 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         <h2 className="section-title">Panel de Control de Alias</h2>
 
         <div className="table-actions">
-          <button
-            type="button"
-            className="danger-btn"
-            disabled={isBusy || !hasRecords}
-            onClick={removeAllAliases}
-          >
-            {deletingAll ? 'Eliminando...' : 'Eliminar todos'}
-          </button>
-
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Buscar por nombre, documento o MiAlias..."
-              aria-label="Buscar MiAlias"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-            />
+          <div className="scheme-filter" role="group" aria-label="Filtrar por tipo de documento">
             <button
               type="button"
-              className="search-icon"
-              aria-label="Buscar"
-              onClick={() => setSearch(searchInput)}
+              className={`scheme-filter-btn${schemeFilter === '' ? ' scheme-filter-btn--active' : ''}`}
+              disabled={isBusy}
+              onClick={() => setSchemeFilter('')}
             >
-              
+              Todo
             </button>
+            <button
+              type="button"
+              className={`scheme-filter-btn${schemeFilter === 'SCID' ? ' scheme-filter-btn--active' : ''}`}
+              disabled={isBusy}
+              onClick={() => setSchemeFilter('SCID')}
+            >
+              SCID
+            </button>
+            <button
+              type="button"
+              className={`scheme-filter-btn${schemeFilter === 'SRIF' ? ' scheme-filter-btn--active' : ''}`}
+              disabled={isBusy}
+              onClick={() => setSchemeFilter('SRIF')}
+            >
+              SRIF
+            </button>
+
+          </div>
+
+          <div className="table-actions-right">
+            <button
+              type="button"
+              className="danger-btn"
+              disabled={isBusy || !hasRecords}
+              onClick={removeAllAliases}
+            >
+              {deletingAll ? 'Eliminando...' : 'Eliminar todos'}
+            </button>
+
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Buscar por nombre, documento o MiAlias..."
+                aria-label="Buscar MiAlias"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+              />
+              <button
+                type="button"
+                className="search-icon"
+                aria-label="Buscar"
+                onClick={() => setSearch(searchInput)}
+              >
+                
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -271,7 +303,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         <div className="dashboard-empty">
           {searchTerm.trim()
             ? `No se encontraron resultados para "${searchTerm.trim()}".`
-            : 'No hay MiAlias registrados.'}
+            : schemeFilter
+              ? `No hay MiAlias registrados con esquema ${schemeFilter}.`
+              : 'No hay MiAlias registrados.'}
         </div>
       ) : (
         <>

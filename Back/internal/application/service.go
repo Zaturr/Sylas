@@ -258,8 +258,8 @@ func (s *AppService) GetAllAlias(ctx context.Context) ([]domain.Alias, error) {
 	return s.repo.ListAllAliases(ctx)
 }
 
-func (s *AppService) GetAliasWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error) {
-	return s.repo.ListAllAliasesWithDetailsPaginated(ctx, page, limit, search)
+func (s *AppService) GetAliasWithDetailsPaginated(ctx context.Context, page, limit int, search string, scheme string) (*domain.PaginatedAliasResponse, error) {
+	return s.repo.ListAllAliasesWithDetailsPaginated(ctx, page, limit, search, scheme)
 }
 
 // CreateFullUser expone el método

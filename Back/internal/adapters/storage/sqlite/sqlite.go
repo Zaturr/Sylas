@@ -728,25 +728,43 @@ func customerSearchFilter(search string) (string, []interface{}) {
 	return filter, []interface{}{pattern, pattern, pattern, pattern}
 }
 
+func schemeDocumentTypeFilter(scheme string) (string, []interface{}) {
+	normalized := strings.ToUpper(strings.TrimSpace(scheme))
+	switch normalized {
+	case "SCID":
+		return ` AND c.document_type IN (?, ?)`, []interface{}{"V", "E"}
+	case "SRIF":
+		return ` AND c.document_type IN (?, ?, ?)`, []interface{}{"J", "G", "C"}
+	case "SPAS":
+		return ` AND c.document_type IN (?)`, []interface{}{"P"}
+	default:
+		return "", nil
+	}
+}
+
 // ListAllAliasesWithDetailsPaginated retorna una fila por alias (multi-alias J/G/C) o por titular sin alias.
-func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string) (*domain.PaginatedAliasResponse, error) {
+func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string, scheme string) (*domain.PaginatedAliasResponse, error) {
 	aliasSearchFilterSQL, aliasSearchArgs := aliasSearchFilter(search)
 	customerSearchFilterSQL, customerSearchArgs := customerSearchFilter(search)
+	schemeFilterSQL, schemeArgs := schemeDocumentTypeFilter(scheme)
 
 	countQuery := `
 	SELECT COUNT(*) FROM (
 		SELECT al.id
 		FROM customers c
 		INNER JOIN alias al ON al.customer_id = c.id
-		WHERE 1=1` + aliasSearchFilterSQL + `
+		WHERE 1=1` + aliasSearchFilterSQL + schemeFilterSQL + `
 		UNION ALL
 		SELECT c.id
 		FROM customers c
 		WHERE NOT EXISTS (SELECT 1 FROM alias al2 WHERE al2.customer_id = c.id)
-		AND 1=1` + customerSearchFilterSQL + `
+		AND 1=1` + customerSearchFilterSQL + schemeFilterSQL + `
 	)`
 
-	countArgs := append(append([]interface{}{}, aliasSearchArgs...), customerSearchArgs...)
+	countArgs := append([]interface{}{}, aliasSearchArgs...)
+	countArgs = append(countArgs, schemeArgs...)
+	countArgs = append(countArgs, customerSearchArgs...)
+	countArgs = append(countArgs, schemeArgs...)
 	var totalRecords int
 	if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalRecords); err != nil {
 		return nil, err
@@ -786,12 +804,12 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 			SELECT c.id AS customer_id, al.id AS alias_id, c.first_name, c.last_name, al.alias_value
 			FROM customers c
 			INNER JOIN alias al ON al.customer_id = c.id
-			WHERE 1=1` + aliasSearchFilterSQL + `
+			WHERE 1=1` + aliasSearchFilterSQL + schemeFilterSQL + `
 			UNION ALL
 			SELECT c.id, NULL, c.first_name, c.last_name, ''
 			FROM customers c
 			WHERE NOT EXISTS (SELECT 1 FROM alias al2 WHERE al2.customer_id = c.id)
-			AND 1=1` + customerSearchFilterSQL + `
+			AND 1=1` + customerSearchFilterSQL + schemeFilterSQL + `
 		)
 		ORDER BY first_name, last_name, COALESCE(alias_value, '')
 		LIMIT ? OFFSET ?
@@ -803,7 +821,11 @@ func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context,
 	ORDER BY c.first_name, c.last_name, COALESCE(al.alias_value, '')
 	`
 
-	queryArgs := append(append(append([]interface{}{}, aliasSearchArgs...), customerSearchArgs...), limit, offset)
+	queryArgs := append([]interface{}{}, aliasSearchArgs...)
+	queryArgs = append(queryArgs, schemeArgs...)
+	queryArgs = append(queryArgs, customerSearchArgs...)
+	queryArgs = append(queryArgs, schemeArgs...)
+	queryArgs = append(queryArgs, limit, offset)
 	rows, err := r.db.QueryContext(ctx, query, queryArgs...)
 	if err != nil {
 		return nil, err

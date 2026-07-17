@@ -6,6 +6,8 @@ import { useAliasService } from '../providers/AppServicesProvider';
 
 const DEFAULT_LIMIT = 20;
 
+export type AliasSchemeFilter = '' | 'SCID' | 'SRIF' | 'SPAS';
+
 function mapResolveToAliasDetail(resolved: ResolveAliasService): AliasDetail {
   return {
     customer_id: resolved.customer.id,
@@ -37,6 +39,7 @@ export const useAlias = () => {
     total_pages: 0,
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [schemeFilter, setSchemeFilterState] = useState<AliasSchemeFilter>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null);
@@ -47,6 +50,7 @@ export const useAlias = () => {
     page: number,
     limit: number,
     search: string,
+    scheme: AliasSchemeFilter,
     generation: number,
   ) => {
     try {
@@ -79,7 +83,7 @@ export const useAlias = () => {
         }
       }
 
-      const result = await aliasService.getAliasDetailsPaginated(page, limit, term);
+      const result = await aliasService.getAliasDetailsPaginated(page, limit, term, scheme);
 
       if (generation !== fetchGenerationRef.current) {
         return;
@@ -101,8 +105,8 @@ export const useAlias = () => {
 
   useEffect(() => {
     const generation = ++fetchGenerationRef.current;
-    fetchAliases(pagination.page, pagination.limit, searchTerm, generation);
-  }, [fetchAliases, pagination.page, pagination.limit, searchTerm]);
+    fetchAliases(pagination.page, pagination.limit, searchTerm, schemeFilter, generation);
+  }, [fetchAliases, pagination.page, pagination.limit, searchTerm, schemeFilter]);
 
   const goToPage = (page: number) => {
     if (loading || deletingAll || deletingCustomerId) {
@@ -132,9 +136,14 @@ export const useAlias = () => {
     setPagination((prev) => ({ ...prev, page: 1 }));
   }, []);
 
+  const setSchemeFilter = useCallback((value: AliasSchemeFilter) => {
+    setSchemeFilterState(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, []);
+
   const refetch = () => {
     const generation = ++fetchGenerationRef.current;
-    fetchAliases(pagination.page, pagination.limit, searchTerm, generation);
+    fetchAliases(pagination.page, pagination.limit, searchTerm, schemeFilter, generation);
   };
 
   const removeAlias = async (customerId: string, aliasValue: string) => {
@@ -183,6 +192,7 @@ export const useAlias = () => {
       setError(null);
       await aliasService.deleteAllAliases();
       setSearchTerm('');
+      setSchemeFilterState('');
       setPagination((prev) => ({ ...prev, page: 1 }));
       refetch();
     } catch (err) {
@@ -196,6 +206,7 @@ export const useAlias = () => {
     aliases,
     pagination,
     searchTerm,
+    schemeFilter,
     loading,
     error,
     deletingCustomerId,
@@ -206,6 +217,7 @@ export const useAlias = () => {
     prevPage,
     setLimit,
     setSearch,
+    setSchemeFilter,
     removeAlias,
     removeAllAliases,
   };
