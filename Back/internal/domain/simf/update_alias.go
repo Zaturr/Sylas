@@ -1,27 +1,21 @@
 package simf
 
-// --- Request: IdModAdvc (PUT /simf/bdca/v1/aliases/update/{Alias}/{Agt}) ---
-
-// UpdateAliasSimfMessage envoltorio raíz del JSON de petición de actualización.
 type UpdateAliasSimfMessage struct {
-	IdModAdvc UpdateAliasSimfRequest `json:"IdModAdvc"`
+	IdModAdvc UpdateAliasSimfRequest `json:"IdModAdvc" xml:"IdModAdvc"`
 }
 
-// UpdateAliasSimfRequest cuerpo del mensaje IdModAdvc para actualización.
 type UpdateAliasSimfRequest struct {
-	GrpHdr GroupHeader        `json:"GrpHdr"`
-	Mod    UpdateAliasSimfMod `json:"Mod"`
+	GrpHdr GroupHeader        `json:"GrpHdr" xml:"GrpHdr"`
+	Mod    UpdateAliasSimfMod `json:"Mod" xml:"Mod"`
 }
 
-// UpdateAliasSimfMod datos de actualización de estado alias-agente.
 type UpdateAliasSimfMod struct {
-	EndToEndID string `json:"EndToEndId"`
-	Alias      string `json:"Alias"`
-	AgentCode  string `json:"Agt"`
-	Status     string `json:"Sts"`
+	EndToEndID string `json:"EndToEndId" xml:"EndToEndId"`
+	Alias      string `json:"Alias" xml:"Alias"`
+	AgentCode  string `json:"Agt" xml:"Agt"`
+	Status     string `json:"Sts" xml:"Sts"`
 }
 
-// UpdateAliasCommand agrupa el request validado (path + body) listo para el core.
 type UpdateAliasCommand struct {
 	MsgID      string
 	CreDtTm    string
@@ -31,25 +25,20 @@ type UpdateAliasCommand struct {
 	Status     string
 }
 
-// --- Response: IdVrfctnRpt ---
-
-// UpdateAliasSimfResponseMessage envoltorio raíz del JSON de respuesta.
 type UpdateAliasSimfResponseMessage struct {
-	IdVrfctnRpt UpdateAliasSimfResponse `json:"IdVrfctnRpt"`
+	IdVrfctnRpt UpdateAliasSimfResponse `json:"IdVrfctnRpt" xml:"IdVrfctnRpt"`
 }
 
-// UpdateAliasSimfResponse cuerpo del mensaje IdVrfctnRpt para actualización.
 type UpdateAliasSimfResponse struct {
-	GrpHdr       GroupHeader                 `json:"GrpHdr"`
-	OrgnlAssgnmt CreateUserSimfOrgnlAssgnmt  `json:"OrgnlAssgnmt"`
-	Report       CreateUserSimfReport        `json:"Rpt"`
-	Mod          *UpdateAliasSimfResponseMod `json:"Mod,omitempty"`
+	GrpHdr       GroupHeader                 `json:"GrpHdr" xml:"GrpHdr"`
+	OrgnlAssgnmt CreateUserSimfOrgnlAssgnmt  `json:"OrgnlAssgnmt" xml:"OrgnlAssgnmt"`
+	Report       CreateUserSimfReport        `json:"Rpt" xml:"Rpt"`
+	Mod          *UpdateAliasSimfResponseMod `json:"Mod,omitempty" xml:"Mod,omitempty"`
 }
 
-// UpdateAliasSimfResponseMod eco del Mod actualizado con Pty (solo en ACCP).
 type UpdateAliasSimfResponseMod struct {
-	Alias     string                `json:"Alias"`
-	AgentCode string                `json:"Agt"`
-	Status    string                `json:"Sts"`
-	Titular   CreateUserSimfTitular `json:"Pty"`
+	Alias     string                `json:"Alias" xml:"Alias"`
+	AgentCode string                `json:"Agt" xml:"Agt"`
+	Status    string                `json:"Sts" xml:"Sts"`
+	Titular   CreateUserSimfTitular `json:"Pty" xml:"Pty"`
 }

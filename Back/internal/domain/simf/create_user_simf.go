@@ -1,34 +1,27 @@
 package simf
 
-// --- Request: IdModAdvc (POST /simf/bdca/v1/aliases) ---
-
-// CreateUserSimfMessage envoltorio raíz del JSON de petición.
 type CreateUserSimfMessage struct {
-	IdModAdvc CreateUserSimfRequest `json:"IdModAdvc"`
+	IdModAdvc CreateUserSimfRequest `json:"IdModAdvc" xml:"IdModAdvc"`
 }
 
-// CreateUserSimfRequest cuerpo del mensaje IdModAdvc.
 type CreateUserSimfRequest struct {
-	GrpHdr GroupHeader      `json:"GrpHdr"`
-	Mod    CreateUserSimfMod `json:"Mod"`
+	GrpHdr GroupHeader       `json:"GrpHdr" xml:"GrpHdr"`
+	Mod    CreateUserSimfMod `json:"Mod" xml:"Mod"`
 }
 
-// CreateUserSimfMod datos de alta de alias y vínculo con agente.
 type CreateUserSimfMod struct {
-	AgentCode  string              `json:"Agt"`
-	EndToEndID string              `json:"EndToEndId"`
-	Alias      string              `json:"Alias"`
-	Titular    CreateUserSimfTitular `json:"Pty"`
+	AgentCode  string                `json:"Agt" xml:"Agt"`
+	EndToEndID string                `json:"EndToEndId" xml:"EndToEndId"`
+	Alias      string                `json:"Alias" xml:"Alias"`
+	Titular    CreateUserSimfTitular `json:"Pty" xml:"Pty"`
 }
 
-// CreateUserSimfTitular titular en el mensaje de alta (JSON: Pty).
 type CreateUserSimfTitular struct {
-	Name       string `json:"Nm"`
-	DocumentID string `json:"Id"`
-	SchemeName string `json:"SchmeNm"`
+	Name       string `json:"Nm" xml:"Nm"`
+	DocumentID string `json:"Id" xml:"Id"`
+	SchemeName string `json:"SchmeNm" xml:"SchmeNm"`
 }
 
-// CreateUserSimfCommand agrupa el request validado listo para el mapper/core.
 type CreateUserSimfCommand struct {
 	MsgID       string
 	CreDtTm     string
@@ -40,44 +33,36 @@ type CreateUserSimfCommand struct {
 	SchemeName  string
 }
 
-// --- Response: IdVrfctnRpt ---
-
-// CreateUserSimfResponseMessage envoltorio raíz del JSON de respuesta.
 type CreateUserSimfResponseMessage struct {
-	IdVrfctnRpt CreateUserSimfResponse `json:"IdVrfctnRpt"`
+	IdVrfctnRpt CreateUserSimfResponse `json:"IdVrfctnRpt" xml:"IdVrfctnRpt"`
 }
 
-// CreateUserSimfResponse cuerpo del mensaje IdVrfctnRpt.
 type CreateUserSimfResponse struct {
-	GrpHdr         GroupHeader                 `json:"GrpHdr"`
-	OrgnlAssgnmt   CreateUserSimfOrgnlAssgnmt  `json:"OrgnlAssgnmt"`
-	Report         CreateUserSimfReport       `json:"Rpt"`
-	Mod            *CreateUserSimfResponseMod `json:"Mod,omitempty"`
+	GrpHdr       GroupHeader                `json:"GrpHdr" xml:"GrpHdr"`
+	OrgnlAssgnmt CreateUserSimfOrgnlAssgnmt `json:"OrgnlAssgnmt" xml:"OrgnlAssgnmt"`
+	Report       CreateUserSimfReport       `json:"Rpt" xml:"Rpt"`
+	Mod          *CreateUserSimfResponseMod `json:"Mod,omitempty" xml:"Mod,omitempty"`
 }
 
-// GroupHeader cabecera SIMF compartida (GrpHdr).
 type GroupHeader struct {
-	MsgID   string `json:"MsgId"`
-	CreDtTm string `json:"CreDtTm"`
+	MsgID   string `json:"MsgId" xml:"MsgId"`
+	CreDtTm string `json:"CreDtTm" xml:"CreDtTm"`
 }
 
-// CreateUserSimfOrgnlAssgnmt referencia al mensaje original.
 type CreateUserSimfOrgnlAssgnmt struct {
-	OrgnlMsgID   string `json:"OrgnlMsgId"`
-	OrgnlCreDtTm string `json:"OrgnlCreDtTm"`
+	OrgnlMsgID   string `json:"OrgnlMsgId" xml:"OrgnlMsgId"`
+	OrgnlCreDtTm string `json:"OrgnlCreDtTm" xml:"OrgnlCreDtTm"`
 }
 
-// CreateUserSimfReport resultado de la verificación (Rpt).
 type CreateUserSimfReport struct {
-	OrgnlEndToEndID string `json:"OrgnlEndToEndId"`
-	Result          string `json:"Result"`
-	Rsn             string `json:"Rsn"`
+	OrgnlEndToEndID string `json:"OrgnlEndToEndId" xml:"OrgnlEndToEndId"`
+	Result          string `json:"Result" xml:"Result"`
+	Rsn             string `json:"Rsn" xml:"Rsn"`
 }
 
-// CreateUserSimfResponseMod eco del Mod con Sts asignado por la IBP (solo en ACCP).
 type CreateUserSimfResponseMod struct {
-	Alias     string                `json:"Alias"`
-	AgentCode string                `json:"Agt"`
-	Status    string                `json:"Sts"`
-	Titular   CreateUserSimfTitular `json:"Pty"`
+	Alias     string                `json:"Alias" xml:"Alias"`
+	AgentCode string                `json:"Agt" xml:"Agt"`
+	Status    string                `json:"Sts" xml:"Sts"`
+	Titular   CreateUserSimfTitular `json:"Pty" xml:"Pty"`
 }

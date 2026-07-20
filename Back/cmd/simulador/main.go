@@ -1,8 +1,10 @@
 package main
 
 import (
+	corexmladapter "Alias_bdca/Back/internal/adapters/corexml"
 	httphandler "Alias_bdca/Back/internal/adapters/http/handler"
-	simfadapter "Alias_bdca/Back/internal/adapters/simf"
+
+	// simfadapter "Alias_bdca/Back/internal/adapters/simf" // JSON-JSON SIMF
 	"Alias_bdca/Back/internal/adapters/storage/sqlite"
 	"Alias_bdca/Back/internal/application"
 	"fmt"
@@ -41,7 +43,7 @@ func main() {
 	randomizerService := application.NewRandomizerService(sqliteRepo)
 	httpHandler := httphandler.NewHTTPHandler(appService)
 	randomizerController := httphandler.NewRandomizerController(randomizerService)
-	simfHandler := simfadapter.NewSIMFHandler(appService)
+	// simfHandler := simfadapter.NewSIMFHandler(appService) // legacy JSON SIMF — descomentar junto con RegisterRoutes
 
 	gin.SetMode(gin.ReleaseMode)
 	// Inicializar Gin
@@ -75,7 +77,11 @@ func main() {
 		api.POST("/seed/test-scenarios", httpHandler.SeedTestScenarios)
 	}
 
-	simfadapter.RegisterRoutes(r, simfHandler)
+	// Core SIMF en :8080/simf/bdca/v1 — solo XML (servicio 3).
+	// JSON al banco/front va a SIMF-Alias :9090/simf/bdca/v1 (servicio 2).
+	// Adaptador JSON legacy comentado; no registrar simfadapter aquí.
+	corexmlHandler := corexmladapter.NewHandler(appService)
+	corexmladapter.RegisterRoutes(r, corexmlHandler)
 
 	registerConfigFileRoute(r, configPath)
 
