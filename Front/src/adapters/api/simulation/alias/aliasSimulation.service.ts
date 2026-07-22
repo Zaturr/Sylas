@@ -293,8 +293,6 @@ export function createAliasSimulationService(
         return { ok: false, message: created.message };
       }
 
-      const sessionKey = getSessionKeyFromSimulationSession(session);
-
       const primaryAccount = getPrimaryAccount(workingSession);
       if (!primaryAccount) {
         return { ok: false, message: 'Debes seleccionar una cuenta para vincular al alias.' };
@@ -307,14 +305,6 @@ export function createAliasSimulationService(
           message: linked.message,
         };
       }
-
-      await simfClients.resolveAliasViaSimf(
-        document.documentType,
-        document.documentNumber,
-        appConfig.simulation.bankCode,
-        sessionKey,
-        signal,
-      );
 
       const resolved = await resolveByDocument(
         document.documentType,

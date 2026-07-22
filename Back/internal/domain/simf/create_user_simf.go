@@ -10,9 +10,9 @@ type CreateUserSimfRequest struct {
 }
 
 type CreateUserSimfMod struct {
-	AgentCode  string                `json:"Agt" xml:"Agt"`
 	EndToEndID string                `json:"EndToEndId" xml:"EndToEndId"`
 	Alias      string                `json:"Alias" xml:"Alias"`
+	AgentCode  string                `json:"Agt" xml:"Agt"`
 	Titular    CreateUserSimfTitular `json:"Pty" xml:"Pty"`
 }
 
