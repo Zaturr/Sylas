@@ -6,7 +6,7 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// ValidateUpdateAliasParams valida path params + body IdModAdvc de actualización.
+// ValidateUpdateAliasParams valida coherencia path/body tras el JSON Schema.
 func ValidateUpdateAliasParams(
 	pathAlias, pathAgent string,
 	req simfdomain.UpdateAliasSimfRequest,
@@ -18,25 +18,6 @@ func ValidateUpdateAliasParams(
 		return simfdomain.UpdateAliasCommand{}, err
 	}
 	if err := ValidateAgentCode(pathAgent); err != nil {
-		return simfdomain.UpdateAliasCommand{}, err
-	}
-	// TODO: pruebas temporales — reactivar validación MsgID/EndToEndID
-	// if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
-	// 	return simfdomain.UpdateAliasCommand{}, err
-	// }
-	if err := ValidateCreDtTm(req.GrpHdr.CreDtTm); err != nil {
-		return simfdomain.UpdateAliasCommand{}, err
-	}
-	// if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
-	// 	return simfdomain.UpdateAliasCommand{}, err
-	// }
-	if err := ValidateAlias(req.Mod.Alias); err != nil {
-		return simfdomain.UpdateAliasCommand{}, err
-	}
-	if err := ValidateAgentCode(req.Mod.AgentCode); err != nil {
-		return simfdomain.UpdateAliasCommand{}, err
-	}
-	if err := ValidateSimfStatus(req.Mod.Status); err != nil {
 		return simfdomain.UpdateAliasCommand{}, err
 	}
 

@@ -6,7 +6,7 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// ValidateBlockSimfParams valida path params + body IdModAdvc de bloqueo/eliminación global.
+// ValidateBlockSimfParams valida coherencia path/body y Sts=BLKD tras el JSON Schema.
 func ValidateBlockSimfParams(
 	pathAlias, pathAgent string,
 	req simfdomain.BlockSimfRequest,
@@ -18,22 +18,6 @@ func ValidateBlockSimfParams(
 		return simfdomain.BlockSimfCommand{}, err
 	}
 	if err := ValidateAgentCode(pathAgent); err != nil {
-		return simfdomain.BlockSimfCommand{}, err
-	}
-	// validación MsgID/EndToEndID
-	// if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
-	// 	return simfdomain.BlockSimfCommand{}, err
-	// }
-	if err := ValidateCreDtTm(req.GrpHdr.CreDtTm); err != nil {
-		return simfdomain.BlockSimfCommand{}, err
-	}
-	// if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
-	// 	return simfdomain.BlockSimfCommand{}, err
-	// }
-	if err := ValidateAlias(req.Mod.Alias); err != nil {
-		return simfdomain.BlockSimfCommand{}, err
-	}
-	if err := ValidateAgentCode(req.Mod.AgentCode); err != nil {
 		return simfdomain.BlockSimfCommand{}, err
 	}
 	if err := ValidateBlockStatus(req.Mod.Status); err != nil {

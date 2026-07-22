@@ -16,7 +16,7 @@ export function buildSimfUpdatePayload(
   return {
     IdModAdvc: {
       GrpHdr: {
-        MsgID: msgId,
+        MsgId: msgId,
         CreDtTm: creDtTm,
       },
       Mod: {

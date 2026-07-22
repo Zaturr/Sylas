@@ -14,8 +14,11 @@ import (
 // CreateUserSimf POST /simf/bdca/v1/aliases (IdModAdvc).
 func (h *SIMFHandler) CreateUserSimf(c *gin.Context) {
 	var message simfdomain.CreateUserSimfMessage
-	if err := c.ShouldBindJSON(&message); err != nil {
-		c.JSON(http.StatusOK, response.BuildCreateUserFormatErrorMessage(simfdomain.CreateUserSimfCommand{}))
+	switch bindIdModAdvcBody(c, &message) {
+	case idModAdvcStructuralConflict:
+		return
+	case idModAdvcValueFormatError:
+		c.JSON(http.StatusOK, response.BuildCreateUserFormatErrorMessage(partialCreateUserCommand(message.IdModAdvc)))
 		return
 	}
 

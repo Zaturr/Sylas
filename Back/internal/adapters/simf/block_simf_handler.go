@@ -13,8 +13,11 @@ import (
 
 func (h *SIMFHandler) BlockSimf(c *gin.Context) {
 	var message simfdomain.BlockSimfMessage
-	if err := c.ShouldBindJSON(&message); err != nil {
-		c.JSON(http.StatusOK, response.BuildBlockSimfFormatErrorMessage(simfdomain.BlockSimfCommand{}))
+	switch bindIdModAdvcBody(c, &message) {
+	case idModAdvcStructuralConflict:
+		return
+	case idModAdvcValueFormatError:
+		c.JSON(http.StatusOK, response.BuildBlockSimfFormatErrorMessage(partialBlockSimfCommand(message.IdModAdvc)))
 		return
 	}
 

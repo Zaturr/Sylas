@@ -14,8 +14,11 @@ import (
 // UpdateAliasSimf PUT /simf/bdca/v1/aliases/update/{Alias}/{Agt}
 func (h *SIMFHandler) UpdateAliasSimf(c *gin.Context) {
 	var message simfdomain.UpdateAliasSimfMessage
-	if err := c.ShouldBindJSON(&message); err != nil {
-		c.JSON(http.StatusOK, response.BuildUpdateAliasFormatErrorMessage(simfdomain.UpdateAliasCommand{}))
+	switch bindIdModAdvcBody(c, &message) {
+	case idModAdvcStructuralConflict:
+		return
+	case idModAdvcValueFormatError:
+		c.JSON(http.StatusOK, response.BuildUpdateAliasFormatErrorMessage(partialUpdateAliasCommand(message.IdModAdvc)))
 		return
 	}
 

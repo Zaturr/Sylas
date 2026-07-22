@@ -11,7 +11,7 @@ export function buildSimfBlockPayload(aliasValue: string, bankCode: string) {
   return {
     IdModAdvc: {
       GrpHdr: {
-        MsgID: msgId,
+        MsgId: msgId,
         CreDtTm: creDtTm,
       },
       Mod: {

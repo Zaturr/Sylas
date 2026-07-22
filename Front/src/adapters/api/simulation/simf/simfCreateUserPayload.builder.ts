@@ -28,7 +28,7 @@ export function buildSimfCreateUserPayload(
     payload: {
       IdModAdvc: {
         GrpHdr: {
-          MsgID: msgId,
+          MsgId: msgId,
           CreDtTm: creDtTm,
         },
         Mod: {

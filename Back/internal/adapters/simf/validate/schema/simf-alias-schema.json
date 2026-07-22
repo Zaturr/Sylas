@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simf.alias/schemas/simf-alias-v2.json",
+  "title": "SIMF Alias V2 - Esquema de Validación de Mensajería",
+  "description": "Esquema JSON Schema Draft 2020-12 para validación de mensajes del módulo de Alias SIMF V2. Incluye reglas estructurales, de trazabilidad y de negocio.",
+  "oneOf": [
+    { "$ref": "#/$defs/AlisIdInqResMessage" },
+    { "$ref": "#/$defs/IdModAdvcMessage" },
+    { "$ref": "#/$defs/IdVrfctnRptMessage" }
+  ],
+  "$defs": {
+    "MsgId": {
+      "type": "string",
+      "minLength": 28,
+      "maxLength": 28,
+      "pattern": "^[A-Za-z0-9]{28}$",
+      "description": "Identificación del mensaje. Composición: Emisor (4) + Centro de procesamiento (2) + Fecha/Hora YYYYMMDDhhmmss (14) + Secuencial (8)."
+    },
+    "EndToEndId": {
+      "type": "string",
+      "minLength": 26,
+      "maxLength": 26,
+      "pattern": "^[A-Za-z0-9]{26}$",
+      "description": "Identificador transaccional. Composición: Canal-PSP-IBP (4) + Fecha/Hora YYYYMMDDhhmmss (14) + Referencia interna (8)."
+    },
+    "CreDtTm": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Fecha y hora de creación en formato ISO 8601 (YYYY-MM-DDThh:mm:ss)."
+    },
+    "PartyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 140,
+      "pattern": "^[A-Z0-9][A-Z0-9 .,&'\\-]*$",
+      "description": "Nombre del titular. Alfanumérico en MAYÚSCULAS, entre 1 y 140 caracteres."
+    },
+    "SchemeName": {
+      "type": "string",
+      "enum": ["SCID", "SRIF", "SPAS"],
+      "description": "Esquema del documento: SCID (Cédula), SRIF (RIF), SPAS (Pasaporte)."
+    },
+    "PartyId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 35,
+      "pattern": "^[A-Za-z0-9]+$",
+      "description": "Número de identificación sin espacios ni caracteres especiales."
+    },
+    "Party": {
+      "type": "object",
+      "required": ["Id", "SchmeNm"],
+      "properties": {
+        "Nm": { "$ref": "#/$defs/PartyName" },
+        "Id": { "$ref": "#/$defs/PartyId" },
+        "SchmeNm": { "$ref": "#/$defs/SchemeName" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "SchmeNm": { "const": "SCID" } },
+            "required": ["SchmeNm"]
+          },
+          "then": {
+            "properties": {
+              "Id": {
+                "pattern": "^[VE][A-Za-z0-9]{0,34}$",
+                "description": "Cédula: prefijo V o E + número (máx. 34 caracteres adicionales)."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "SchmeNm": { "const": "SRIF" } },
+            "required": ["SchmeNm"]
+          },
+          "then": {
+            "properties": {
+              "Id": {
+                "pattern": "^[JGCR][0-9]{9}$",
+                "description": "RIF: prefijo J, G, C o R + 9 dígitos rellenados con ceros a la izquierda."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "SchmeNm": { "const": "SPAS" } },
+            "required": ["SchmeNm"]
+          },
+          "then": {
+            "properties": {
+              "Id": {
+                "pattern": "^P[A-Za-z0-9]{0,34}$",
+                "description": "Pasaporte: prefijo P + número (máx. 34 caracteres adicionales)."
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "Alias": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 15,
+      "pattern": "^(?!\\.)(?!.*\\.\\.)(?!.*\\.$)[a-z0-9]+(\\.[a-z0-9]+)*$",
+      "description": "Alias alfanumérico en minúsculas (6-15 caracteres). Único carácter especial permitido: punto (.). No al inicio/fin ni consecutivos."
+    },
+    "Agent": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 4,
+      "pattern": "^[A-Za-z0-9]{4}$",
+      "description": "Código de la institución en la CCE (4 caracteres)."
+    },
+    "Status": {
+      "type": "string",
+      "enum": ["ACTV", "INAC", "PNDL", "BLKD", "UNRG"],
+      "description": "ACTV=Activo, INAC=Inactivo local, PNDL=Pendiente baja, BLKD=Bloqueado/Eliminado, UNRG=No registrado."
+    },
+    "Result": {
+      "type": "string",
+      "enum": ["ACCP", "RJCT"],
+      "description": "ACCP=Aceptada, RJCT=Rechazada."
+    },
+    "Reason": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 4,
+      "description": "Motivo de falla (4 caracteres). Vacío en respuestas exitosas.",
+      "oneOf": [
+        { "const": "" },
+        {
+          "type": "string",
+          "enum": ["ACRD", "RR10", "RR04", "BE23"],
+          "description": "ACRD=Alias ocupado, RR10=Error formato, RR04=Blacklist, BE23=No encontrado."
+        }
+      ]
+    },
+    "GroupHeader": {
+      "type": "object",
+      "required": ["MsgId", "CreDtTm"],
+      "properties": {
+        "MsgId": { "$ref": "#/$defs/MsgId" },
+        "CreDtTm": { "$ref": "#/$defs/CreDtTm" }
+      },
+      "additionalProperties": false
+    },
+    "AgentStatus": {
+      "type": "object",
+      "required": ["Agt", "Sts"],
+      "properties": {
+        "Agt": { "$ref": "#/$defs/Agent" },
+        "Sts": { "$ref": "#/$defs/Status" }
+      },
+      "additionalProperties": false
+    },
+    "AliasEntry": {
+      "type": "object",
+      "required": ["Alias", "AgtList"],
+      "properties": {
+        "Alias": { "$ref": "#/$defs/Alias" },
+        "AgtList": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/AgentStatus" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "InquiryReport": {
+      "type": "object",
+      "required": ["Result"],
+      "properties": {
+        "Result": { "$ref": "#/$defs/Result" },
+        "Rsn": { "$ref": "#/$defs/Reason" },
+        "Pty": { "$ref": "#/$defs/Party" },
+        "AliasList": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AliasEntry" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "Result": { "const": "RJCT" } },
+            "required": ["Result"]
+          },
+          "then": {
+            "required": ["Rsn", "Pty"],
+            "properties": {
+              "Rsn": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 4,
+                "not": { "const": "" }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "Result": { "const": "ACCP" } },
+            "required": ["Result"]
+          },
+          "then": {
+            "required": ["Pty"]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "AlisIdInqRes": {
+      "type": "object",
+      "required": ["GrpHdr", "InqRpt"],
+      "properties": {
+        "GrpHdr": { "$ref": "#/$defs/GroupHeader" },
+        "InqRpt": { "$ref": "#/$defs/InquiryReport" }
+      },
+      "additionalProperties": false
+    },
+    "AlisIdInqResMessage": {
+      "type": "object",
+      "required": ["AlisIdInqRes"],
+      "properties": {
+        "AlisIdInqRes": { "$ref": "#/$defs/AlisIdInqRes" }
+      },
+      "additionalProperties": false
+    },
+    "ModificationRequest": {
+      "type": "object",
+      "properties": {
+        "Agt": { "$ref": "#/$defs/Agent" },
+        "EndToEndId": { "$ref": "#/$defs/EndToEndId" },
+        "Alias": { "$ref": "#/$defs/Alias" },
+        "Sts": { "$ref": "#/$defs/Status" },
+        "Pty": { "$ref": "#/$defs/Party" }
+      },
+      "allOf": [
+        {
+          "description": "Registro o vinculación inicial: requiere Agt, EndToEndId, Alias y Pty.",
+          "if": {
+            "not": { "required": ["Sts"] }
+          },
+          "then": {
+            "required": ["Agt", "EndToEndId", "Alias", "Pty"]
+          }
+        },
+        {
+          "description": "Actualización de estado: requiere EndToEndId, Alias, Agt y Sts.",
+          "if": {
+            "required": ["Sts"]
+          },
+          "then": {
+            "required": ["EndToEndId", "Alias", "Agt", "Sts"],
+            "properties": {
+              "Sts": {
+                "enum": ["ACTV", "INAC", "BLKD"],
+                "description": "ACTV=Reactivar, INAC=Inactivar local, BLKD=Baja global."
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "IdModAdvc": {
+      "type": "object",
+      "required": ["GrpHdr", "Mod"],
+      "properties": {
+        "GrpHdr": { "$ref": "#/$defs/GroupHeader" },
+        "Mod": { "$ref": "#/$defs/ModificationRequest" }
+      },
+      "additionalProperties": false
+    },
+    "IdModAdvcMessage": {
+      "type": "object",
+      "required": ["IdModAdvc"],
+      "properties": {
+        "IdModAdvc": { "$ref": "#/$defs/IdModAdvc" }
+      },
+      "additionalProperties": false
+    },
+    "OriginalAssignment": {
+      "type": "object",
+      "required": ["OrgnlMsgId", "OrgnlCreDtTm"],
+      "properties": {
+        "OrgnlMsgId": { "$ref": "#/$defs/MsgId" },
+        "OrgnlCreDtTm": { "$ref": "#/$defs/CreDtTm" }
+      },
+      "additionalProperties": false
+    },
+    "VerificationReport": {
+      "type": "object",
+      "required": ["OrgnlEndToEndId", "Result"],
+      "properties": {
+        "OrgnlEndToEndId": { "$ref": "#/$defs/EndToEndId" },
+        "Result": { "$ref": "#/$defs/Result" },
+        "Rsn": { "$ref": "#/$defs/Reason" }
+      },
+      "additionalProperties": false
+    },
+    "ModificationResponse": {
+      "type": "object",
+      "required": ["Alias", "Agt", "Sts"],
+      "properties": {
+        "Alias": { "$ref": "#/$defs/Alias" },
+        "Agt": { "$ref": "#/$defs/Agent" },
+        "Sts": { "$ref": "#/$defs/Status" },
+        "Pty": { "$ref": "#/$defs/Party" }
+      },
+      "additionalProperties": false
+    },
+    "IdVrfctnRpt": {
+      "type": "object",
+      "required": ["GrpHdr", "OrgnlAssgnmt", "Rpt", "Mod"],
+      "properties": {
+        "GrpHdr": { "$ref": "#/$defs/GroupHeader" },
+        "OrgnlAssgnmt": { "$ref": "#/$defs/OriginalAssignment" },
+        "Rpt": { "$ref": "#/$defs/VerificationReport" },
+        "Mod": { "$ref": "#/$defs/ModificationResponse" }
+      },
+      "additionalProperties": false
+    },
+    "IdVrfctnRptMessage": {
+      "type": "object",
+      "required": ["IdVrfctnRpt"],
+      "properties": {
+        "IdVrfctnRpt": { "$ref": "#/$defs/IdVrfctnRpt" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

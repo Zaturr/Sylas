@@ -6,34 +6,8 @@ import (
 	simfdomain "Alias_bdca/Back/internal/domain/simf"
 )
 
-// ValidateCreateUserSimfRequest valida el mensaje IdModAdvc y devuelve el comando de dominio.
+// ValidateCreateUserSimfRequest mapea el IdModAdvc ya validado por JSON Schema al comando de dominio.
 func ValidateCreateUserSimfRequest(req simfdomain.CreateUserSimfRequest) (simfdomain.CreateUserSimfCommand, error) {
-	// TODO: pruebas temporales — reactivar validación MsgID/EndToEndID
-	// if err := ValidateMsgID(req.GrpHdr.MsgID); err != nil {
-	// 	return simfdomain.CreateUserSimfCommand{}, err
-	// }
-	if err := ValidateCreDtTm(req.GrpHdr.CreDtTm); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
-	if err := ValidateAgentCode(req.Mod.AgentCode); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
-	// if err := ValidateEndToEndID(req.Mod.EndToEndID); err != nil {
-	// 	return simfdomain.CreateUserSimfCommand{}, err
-	// }
-	if err := ValidateAlias(req.Mod.Alias); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
-	if err := ValidateTitularName(req.Mod.Titular.Name); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
-	if err := ValidateSchemeName(req.Mod.Titular.SchemeName); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
-	if err := ValidateDocumentID(req.Mod.Titular.SchemeName, req.Mod.Titular.DocumentID); err != nil {
-		return simfdomain.CreateUserSimfCommand{}, err
-	}
-
 	return simfdomain.CreateUserSimfCommand{
 		MsgID:       strings.TrimSpace(req.GrpHdr.MsgID),
 		CreDtTm:     strings.TrimSpace(req.GrpHdr.CreDtTm),
