@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const defaultRestrictedWordsFile = "restricted word/words.txt"
+const defaultRestrictedWordsFile = "words.txt"
 
 func LoadRestrictedWordsFile(configPath string) (string, error) {
 	if configPath == "" {

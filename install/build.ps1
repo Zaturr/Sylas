@@ -128,13 +128,29 @@ else {
   }
 }
 
+Write-Step "Asegurando words.txt (palabras restringidas) junto al ejecutable"
+$WordsOut = Join-Path $InstallDir "words.txt"
+$WordsSrc = Join-Path $RepoRoot "restricted word\words.txt"
+if (Test-Path $WordsOut) {
+  Write-Host "Se conserva el words.txt existente (no se sobrescribe): $WordsOut"
+}
+elseif (Test-Path $WordsSrc) {
+  Copy-Item -Path $WordsSrc -Destination $WordsOut -Force
+  Write-Host "Copiado desde: $WordsSrc"
+}
+else {
+  Write-Host "Aviso: no se encontró '$WordsSrc'. Crea install\words.txt manualmente." -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "Build listo." -ForegroundColor Green
 Write-Host "  Ejecutable: $ExePath"
 Write-Host "  Config:     $ConfigOut"
+Write-Host "  Palabras:   $WordsOut"
 Write-Host ""
 Write-Host "Uso:"
 Write-Host "  1) Edita install\config.json si lo necesitas (PORT, banco, URL API)."
-Write-Host "  2) Ejecuta:  .\install\sylas.exe"
-Write-Host "  3) Abre:     http://localhost:<PORT>"
+Write-Host "  2) Edita install\words.txt para palabras restringidas (sin recompilar)."
+Write-Host "  3) Ejecuta:  .\install\sylas.exe"
+Write-Host "  4) Abre:     http://localhost:<PORT>"
 Write-Host ""

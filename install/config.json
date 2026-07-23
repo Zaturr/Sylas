@@ -12,7 +12,7 @@
   "SCRIBE_MAX_BACKUPS": 5,
   "SCRIBE_MAX_AGE_DAY": 30,
   "SCRIBE_COMPRESS": false,
-  "RESTRICTED_WORDS_FILE": "restricted word/words.txt",
+  "RESTRICTED_WORDS_FILE": "words.txt",
   "SIMULATION": {
     "bankCode": "0105",
     "bankName": "Mercantil",

@@ -6,9 +6,10 @@ import (
 	"strings"
 )
 
-const defaultRelativePath = "restricted word/" + DefaultFileName
+const defaultRelativePath = DefaultFileName
 
-// ResolvePath busca el archivo de palabras restringidas cerca del config, exe o cwd.
+// ResolvePath busca el archivo de palabras restringidas junto al config.json (prioridad),
+// luego junto al .exe y finalmente en el cwd / padres del repo.
 func ResolvePath(configPath, configuredPath string) string {
 	configuredPath = strings.TrimSpace(configuredPath)
 	if configuredPath == "" {
