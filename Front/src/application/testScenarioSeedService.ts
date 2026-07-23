@@ -9,7 +9,9 @@ export type TestScenarioSeedRequest = {
 export type TestScenarioSeedResponse = {
   message: string;
   created: number;
+  updated: number;
   skipped: number;
+  purged: number;
   total: number;
   errors?: string[];
 };

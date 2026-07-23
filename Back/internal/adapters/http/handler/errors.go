@@ -20,6 +20,8 @@ func mapSimfRegisterError(err error) (int, string) {
 		return 422, "el alias ya está registrado por otro titular"
 	case errors.Is(err, application.ErrSimfAliasLimitExceeded):
 		return 422, "el titular ya tiene un alias activo; debe bloquearlo (BLKD) antes de registrar otro"
+	case errors.Is(err, application.ErrSimfAliasBlacklisted):
+		return 422, "el alias contiene una palabra restringida (RR04)"
 	case errors.Is(err, application.ErrSimfAccountAlreadyHasAlias):
 		return 422, "la cuenta ya tiene un alias asociado"
 	case errors.Is(err, application.ErrSimfAccountNotEligible):

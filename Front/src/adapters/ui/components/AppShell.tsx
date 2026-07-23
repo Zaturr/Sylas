@@ -64,7 +64,7 @@ export function AppShell({
               >
                 ☰
               </button>
-              <h1 className="main-title">BDCA</h1>
+              <h1 className="main-title">BDCA-MiAlias</h1>
             </div>
 
             

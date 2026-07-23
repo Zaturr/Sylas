@@ -231,6 +231,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               className={`scheme-filter-btn${schemeFilter === '' ? ' scheme-filter-btn--active' : ''}`}
               disabled={isBusy}
               onClick={() => setSchemeFilter('')}
+              title="Mostrar todos (solo consulta, no inserta)"
             >
               Todo
             </button>
@@ -239,6 +240,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               className={`scheme-filter-btn${schemeFilter === 'SCID' ? ' scheme-filter-btn--active' : ''}`}
               disabled={isBusy}
               onClick={() => setSchemeFilter('SCID')}
+              title="Filtrar personas naturales V/E (solo consulta, no inserta)"
             >
               SCID
             </button>
@@ -247,6 +249,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               className={`scheme-filter-btn${schemeFilter === 'SRIF' ? ' scheme-filter-btn--active' : ''}`}
               disabled={isBusy}
               onClick={() => setSchemeFilter('SRIF')}
+              title="Filtrar personas jurídicas J/G/C (solo consulta, no inserta)"
             >
               SRIF
             </button>
@@ -328,9 +331,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   const itemNumber =
                     (pagination.page - 1) * pagination.limit + index + 1;
                   const isDeletingRow = deletingCustomerId === alias.customer_id;
+                  const rowKey = `${alias.customer_id}:${alias.alias?.trim() || 'row'}`;
 
                   return (
-                    <tr key={alias.customer_id}>
+                    <tr key={rowKey}>
                       <td className="col-num">{itemNumber}</td>
                       <td className="col-nombre">{alias.first_name}</td>
                       <td className="col-apellido">{alias.last_name}</td>

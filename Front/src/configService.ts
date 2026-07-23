@@ -16,6 +16,12 @@ export interface SimulationConfig {
 export interface AppConfig {
   /** Puerto del backend. Lo usa Go al arrancar; el front no lo lee para escuchar. */
   PORT?: string;
+  /**
+   * URL pública del simulador (ej. http://192.168.120.103:8080).
+   * Opcional: si no se define, el navegador usa el mismo host con el que abrió la UI.
+   */
+  PUBLIC_BASE_URL?: string;
+  /** Base de la API REST. Puede ser relativa (/api/v1) o absoluta. */
   VITE_API_BASE_URL?: string;
   SIMULATION?: SimulationConfig;
 }
@@ -24,7 +30,6 @@ let runtimeConfig: AppConfig | null = null;
 
 export const loadConfig = async (): Promise<void> => {
   try {
-    // Agregamos un timestamp para evitar que el navegador guarde esto en caché
     const response = await fetch(`/config.json?t=${new Date().getTime()}`);
     if (response.ok) {
       runtimeConfig = await response.json();
@@ -37,12 +42,58 @@ export const loadConfig = async (): Promise<void> => {
   }
 };
 
+function isLocalHost(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase();
+  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1';
+}
+
+/** Origen HTTP del simulador (protocolo + host + puerto). */
+export const getPublicOrigin = (): string => {
+  const publicBase = runtimeConfig?.PUBLIC_BASE_URL?.trim();
+  if (publicBase) {
+    try {
+      return new URL(publicBase).origin;
+    } catch {
+      console.warn('PUBLIC_BASE_URL inválida:', publicBase);
+    }
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+
+  const configured =
+    runtimeConfig?.VITE_API_BASE_URL ?? import.meta.env.VITE_API_BASE_URL;
+  if (configured && !configured.startsWith('/')) {
+    try {
+      return new URL(configured).origin;
+    } catch {
+      // continúa con fallback
+    }
+  }
+
+  return 'http://localhost:8080';
+};
+
 export const getApiBaseUrl = (): string => {
-  return (
+  const configured =
     runtimeConfig?.VITE_API_BASE_URL ??
     import.meta.env.VITE_API_BASE_URL ??
-    'http://localhost:8080/api/v1'
-  );
+    '/api/v1';
+
+  if (configured.startsWith('/')) {
+    return `${getPublicOrigin()}${configured}`;
+  }
+
+  try {
+    const url = new URL(configured);
+    if (typeof window !== 'undefined' && isLocalHost(url.hostname)) {
+      return `${getPublicOrigin()}${url.pathname}`;
+    }
+    return configured;
+  } catch {
+    return `${getPublicOrigin()}/api/v1`;
+  }
 };
 
 export const getSimulationConfig = (): SimulationConfig => {

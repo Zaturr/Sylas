@@ -142,6 +142,9 @@ function buildNaturalMultiBankAccounts(
 }
 
 function buildLegalEntityTestScenarios(userBankId: string): TestScenarioConfig[] {
+  // Multi-fila en el panel solo aplica a multi-alias del MISMO banco.
+  // Un único escenario jurídico demuestra multicuenta + multi-alias en el banco emisor.
+  // El resto: 1 alias (varias cuentas del mismo banco se ven en la misma fila).
   const eligibleCount = eligibleLegalEntityAliasAccounts();
   const allEligibleIndexes = Array.from({ length: eligibleCount }, (_, index) => index);
 
@@ -158,15 +161,15 @@ function buildLegalEntityTestScenarios(userBankId: string): TestScenarioConfig[]
       aliases: buildSingleAlias('j.blkd.solo', 0, 'BLKD'),
     },
     {
-      id: 'J-BLKD-MULTI-01',
-      label: 'Jurídico BLKD - varios alias',
+      id: 'J-BLKD-STATUS-01',
+      label: 'Jurídico BLKD - un alias (todas INAC)',
       document_type: 'J',
       document_number: '300000002',
       first_name: 'Comercializadora Delta',
       last_name: 'CA',
       second_last_name: '',
       accounts: buildJuridicalAccounts(userBankId, repeatStatus('INAC')),
-      aliases: buildAliasEntries('j.blkd', [0, 1, 2], 'BLKD'),
+      aliases: buildSingleAlias('j.blkd.delta', 0, 'BLKD'),
     },
     {
       id: 'J-INAC-SINGLE-01',
@@ -180,37 +183,37 @@ function buildLegalEntityTestScenarios(userBankId: string): TestScenarioConfig[]
       aliases: buildSingleAlias('j.inac.solo', 0),
     },
     {
-      id: 'J-INAC-ALL-01',
-      label: 'Jurídico INAC - todos los alias',
+      id: 'J-INAC-STATUS-01',
+      label: 'Jurídico INAC - un alias (cuenta INAC)',
       document_type: 'J',
       document_number: '300000004',
       first_name: 'Grupo Andina',
       last_name: 'CA',
       second_last_name: '',
       accounts: buildJuridicalAccounts(userBankId, repeatStatus('INAC')),
-      aliases: buildAliasEntries('j.inac', allEligibleIndexes),
+      aliases: buildSingleAlias('j.inac.andina', 0),
     },
     {
       id: 'J-INAC-VAR-01',
-      label: 'Jurídico INAC - alias mixtos',
+      label: 'Jurídico INAC - un alias (cuentas mixtas)',
       document_type: 'J',
       document_number: '300000005',
       first_name: 'TechNova Solutions',
       last_name: 'CA',
       second_last_name: '',
       accounts: buildJuridicalAccounts(userBankId, ['INAC', 'INAC', 'ACTV', 'ACTV', 'ACTV', 'ACTV', 'ACTV', 'ACTV']),
-      aliases: buildAliasEntries('j.inac.var', [0, 1, 2, 3]),
+      aliases: buildSingleAlias('j.inac.var', 0),
     },
     {
-      id: 'J-INAC-ALL-BUT-ONE-01',
-      label: 'Jurídico INAC - todos menos uno ACTV',
+      id: 'J-INAC-ONE-ACTV-01',
+      label: 'Jurídico - un alias (emisora ACTV)',
       document_type: 'J',
       document_number: '300000006',
       first_name: 'Agroindustrial Vega',
       last_name: 'CA',
       second_last_name: '',
       accounts: buildJuridicalAccounts(userBankId, ['ACTV', 'INAC', 'INAC', 'INAC', 'INAC', 'INAC', 'INAC', 'INAC']),
-      aliases: buildAliasEntries('j.inac.one', allEligibleIndexes),
+      aliases: buildSingleAlias('j.inac.vega', 0),
     },
     {
       id: 'J-ACTV-SINGLE-01',
@@ -224,8 +227,9 @@ function buildLegalEntityTestScenarios(userBankId: string): TestScenarioConfig[]
       aliases: buildSingleAlias('j.actv.solo', 0),
     },
     {
-      id: 'J-ACTV-ALL-01',
-      label: 'Jurídico ACTV - todos los alias',
+      // Único caso multi-alias: varias cuentas/alias del MISMO banco → varias filas en el panel
+      id: 'J-ACTV-MULTI-SAME-BANK-01',
+      label: 'Jurídico ACTV - multi-alias mismo banco',
       document_type: 'J',
       document_number: '300000008',
       first_name: 'Logistica Integral',
@@ -236,25 +240,25 @@ function buildLegalEntityTestScenarios(userBankId: string): TestScenarioConfig[]
     },
     {
       id: 'J-ACTV-VAR-01',
-      label: 'Jurídico ACTV - alias mixtos',
+      label: 'Jurídico ACTV - un alias (cuentas mixtas)',
       document_type: 'J',
       document_number: '300000009',
       first_name: 'Distribuidora Horizonte',
       last_name: 'CA',
       second_last_name: '',
       accounts: buildJuridicalAccounts(userBankId, ['ACTV', 'INAC', 'ACTV', 'INAC', 'ACTV', 'ACTV', 'ACTV', 'ACTV']),
-      aliases: buildAliasEntries('j.actv.var', [0, 1, 2, 3]),
+      aliases: buildSingleAlias('j.actv.var', 0),
     },
     {
-      id: 'J-ACTV-ALL-BUT-ISSUER-01',
-      label: 'Jurídico ACTV - todos menos la cuenta emisora',
+      id: 'J-ACTV-ISSUER-INAC-01',
+      label: 'Jurídico ACTV - un alias (emisora INAC)',
       document_type: 'J',
       document_number: '300000010',
       first_name: 'Manufactura Prime',
       last_name: 'CA',
       second_last_name: '',
       accounts: buildJuridicalAccounts(userBankId, ['INAC', 'ACTV', 'ACTV', 'ACTV', 'ACTV', 'ACTV', 'ACTV', 'ACTV']),
-      aliases: buildAliasEntries('j.actv.emis', allEligibleIndexes),
+      aliases: buildSingleAlias('j.actv.emis', 1),
     },
   ];
 }

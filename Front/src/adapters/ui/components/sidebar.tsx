@@ -56,7 +56,7 @@ export function Sidebar({
 
       <aside className={sidebarClassName}>
         <div className="sidebar-header">
-          <div className="sidebar-brand">BDCA</div>
+          <div className="sidebar-brand">BDCA-MiAlias</div>
           <button
             type="button"
             className="sidebar-close"

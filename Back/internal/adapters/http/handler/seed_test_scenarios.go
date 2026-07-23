@@ -32,7 +32,9 @@ func (h *HTTPHandler) SeedTestScenarios(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":  "Carga de escenarios de prueba finalizada",
 		"created":  result.Created,
+		"updated":  result.Updated,
 		"skipped":  result.Skipped,
+		"purged":   result.Purged,
 		"errors":   result.Errors,
 		"total":    len(req.Scenarios),
 	})

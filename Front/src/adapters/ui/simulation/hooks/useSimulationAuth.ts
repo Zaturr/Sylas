@@ -488,9 +488,12 @@ export function useSimulationAuth() {
       return;
     }
 
-    clearSessionTrace(simfRequestTracePort, state.session);
+    if (state.step === 'alias-create-success' && state.session) {
+      await authSimulationService.verifyAliasViaSimf(state.session);
+    }
+
     dispatch({ type: 'FINISH_ALIAS_FLOW' });
-  }, [backToAccountsAndAliases, simfRequestTracePort, state.session]);
+  }, [authSimulationService, backToAccountsAndAliases, state.session, state.step]);
 
   const backToAliasManagement = useCallback(async () => {
     if (state.session?.isLegalEntity) {

@@ -44,12 +44,35 @@ powershell -ExecutionPolicy Bypass -File .\install\build.ps1
 ```
 ## Usar
 
-1. Edita `install\config.json` (`PORT`, `VITE_API_BASE_URL`, `SIMULATION`, …).
+1. Edita `install\config.json` (`PORT`, `PUBLIC_BASE_URL`, `VITE_API_BASE_URL`, `SIMULATION`, …).
 2. Ejecuta `.\install\sylas.exe`.
 3. Abre `http://localhost:<PORT>` (por defecto `8080`).
 
-Si cambias `PORT`, alinea también `VITE_API_BASE_URL` y **reinicia** el `.exe`.  
+Si cambias `PORT`, alinea también `PUBLIC_BASE_URL` y **reinicia** el `.exe`.  
 Si solo cambias datos de simulación, guarda y **recarga** el navegador.
+
+## Acceso desde otras PCs (LAN) y Postman
+
+El backend (Gin) sirve **API + UI** en un solo proceso y escucha en **todas las interfaces** (`0.0.0.0:PORT`).
+
+En la máquina servidor (ej. José, IP `192.168.120.103`):
+
+```json
+{
+  "PORT": "8080",
+  "PUBLIC_BASE_URL": "http://192.168.120.103:8080",
+  "VITE_API_BASE_URL": "/api/v1"
+}
+```
+
+- **David / Daniel (navegador):** `http://192.168.120.103:8080`
+- **Postman (REST):** `http://192.168.120.103:8080/api/v1/...`
+- **Postman (SIMF):** `http://192.168.120.103:8080/simf/bdca/v1/...`
+
+`VITE_API_BASE_URL` puede ser relativa (`/api/v1`): el front usará el mismo host con el que abrieron la página.  
+`PUBLIC_BASE_URL` es opcional pero recomendada para documentar la URL de red al arrancar el `.exe`.
+
+Si no conecta desde otra PC, revisa el **firewall de Windows** en el servidor (permitir TCP entrante en el puerto `8080`).
 
 ## Notas
 

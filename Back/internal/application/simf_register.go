@@ -27,6 +27,10 @@ func (s *AppService) RegisterSimfUser(
 	}
 
 	if aliasValue != "" {
+		if s.isAliasBlacklisted(aliasValue) {
+			return ErrSimfAliasBlacklisted
+		}
+
 		existingAliasByValue, err := s.repo.GetAliasByValue(ctx, aliasValue)
 		if err != nil {
 			return err

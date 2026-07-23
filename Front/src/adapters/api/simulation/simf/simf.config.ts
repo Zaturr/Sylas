@@ -1,9 +1,9 @@
-import { appConfig } from '../../app.config';
+import { getApiBaseUrl, getPublicOrigin } from '../../../../configService';
 
 export function getSimfBaseUrl(): string {
   try {
-    return `${new URL(appConfig.apiBaseUrl).origin}/simf/bdca/v1`;
-  } catch (error) {
-    return 'http://localhost:8080/simf/bdca/v1';
+    return `${new URL(getApiBaseUrl()).origin}/simf/bdca/v1`;
+  } catch {
+    return `${getPublicOrigin()}/simf/bdca/v1`;
   }
 }

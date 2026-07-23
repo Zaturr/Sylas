@@ -15,6 +15,14 @@ import (
 func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScenarioSeedRequest) (*domain.TestScenarioSeedResult, error) {
 	result := &domain.TestScenarioSeedResult{}
 
+	// Certificación: al iniciar solo deben existir los escenarios de prueba.
+	// Borramos TODO (randomizador, docs viejos, duplicados) y recreamos los 30.
+	deleted, err := s.repo.DeleteAllCustomers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("limpiar clientes previos: %w", err)
+	}
+	result.Purged = int(deleted)
+
 	for _, scenario := range req.Scenarios {
 		if err := validateTestScenario(scenario); err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
@@ -22,15 +30,6 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 		}
 
 		documentType := resolveScenarioDocumentType(scenario)
-		existing, err := s.repo.GetCustomerByDocument(ctx, documentType, scenario.DocumentNumber)
-		if err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
-			continue
-		}
-		if existing != nil {
-			result.Skipped++
-			continue
-		}
 
 		now := time.Now()
 		customerID := uuid.New().String()
@@ -110,7 +109,13 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 				continue
 			}
 			if createdAlias != nil {
-				if err := s.repo.SyncAliasBankLinksFromAccounts(ctx, createdAlias.ID, accounts); err != nil {
+				// Recargar cuentas desde BD (IDs reales) y vincular TODOS los bancos del escenario.
+				persistedAccounts, err := s.repo.GetAccountsByCustomerID(ctx, customerID)
+				if err != nil {
+					result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
+					continue
+				}
+				if err := s.repo.SyncAliasBankLinksFromAccounts(ctx, createdAlias.ID, persistedAccounts); err != nil {
 					result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
 					continue
 				}

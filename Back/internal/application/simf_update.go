@@ -3,6 +3,9 @@ package application
 import (
 	"Alias_bdca/Back/internal/domain"
 	"context"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 // UpdateSimfAliasAgentStatus actualiza el Sts del vínculo alias-agente (cuenta en la IBP).
@@ -40,13 +43,32 @@ func (s *AppService) UpdateSimfAliasAgentStatus(
 		}
 	}
 
-	// Fallback legacy por si no hay vínculo en alias_bank_links
+	// Fallback: cuenta primaria del alias si es del mismo banco.
 	if accountID == "" && alias.AccountID != "" {
 		for _, account := range accounts {
 			if account.ID == alias.AccountID && account.BankID == bankID {
 				accountID = account.ID
 				break
 			}
+		}
+	}
+
+	// Fallback: el titular tiene cuenta no-dólares en ese Agt.
+	// El panel muestra bancos desde accounts; el update antes solo miraba alias_bank_links.
+	if accountID == "" {
+		for _, account := range accounts {
+			if account.BankID != bankID || domain.IsDollarAccount(account.AccountType) {
+				continue
+			}
+			accountID = account.ID
+			_ = s.repo.UpsertAliasBankLink(ctx, &domain.AliasBankLink{
+				ID:        uuid.New().String(),
+				AliasID:   alias.ID,
+				BankID:    bankID,
+				AccountID: account.ID,
+				CreatedAt: time.Now(),
+			})
+			break
 		}
 	}
 

@@ -7,7 +7,10 @@ import type {
   UpdateAliasStatusInput,
   UpdateAliasStatusResult,
 } from '../../../../application/simulation/authSimulation.port';
-import type { SimulationSession } from '../../../../domain/simulation/auth.types';
+import type {
+  AliasResolveEntry,
+  SimulationSession,
+} from '../../../../domain/simulation/auth.types';
 import { isPendingAlias } from '../../../../domain/simulation/auth.types';
 import type { ParsedDocument } from '../../../../domain/simulation/documentParser';
 import { parseDocumentInput } from '../../../../domain/simulation/documentParser';
@@ -103,6 +106,34 @@ function getSessionKeyFromSimulationSession(session: SimulationSession): string 
     session.mappedDocument.documentType,
     session.mappedDocument.documentNumber,
   );
+}
+
+function applyRegisteredAliasToSession(
+  session: SimulationSession,
+  aliasValue: string,
+  accountId: string,
+): SimulationSession {
+  const updatedSession = {
+    ...withPrimaryAccount(session, accountId),
+    alias: aliasValue,
+    hasConfiguredAlias: true,
+    aliasCoreStatus: 'ACTV',
+  };
+
+  if (!session.isLegalEntity) {
+    return updatedSession;
+  }
+
+  const entry: AliasResolveEntry = {
+    alias_value: aliasValue,
+    alias_status: 'ACTV',
+    account_id: accountId,
+  };
+
+  return {
+    ...updatedSession,
+    registeredAliases: [...session.registeredAliases, entry],
+  };
 }
 
 export function createAliasSimulationService(
@@ -247,7 +278,6 @@ export function createAliasSimulationService(
       }
 
       const trimmedAlias = validation.value;
-      const document = session.mappedDocument;
       const currentAlias = session.alias?.trim() || null;
       const aliasIsBlocked = isAliasGloballyBlocked(session.aliasCoreStatus);
       const resolvedAccountId = accountId?.trim() || session.primaryAccountId?.trim() || '';
@@ -293,8 +323,6 @@ export function createAliasSimulationService(
         return { ok: false, message: created.message };
       }
 
-      const sessionKey = getSessionKeyFromSimulationSession(session);
-
       const primaryAccount = getPrimaryAccount(workingSession);
       if (!primaryAccount) {
         return { ok: false, message: 'Debes seleccionar una cuenta para vincular al alias.' };
@@ -308,30 +336,9 @@ export function createAliasSimulationService(
         };
       }
 
-      await simfClients.resolveAliasViaSimf(
-        document.documentType,
-        document.documentNumber,
-        appConfig.simulation.bankCode,
-        sessionKey,
-        signal,
-      );
-
-      const resolved = await resolveByDocument(
-        document.documentType,
-        document.documentNumber,
-        signal,
-      );
-
-      if (!resolved.ok) {
-        return {
-          ok: false,
-          message: 'El alias se registró, pero no se pudo refrescar la sesión.',
-        };
-      }
-
       return {
         ok: true,
-        session: buildFilteredSession(resolved.data, document),
+        session: applyRegisteredAliasToSession(workingSession, trimmedAlias, primaryAccount.id),
       };
     },
 

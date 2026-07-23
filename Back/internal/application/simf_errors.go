@@ -8,6 +8,7 @@ var (
 	ErrSimfAliasLimitExceeded  = errors.New("simf_alias_limit_exceeded")
 	ErrSimfUnauthorizedIBP     = errors.New("simf_unauthorized_ibp")
 	ErrSimfAliasBlocked        = errors.New("simf_alias_blocked")
+	ErrSimfAliasBlacklisted    = errors.New("simf_alias_blacklisted")
 	ErrSimfAliasNotFound        = errors.New("simf_alias_not_found")
 	ErrSimfAgentNotLinked       = errors.New("simf_agent_not_linked")
 	ErrSimfAliasBlockRequiresInactiveAccounts = errors.New("simf_alias_block_requires_inactive_accounts")

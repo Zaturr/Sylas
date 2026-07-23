@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { type AliasDetail, type PaginationMeta } from '../../../domain/alias';
-import { parseDocumentInput } from '../../../domain/validations';
+import { mapDocumentTypeToSimfScheme, parseDocumentInput } from '../../../domain/validations';
 import { type ResolveAliasService } from '../../../application/aliasService';
 import { useAliasService } from '../providers/AppServicesProvider';
 
@@ -27,6 +27,22 @@ function mapResolveToAliasDetail(resolved: ResolveAliasService): AliasDetail {
       status: account.status,
     })),
   };
+}
+
+/** Filtro solo de visualización: no crea ni modifica registros. */
+function filterAliasesByScheme(items: AliasDetail[], scheme: AliasSchemeFilter): AliasDetail[] {
+  if (!scheme) {
+    return items;
+  }
+
+  return items.filter((item) => mapDocumentTypeToSimfScheme(item.document_type) === scheme);
+}
+
+function matchesSchemeFilter(documentType: string, scheme: AliasSchemeFilter): boolean {
+  if (!scheme) {
+    return true;
+  }
+  return mapDocumentTypeToSimfScheme(documentType) === scheme;
 }
 
 export const useAlias = () => {
@@ -60,6 +76,20 @@ export const useAlias = () => {
 
       const document = parseDocumentInput(term);
       if (document) {
+        if (!matchesSchemeFilter(document.documentType, scheme)) {
+          if (generation !== fetchGenerationRef.current) {
+            return;
+          }
+          setAliases([]);
+          setPagination({
+            page: 1,
+            limit,
+            total_records: 0,
+            total_pages: 0,
+          });
+          return;
+        }
+
         try {
           const resolved = await aliasService.resolveByDocument(
             document.documentType,
@@ -83,14 +113,27 @@ export const useAlias = () => {
         }
       }
 
+      // Solo lectura: GET /alias/list?scheme=SCID|SRIF (nunca inserta).
       const result = await aliasService.getAliasDetailsPaginated(page, limit, term, scheme);
 
       if (generation !== fetchGenerationRef.current) {
         return;
       }
 
-      setAliases(result.data);
-      setPagination(result.pagination);
+      const filteredData = filterAliasesByScheme(result.data, scheme);
+      setAliases(filteredData);
+
+      if (scheme && filteredData.length !== result.data.length) {
+        // Si el backend no filtró, ajustamos el total visible a lo filtrado en cliente.
+        setPagination({
+          ...result.pagination,
+          total_records: filteredData.length,
+          total_pages: filteredData.length > 0 ? 1 : 0,
+          page: 1,
+        });
+      } else {
+        setPagination(result.pagination);
+      }
     } catch (err) {
       if (generation !== fetchGenerationRef.current) {
         return;
@@ -101,11 +144,11 @@ export const useAlias = () => {
         setLoading(false);
       }
     }
-  }, []);
+  }, [aliasService]);
 
   useEffect(() => {
     const generation = ++fetchGenerationRef.current;
-    fetchAliases(pagination.page, pagination.limit, searchTerm, schemeFilter, generation);
+    void fetchAliases(pagination.page, pagination.limit, searchTerm, schemeFilter, generation);
   }, [fetchAliases, pagination.page, pagination.limit, searchTerm, schemeFilter]);
 
   const goToPage = (page: number) => {
@@ -133,17 +176,18 @@ export const useAlias = () => {
 
   const setSearch = useCallback((value: string) => {
     setSearchTerm(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPagination((prev) => (prev.page === 1 ? prev : { ...prev, page: 1 }));
   }, []);
 
   const setSchemeFilter = useCallback((value: AliasSchemeFilter) => {
+    // Solo cambia el filtro de consulta; no escribe en BD.
     setSchemeFilterState(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPagination((prev) => (prev.page === 1 ? prev : { ...prev, page: 1 }));
   }, []);
 
   const refetch = () => {
     const generation = ++fetchGenerationRef.current;
-    fetchAliases(pagination.page, pagination.limit, searchTerm, schemeFilter, generation);
+    void fetchAliases(pagination.page, pagination.limit, searchTerm, schemeFilter, generation);
   };
 
   const removeAlias = async (customerId: string, aliasValue: string) => {

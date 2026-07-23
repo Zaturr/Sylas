@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	simfdomain "Alias_bdca/Back/internal/domain/simf"
-
 	"github.com/dlclark/regexp2"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/santhosh-tekuri/jsonschema/v6/kind"
@@ -33,7 +31,7 @@ type SchemaConflictBody struct {
 	Details []SchemaViolation `json:"details"`
 }
 
-// IdModAdvcValidationResult separa errores de estructura (409) de errores de valor (RR10/200).
+// IdModAdvcValidationResult separa errores de schema (409) de rechazos de negocio SIMF (RR10/200).
 type IdModAdvcValidationResult struct {
 	Structural []SchemaViolation
 	Value      []SchemaViolation
@@ -155,8 +153,8 @@ func collectLeafValidationErrors(err *jsonschema.ValidationError, fn func(*jsons
 	}
 }
 
-// isStructuralErrorKind indica errores de forma/claves del JSON (409).
-// Los valores de campos (pattern, enum, format, etc.) se tratan como RR10 con HTTP 200.
+// isStructuralErrorKind indica errores de forma del JSON o formato de campos del schema (409).
+// Incluye claves faltantes, tipos incorrectos y restricciones pattern/minLength/format/enum.
 func isStructuralErrorKind(errorKind jsonschema.ErrorKind) bool {
 	switch errorKind.(type) {
 	case *kind.InvalidJsonValue,
@@ -170,7 +168,13 @@ func isStructuralErrorKind(errorKind jsonschema.ErrorKind) bool {
 		*kind.Dependency,
 		*kind.DependentRequired,
 		*kind.MinItems,
-		*kind.MaxItems:
+		*kind.MaxItems,
+		*kind.MinLength,
+		*kind.MaxLength,
+		*kind.Pattern,
+		*kind.Format,
+		*kind.Enum,
+		*kind.Const:
 		return true
 	default:
 		return false
@@ -201,13 +205,4 @@ func compileECMAScriptRegexp(pattern string) (jsonschema.Regexp, error) {
 		return nil, err
 	}
 	return (*ecmascriptRegexp)(re), nil
-}
-
-// BuildSchemaConflictBody construye el cuerpo estándar de respuesta 409.
-func BuildSchemaConflictBody(violations []SchemaViolation) SchemaConflictBody {
-	return SchemaConflictBody{
-		Error:   "estructura JSON invalida",
-		Reason:  simfdomain.ReasonFormat,
-		Details: violations,
-	}
 }

@@ -36,6 +36,8 @@ type TestScenarioSeedRequest struct {
 
 type TestScenarioSeedResult struct {
 	Created int      `json:"created"`
+	Updated int      `json:"updated"`
 	Skipped int      `json:"skipped"`
+	Purged  int      `json:"purged"`
 	Errors  []string `json:"errors,omitempty"`
 }

@@ -12,13 +12,26 @@ import (
 )
 
 type AppService struct {
-	repo ports.AliasRepository
+	repo       ports.AliasRepository
+	restricted restrictedAliasChecker
 }
 
-func NewAppService(repo ports.AliasRepository) *AppService {
+type restrictedAliasChecker interface {
+	IsRestricted(alias string) bool
+}
+
+func NewAppService(repo ports.AliasRepository, restricted restrictedAliasChecker) *AppService {
 	return &AppService{
-		repo: repo,
+		repo:       repo,
+		restricted: restricted,
 	}
+}
+
+func (s *AppService) isAliasBlacklisted(aliasValue string) bool {
+	if s.restricted == nil {
+		return false
+	}
+	return s.restricted.IsRestricted(aliasValue)
 }
 
 func (s *AppService) GetCustomerByDocument(ctx context.Context, docType, docNum string) (*domain.Customer, error) {
@@ -39,6 +52,11 @@ func (s *AppService) RegisterCustomerWithAccount(ctx context.Context, customer *
 }
 
 func (s *AppService) CreateAlias(ctx context.Context, customerID string, aliasValue string, accountID string) (*domain.Alias, error) {
+	aliasValue = strings.TrimSpace(aliasValue)
+	if s.isAliasBlacklisted(aliasValue) {
+		return nil, ErrSimfAliasBlacklisted
+	}
+
 	existingAlias, _ := s.repo.GetAliasByValue(ctx, aliasValue)
 	if existingAlias != nil {
 		if domain.IsAliasGloballyBlocked(existingAlias.Status) {
@@ -264,6 +282,9 @@ func (s *AppService) GetAliasWithDetailsPaginated(ctx context.Context, page, lim
 
 // CreateFullUser expone el método
 func (s *AppService) CreateFullUser(ctx context.Context, customer *domain.Customer, accounts []domain.Account, alias *domain.Alias) error {
+	if alias != nil && s.isAliasBlacklisted(alias.AliasValue) {
+		return ErrSimfAliasBlacklisted
+	}
 	return s.repo.CreateFullUser(ctx, customer, accounts, alias)
 }
 

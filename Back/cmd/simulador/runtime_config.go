@@ -17,32 +17,49 @@ var defaultConfigJSON []byte
 // runtimeFileConfig es la parte del config.json que el backend necesita al arrancar.
 // El resto (SIMULATION, etc.) lo consume el frontend en el navegador.
 type runtimeFileConfig struct {
-	Port string `json:"PORT"`
+	Port          string `json:"PORT"`
+	PublicBaseURL string `json:"PUBLIC_BASE_URL"`
 }
 
-func loadListenAddr() (addr string, configPath string, err error) {
-	configPath, err = ensureConfigFile()
+func loadRuntimeConfig() (runtimeFileConfig, string, error) {
+	configPath, err := ensureConfigFile()
 	if err != nil {
-		return ":" + defaultPort, "", fmt.Errorf("usando puerto por defecto %s: %w", defaultPort, err)
+		return runtimeFileConfig{Port: defaultPort}, "", err
 	}
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		return ":" + defaultPort, configPath, fmt.Errorf("no se pudo leer %s: %w", configPath, err)
+		return runtimeFileConfig{Port: defaultPort}, configPath, fmt.Errorf("no se pudo leer %s: %w", configPath, err)
 	}
 
 	var cfg runtimeFileConfig
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return ":" + defaultPort, configPath, fmt.Errorf("config.json inválido (%s): %w", configPath, err)
+		return runtimeFileConfig{Port: defaultPort}, configPath, fmt.Errorf("config.json inválido (%s): %w", configPath, err)
 	}
 
-	port := strings.TrimSpace(cfg.Port)
-	if port == "" {
-		port = defaultPort
+	if strings.TrimSpace(cfg.Port) == "" {
+		cfg.Port = defaultPort
 	}
-	port = strings.TrimPrefix(port, ":")
 
+	return cfg, configPath, nil
+}
+
+func loadListenAddr() (addr string, configPath string, err error) {
+	cfg, configPath, err := loadRuntimeConfig()
+	if err != nil {
+		return ":" + defaultPort, configPath, fmt.Errorf("usando puerto por defecto %s: %w", defaultPort, err)
+	}
+
+	port := strings.TrimPrefix(strings.TrimSpace(cfg.Port), ":")
 	return ":" + port, configPath, nil
+}
+
+func loadPublicBaseURL() string {
+	cfg, _, err := loadRuntimeConfig()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(cfg.PublicBaseURL)
 }
 
 // ensureConfigFile localiza un config.json editable en disco.

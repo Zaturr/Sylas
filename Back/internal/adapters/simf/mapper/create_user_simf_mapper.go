@@ -124,6 +124,8 @@ func MapCreateUserBusinessReason(err error) string {
 		return simfdomain.ReasonUnauthorizedIBP
 	case errors.Is(err, application.ErrSimfAliasBlocked):
 		return simfdomain.ReasonAliasBlocked
+	case errors.Is(err, application.ErrSimfAliasBlacklisted):
+		return simfdomain.ReasonBlacklist
 	}
 
 	errText := strings.ToLower(err.Error())

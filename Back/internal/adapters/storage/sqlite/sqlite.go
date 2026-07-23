@@ -732,17 +732,19 @@ func schemeDocumentTypeFilter(scheme string) (string, []interface{}) {
 	normalized := strings.ToUpper(strings.TrimSpace(scheme))
 	switch normalized {
 	case "SCID":
-		return ` AND c.document_type IN (?, ?)`, []interface{}{"V", "E"}
+		return ` AND UPPER(TRIM(c.document_type)) IN (?, ?)`, []interface{}{"V", "E"}
 	case "SRIF":
-		return ` AND c.document_type IN (?, ?, ?)`, []interface{}{"J", "G", "C"}
+		return ` AND UPPER(TRIM(c.document_type)) IN (?, ?, ?)`, []interface{}{"J", "G", "C"}
 	case "SPAS":
-		return ` AND c.document_type IN (?)`, []interface{}{"P"}
+		return ` AND UPPER(TRIM(c.document_type)) IN (?)`, []interface{}{"P"}
 	default:
 		return "", nil
 	}
 }
 
-// ListAllAliasesWithDetailsPaginated retorna una fila por alias (multi-alias J/G/C) o por titular sin alias.
+// ListAllAliasesWithDetailsPaginated retorna:
+// - 1 fila por cada alias registrado (multi-alias jurídico = varias filas del mismo titular)
+// - 1 fila por titular sin alias (UNRG); nunca una fila por cuenta bancaria
 func (r *RealRepository) ListAllAliasesWithDetailsPaginated(ctx context.Context, page, limit int, search string, scheme string) (*domain.PaginatedAliasResponse, error) {
 	aliasSearchFilterSQL, aliasSearchArgs := aliasSearchFilter(search)
 	customerSearchFilterSQL, customerSearchArgs := customerSearchFilter(search)
