@@ -1,6 +1,6 @@
 {
   "PORT": "8070",
-  "PUBLIC_BASE_URL": "http://192.168.120.103:8080",
+  "PUBLIC_BASE_URL": "http://192.168.120.106:8070",
   "VITE_API_BASE_URL": "/api/v1",
   "TRACE_ENABLED": true,
   "TRACE_BUFFER_SIZE": 1024,

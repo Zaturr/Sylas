@@ -49,6 +49,12 @@ function isLocalHost(hostname: string): boolean {
 
 /** Origen HTTP del simulador (protocolo + host + puerto). */
 export const getPublicOrigin = (): string => {
+  // Si el usuario abrió la UI en el navegador, la API relativa debe ir al MISMO origen.
+  // No forzar PUBLIC_BASE_URL aquí: suele romper localhost vs LAN / puerto distinto.
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+
   const publicBase = runtimeConfig?.PUBLIC_BASE_URL?.trim();
   if (publicBase) {
     try {
@@ -56,10 +62,6 @@ export const getPublicOrigin = (): string => {
     } catch {
       console.warn('PUBLIC_BASE_URL inválida:', publicBase);
     }
-  }
-
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin;
   }
 
   const configured =
@@ -81,14 +83,18 @@ export const getApiBaseUrl = (): string => {
     import.meta.env.VITE_API_BASE_URL ??
     '/api/v1';
 
+  // Ruta relativa: siempre mismo host/puerto de la página (evita Failed to fetch).
   if (configured.startsWith('/')) {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return `${window.location.origin}${configured}`;
+    }
     return `${getPublicOrigin()}${configured}`;
   }
 
   try {
     const url = new URL(configured);
     if (typeof window !== 'undefined' && isLocalHost(url.hostname)) {
-      return `${getPublicOrigin()}${url.pathname}`;
+      return `${window.location.origin}${url.pathname}`;
     }
     return configured;
   } catch {

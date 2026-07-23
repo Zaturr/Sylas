@@ -103,6 +103,29 @@ func (r *RealRepository) GetCustomerByDocument(ctx context.Context, documentType
 	return &customer, nil
 }
 
+// ListAllCustomers retorna id + documento de todos los clientes.
+func (r *RealRepository) ListAllCustomers(ctx context.Context) ([]domain.Customer, error) {
+	query := `SELECT id, document_type, document_number FROM customers ORDER BY document_type, document_number`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	customers := make([]domain.Customer, 0)
+	for rows.Next() {
+		var customer domain.Customer
+		if err := rows.Scan(&customer.ID, &customer.DocumentType, &customer.DocumentNumber); err != nil {
+			return nil, err
+		}
+		customers = append(customers, customer)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return customers, nil
+}
+
 // GetCustomerByDocumentNumber busca un cliente solo por document_number.
 func (r *RealRepository) GetCustomerByDocumentNumber(ctx context.Context, documentNumber string) (*domain.Customer, error) {
 	query := `SELECT id, document_type, document_number, first_name, COALESCE(middle_name, ''), last_name, COALESCE(second_last_name, ''), email, phone, created_at

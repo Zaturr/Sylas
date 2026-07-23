@@ -15,14 +15,8 @@ import (
 func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScenarioSeedRequest) (*domain.TestScenarioSeedResult, error) {
 	result := &domain.TestScenarioSeedResult{}
 
-	// Certificación: al iniciar solo deben existir los escenarios de prueba.
-	// Borramos TODO (randomizador, docs viejos, duplicados) y recreamos los 30.
-	deleted, err := s.repo.DeleteAllCustomers(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("limpiar clientes previos: %w", err)
-	}
-	result.Purged = int(deleted)
-
+	// 1) Recrear cada escenario (borra solo ese documento si existe, luego crea).
+	//    Nunca hacemos DeleteAll primero: si algo falla a mitad, no dejamos la BD vacía.
 	for _, scenario := range req.Scenarios {
 		if err := validateTestScenario(scenario); err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
@@ -30,6 +24,19 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 		}
 
 		documentType := resolveScenarioDocumentType(scenario)
+		existing, err := s.repo.GetCustomerByDocument(ctx, documentType, scenario.DocumentNumber)
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
+			continue
+		}
+		recreating := false
+		if existing != nil {
+			if err := s.repo.DeleteCustomerByID(ctx, existing.ID); err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
+				continue
+			}
+			recreating = true
+		}
 
 		now := time.Now()
 		customerID := uuid.New().String()
@@ -75,7 +82,11 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 				continue
 			}
 
-			result.Created++
+			if recreating {
+				result.Updated++
+			} else {
+				result.Created++
+			}
 			continue
 		}
 
@@ -109,7 +120,6 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 				continue
 			}
 			if createdAlias != nil {
-				// Recargar cuentas desde BD (IDs reales) y vincular TODOS los bancos del escenario.
 				persistedAccounts, err := s.repo.GetAccountsByCustomerID(ctx, customerID)
 				if err != nil {
 					result.Errors = append(result.Errors, fmt.Sprintf("%s: %s", scenario.ID, err.Error()))
@@ -122,8 +132,19 @@ func (s *AppService) SeedTestScenarios(ctx context.Context, req domain.TestScena
 			}
 		}
 
-		result.Created++
+		if recreating {
+			result.Updated++
+		} else {
+			result.Created++
+		}
 	}
+
+	// 2) Solo al final: borrar randomizador / docs que no son de los 30 escenarios.
+	purged, err := s.purgeCustomersOutsideScenarios(ctx, req.Scenarios)
+	if err != nil {
+		return nil, fmt.Errorf("purge test scenarios: %w", err)
+	}
+	result.Purged = purged
 
 	return result, nil
 }
@@ -388,4 +409,32 @@ func buildScenarioAccountNumber(bankID, documentNumber, accountType string) stri
 	controlStr := fmt.Sprintf("%d%d", firstDigit, secondDigit)
 
 	return bankID + office + controlStr + account
+}
+
+func (s *AppService) purgeCustomersOutsideScenarios(ctx context.Context, scenarios []domain.TestScenario) (int, error) {
+	allowed := make(map[string]struct{}, len(scenarios))
+	for _, scenario := range scenarios {
+		docType := strings.ToUpper(strings.TrimSpace(resolveScenarioDocumentType(scenario)))
+		key := docType + "|" + strings.TrimSpace(scenario.DocumentNumber)
+		allowed[key] = struct{}{}
+	}
+
+	customers, err := s.repo.ListAllCustomers(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	purged := 0
+	for _, customer := range customers {
+		key := strings.ToUpper(strings.TrimSpace(customer.DocumentType)) + "|" + strings.TrimSpace(customer.DocumentNumber)
+		if _, ok := allowed[key]; ok {
+			continue
+		}
+		if err := s.repo.DeleteCustomerByID(ctx, customer.ID); err != nil {
+			return purged, err
+		}
+		purged++
+	}
+
+	return purged, nil
 }
